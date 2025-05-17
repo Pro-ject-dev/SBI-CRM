@@ -6,7 +6,6 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ title, children }) => {
-  console.log(title);
   return <>{children}</>;
 };
 

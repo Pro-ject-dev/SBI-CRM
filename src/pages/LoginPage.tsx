@@ -32,6 +32,7 @@ const LoginPage = () => {
       );
 
       localStorage.setItem("role", role);
+      localStorage.setItem("api_endpoint", `/api/${role}`);
 
       if (role === "admin") {
         navigate("/admin/dashboard");

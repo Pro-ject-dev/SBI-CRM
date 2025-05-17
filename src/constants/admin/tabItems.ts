@@ -1,8 +1,11 @@
 import AddonsForm from "../../features/admin/AddonsForm";
+import AddonsProductManagement from "../../features/admin/AddonsProductManagement";
 import BanksForm from "../../features/admin/BanksForm";
 import CombosMappingForm from "../../features/admin/CombosMappingForm";
-import CustomizedProductsForm from "../../features/admin/CustomizedProductsForm";
-import StandardProductsForm from "../../features/admin/StandardProductsForm";
+import CustomizedForm from "../../features/admin/CustomizedForm";
+import CustomizedProductManagement from "../../features/admin/CustomizedProductManagement";
+import StandardForm from "../../features/admin/StandardForm";
+import StandardProductManagement from "../../features/admin/StandardProductManagement";
 import TermsForm from "../../features/admin/TermsForm";
 import type { TabBar } from "../../types/tabBar";
 
@@ -10,12 +13,12 @@ export const masterFormTabItems: TabBar[] = [
   {
     id: "standard",
     label: "Standard Products",
-    component: StandardProductsForm,
+    component: StandardForm,
   },
   {
     id: "customized",
     label: "Customized Products",
-    component: CustomizedProductsForm,
+    component: CustomizedForm,
   },
   { id: "addons", label: "Add-ons Products", component: AddonsForm },
   {
@@ -25,4 +28,22 @@ export const masterFormTabItems: TabBar[] = [
   },
   { id: "banks", label: "Banks", component: BanksForm },
   { id: "terms", label: "Terms", component: TermsForm },
+];
+
+export const productManagementTabItems: TabBar[] = [
+  {
+    id: "standard",
+    label: "Standard Products",
+    component: StandardProductManagement,
+  },
+  {
+    id: "customized",
+    label: "Customized Products",
+    component: CustomizedProductManagement,
+  },
+  {
+    id: "addons",
+    label: "Add-ons Products",
+    component: AddonsProductManagement,
+  },
 ];

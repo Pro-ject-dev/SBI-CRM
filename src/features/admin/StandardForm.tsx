@@ -2,10 +2,10 @@ import { Box, Button, Container, Grid, Paper, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import {
-  useAddAddonsMutation,
-  useGetAddonsByIdQuery,
-  useUpdateAddonsMutation,
-} from "../../app/api/addonsProductApi";
+  useAddStandardMutation,
+  useGetStandardByIdQuery,
+  useUpdateStandardMutation,
+} from "../../app/api/standardProductApi";
 import { InputBox } from "../../components/UI/InputBox";
 import { useSearchParams } from "react-router-dom";
 import CustomToast from "../../components/UI/CustomToast";
@@ -13,58 +13,57 @@ import toast from "react-hot-toast";
 
 interface FormField {
   label: string;
-  key: keyof AddonsFormData;
+  key: keyof StandardFormData;
   type: string;
   min?: number;
   max?: number;
 }
 
-const AddonsForm = () => {
+const StandardForm = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
-
   const {
     data,
     isLoading: fetchLoading,
     isError,
     refetch,
-  } = useGetAddonsByIdQuery({ id: id || "" }, { skip: !id });
-  const [addAddons, { isLoading: addLoading }] = useAddAddonsMutation();
-  const [updateAddons, { isLoading: updateLoading }] =
-    useUpdateAddonsMutation();
+  } = useGetStandardByIdQuery({ id: id || "" }, { skip: !id });
+  const [addStandard, { isLoading: addLoading }] = useAddStandardMutation();
+  const [UpdateStandard, { isLoading: updateLoading }] =
+    useUpdateStandardMutation();
 
-  const [addonsForm, setAddonsForm] = useState<AddonsFormData>({
+  const [standardForm, setStandardForm] = useState<StandardFormData>({
     productName: "",
-    ratePerKg: "",
-    weight: "",
+    ratePerQuantity: "",
     grade: "",
-    length: "",
-    width: "",
+    size: "",
     thickness: "",
-    minLimit: "",
+    minimumCost: "",
     gst: "",
     remark: "",
     totalAmount: "",
   });
-
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const formFields: FormField[] = [
     { label: "Product Name", key: "productName", type: "text" },
-    { label: "Rate per kg", key: "ratePerKg", type: "number", min: 0 },
-    { label: "Weight of the object", key: "weight", type: "number", min: 0 },
+    {
+      label: "Rate per Quantity",
+      key: "ratePerQuantity",
+      type: "number",
+      min: 0,
+    },
     { label: "Grade", key: "grade", type: "text" },
-    { label: "Length", key: "length", type: "number", min: 0 },
-    { label: "Width", key: "width", type: "number", min: 0 },
+    { label: "Size", key: "size", type: "number", min: 0 },
     { label: "Thickness", key: "thickness", type: "number", min: 0 },
+    { label: "Minimum Cost", key: "minimumCost", type: "number", min: 0 },
     { label: "GST", key: "gst", type: "number", min: 0, max: 100 },
     { label: "Remark", key: "remark", type: "text" },
-    { label: "Min Limit / sq.in", key: "minLimit", type: "number", min: 0 },
     { label: "Total Amount", key: "totalAmount", type: "number", min: 0 },
   ];
 
-  const handleAddonsChange = (key: string, value: string) => {
-    setAddonsForm((prev) => ({ ...prev, [key]: value }));
+  const handleStandardChange = (key: string, value: string) => {
+    setStandardForm((prev) => ({ ...prev, [key]: value }));
     if (value.trim()) {
       const removeError = Object.fromEntries(
         Object.entries(errors).filter(([objKey]) => objKey !== key)
@@ -75,15 +74,13 @@ const AddonsForm = () => {
 
   useEffect(() => {
     if (id && data) {
-      setAddonsForm({
-        productName: data?.data?.name,
-        ratePerKg: data?.data?.ratePerKg,
+      setStandardForm({
+        productName: data?.data?.productName,
+        ratePerQuantity: data?.data?.ratePerQuantity,
         grade: data?.data?.grade,
-        length: data?.data?.length,
-        width: data?.data?.width,
-        weight: data?.data?.weightOfObject,
+        size: data?.data?.length,
         thickness: data?.data?.thickness,
-        minLimit: data?.data?.minSqIn,
+        minimumCost: data?.data?.maxCost,
         gst: data?.data?.gst,
         remark: data?.data?.remark,
         totalAmount: data?.data?.totalAmount,
@@ -91,10 +88,13 @@ const AddonsForm = () => {
     }
   }, [id, data]);
 
-  const handleAddAddons = async () => {
+  console.log("Edit Data: ", standardForm);
+
+  const handleAddStandard = async () => {
     const newErrors: Record<string, string> = {};
-    for (const key of Object.keys(addonsForm) as (keyof AddonsFormData)[]) {
-      if (!addonsForm[key].trim()) {
+
+    for (const key of Object.keys(standardForm) as (keyof StandardFormData)[]) {
+      if (!standardForm[key].trim()) {
         newErrors[key] = `${key} is required**`;
       }
     }
@@ -107,51 +107,49 @@ const AddonsForm = () => {
 
     try {
       if (id && data) {
-        const updateData = await updateAddons({
+        const updateData = await UpdateStandard({
           id: `${id}`,
-          name: `${addonsForm.productName}`,
-          ratePerKg: `${addonsForm.ratePerKg}`,
-          grade: `${addonsForm.grade}`,
-          weightOfObject: `${addonsForm.weight}`,
-          length: `${addonsForm.length}`,
-          width: `${addonsForm.width}`,
-          thickness: `${addonsForm.thickness}`,
-          maxSqIn: `${addonsForm.minLimit}`,
-          gst: `${addonsForm.gst}`,
-          totalAmount: `${addonsForm.totalAmount}`,
-          remark: `${addonsForm.remark}`,
+          productName: `${standardForm.productName}`,
+          ratePerQuantity: `${standardForm.ratePerQuantity}`,
+          grade: `${standardForm.grade}`,
+          length: `${standardForm.size}`,
+          width: `${standardForm.size}`,
+          thickness: `${standardForm.thickness}`,
+          maxCost: `${standardForm.minimumCost}`,
+          gst: `${standardForm.gst}`,
+          totalAmount: `${standardForm.totalAmount}`,
+          remark: `${standardForm.remark}`,
+          isstandard: "1",
         });
         toast.custom(
           <CustomToast message="Product Updated Successfully" toast="success" />
         );
       } else {
-        const data = await addAddons({
+        const AddData = await addStandard({
           date: "2025-05-14",
-          name: `${addonsForm.productName}`,
-          ratePerKg: `${addonsForm.ratePerKg}`,
-          grade: `${addonsForm.grade}`,
-          length: `${addonsForm.length}`,
-          width: `${addonsForm.width}`,
-          thickness: `${addonsForm.thickness}`,
-          minSqIn: `${addonsForm.minLimit}`,
-          gst: `${addonsForm.gst}`,
-          totalAmount: `${addonsForm.totalAmount}`,
-          remark: `${addonsForm.remark}`,
+          productName: `${standardForm.productName}`,
+          ratePerQuantity: `${standardForm.ratePerQuantity}`,
+          grade: `${standardForm.grade}`,
+          length: `${standardForm.size}`,
+          width: `${standardForm.size}`,
+          thickness: `${standardForm.thickness}`,
+          maxCost: `${standardForm.minimumCost}`,
+          gst: `${standardForm.gst}`,
+          totalAmount: `${standardForm.totalAmount}`,
+          remark: `${standardForm.remark}`,
+          isstandard: "1",
         });
         toast.custom(
           <CustomToast message="Product Added Successfully" toast="success" />
         );
       }
-
-      setAddonsForm({
+      setStandardForm({
         productName: "",
-        ratePerKg: "",
-        weight: "",
+        ratePerQuantity: "",
         grade: "",
-        length: "",
-        width: "",
+        size: "",
         thickness: "",
-        minLimit: "",
+        minimumCost: "",
         gst: "",
         remark: "",
         totalAmount: "",
@@ -176,9 +174,9 @@ const AddonsForm = () => {
           <InputBox
             id={field.key}
             name={field.key}
-            value={addonsForm[field.key]}
+            value={standardForm[field.key]}
             type="text"
-            onChange={handleAddonsChange}
+            onChange={handleStandardChange}
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: "8px",
@@ -190,11 +188,11 @@ const AddonsForm = () => {
           <InputBox
             id={field.key}
             name={field.key}
-            value={addonsForm[field.key]}
+            value={standardForm[field.key]}
             type="number"
             min={field.min}
             max={field.max}
-            onChange={handleAddonsChange}
+            onChange={handleStandardChange}
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: "8px",
@@ -216,12 +214,13 @@ const AddonsForm = () => {
           color: "white",
           textAlign: "center",
           borderRadius: "16px",
+
           background: "linear-gradient(to right, #94a3b8, #334155, #0f172a)",
           boxShadow: 3,
         }}
       >
         <Typography variant="h6" component="h3">
-          Add-ons Products
+          Standard Products
         </Typography>
       </Box>
 
@@ -251,7 +250,7 @@ const AddonsForm = () => {
           color="primary"
           endIcon={<ArrowForwardIosIcon />}
           sx={{ py: 1.2, px: 3 }}
-          onClick={() => handleAddAddons()}
+          onClick={() => handleAddStandard()}
         >
           {id ? "Update Product" : "Add Product"}
         </Button>
@@ -263,4 +262,4 @@ const AddonsForm = () => {
   );
 };
 
-export default AddonsForm;
+export default StandardForm;
