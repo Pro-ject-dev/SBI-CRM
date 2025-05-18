@@ -1,7 +1,6 @@
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import type { TabBar } from "../../types/tabBar";
-import type { JSX } from "react";
 
 const CustomTabs = ({
   tabItems,
@@ -9,7 +8,7 @@ const CustomTabs = ({
   activeTab,
 }: {
   tabItems: TabBar[];
-  handleTabChange: (id: string, index: number) => void;
+  handleTabChange: (id: string) => void;
   activeTab: string;
 }) => {
   const colors = {
@@ -42,7 +41,7 @@ const CustomTabs = ({
         {tabItems.map((tab, index) => (
           <Button
             key={tab.id}
-            onClick={() => handleTabChange(tab.id, index)}
+            onClick={() => handleTabChange(tab.id)}
             sx={{
               px: 3,
               py: 1.5,

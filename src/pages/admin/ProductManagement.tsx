@@ -1,16 +1,11 @@
-import { Box } from "@mui/material";
-import { masterFormTabItems } from "../../constants/admin/tabItems";
-import CustomTabs from "../../components/UI/CustomTabs";
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { productManagementTabItems } from "../../constants/admin/tabItems";
+import { Box } from "@mui/material";
+import CustomTabs from "../../components/UI/CustomTabs";
 
-const MasterForm = () => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const tabId = searchParams.get("tab");
-  const tabItems = masterFormTabItems;
-  const [activeTab, setActiveTab] = useState<string>(tabId || tabItems[0]?.id);
+const ProductManagement = () => {
+  const tabItems = productManagementTabItems;
+  const [activeTab, setActiveTab] = useState<string>(tabItems[0]?.id);
   const [ActiveComponent, setActiveComponent] =
     useState<React.ElementType | null>(
       () =>
@@ -19,7 +14,6 @@ const MasterForm = () => {
 
   const handleTabChange = (id: string) => {
     setActiveTab(id);
-    navigate(location.pathname, { replace: true });
   };
 
   useEffect(() => {
@@ -44,4 +38,4 @@ const MasterForm = () => {
   );
 };
 
-export default MasterForm;
+export default ProductManagement;

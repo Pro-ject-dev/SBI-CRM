@@ -9,7 +9,6 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
-  // const user = useSelector((state: RootState) => state.auth);
   const role = localStorage.getItem("role");
 
   console.log("User: ", role);
