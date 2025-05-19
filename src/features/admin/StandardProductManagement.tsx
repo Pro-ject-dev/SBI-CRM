@@ -8,15 +8,25 @@ import { Delete, Edit } from "@mui/icons-material";
 import { DataTable } from "../../components/UI/DataTable";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useNavigate } from "react-router-dom";
+import { addToast } from "../../app/slices/toastSlice";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "../../app/store";
 
 const StandardProductManagement = () => {
+  const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
-  const { data, isLoading, isError, refetch } = useGetStandardQuery({
+  const {
+    data,
+    // isLoading, isError,
+    refetch,
+  } = useGetStandardQuery({
     isStandard: "1",
   });
 
-  const [deleteStandard, { isLoading: deleteLoading }] =
-    useDeleteStandardMutation();
+  const [
+    deleteStandard,
+    // { isLoading: deleteLoading }
+  ] = useDeleteStandardMutation();
 
   const [productData, setProductData] = useState<
     StandardCustomizedResponse[] | []
@@ -35,10 +45,18 @@ const StandardProductManagement = () => {
     try {
       if (id) {
         const deleteData = await deleteStandard({ id });
-        console.log("Data Deleted: ", deleteData);
+        dispatch(
+          addToast({ message: "Product Deleted Successfully", type: "success" })
+        );
+        return deleteData;
       }
     } catch (error) {
-      console.log(`Deleting Data: ${error}`);
+      dispatch(
+        addToast({
+          message: "Failed to Deleting Product!",
+          type: "error",
+        })
+      );
     }
   };
 

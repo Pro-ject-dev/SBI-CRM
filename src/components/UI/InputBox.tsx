@@ -43,8 +43,6 @@ export const InputBox: React.FC<InputBoxProps> = ({
       setInputValue(e.target.value);
       return;
     }
-    console.log("Minimum value: ", min);
-    console.log("Minimum: ", min && min > Number(e.target.value));
     if (min !== undefined && min > Number(e.target.value)) {
       return;
     }
@@ -53,10 +51,6 @@ export const InputBox: React.FC<InputBoxProps> = ({
     }
     setInputValue(e.target.value);
   };
-
-  useEffect(() => {
-    console.log(`${id} Value: `, inputValue);
-  }, [inputValue]);
 
   return (
     <TextField

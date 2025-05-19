@@ -24,7 +24,6 @@ const Header = () => {
   };
 
   const handleSignOut = () => {
-    console.log("Signing out...");
     handleCloseUserMenu();
   };
 

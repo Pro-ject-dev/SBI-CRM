@@ -8,13 +8,24 @@ import {
   useGetAddonsQuery,
 } from "../../app/api/addonsProductApi";
 import { useNavigate } from "react-router-dom";
+import { addToast } from "../../app/slices/toastSlice";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "../../app/store";
 
 const AddonsProductManagement = () => {
+  const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
-  const { data, isLoading, isError, refetch } = useGetAddonsQuery("");
+  const {
+    data,
+    // isLoading,
+    // isError,
+    refetch,
+  } = useGetAddonsQuery("");
 
-  const [deleteAddons, { isLoading: deleteLoading }] =
-    useDeleteAddonsMutation();
+  const [
+    deleteAddons,
+    // { isLoading: deleteLoading }
+  ] = useDeleteAddonsMutation();
 
   const [productData, setProductData] = useState<AddonsResponse[] | []>([]);
 
@@ -31,10 +42,18 @@ const AddonsProductManagement = () => {
     try {
       if (id) {
         const deleteData = await deleteAddons({ id });
-        console.log("Data Deleted: ", deleteData);
+        dispatch(
+          addToast({ message: "Product Deleted Successfully", type: "success" })
+        );
+        return deleteData;
       }
     } catch (error) {
-      console.log(`Deleting Data: ${error}`);
+      dispatch(
+        addToast({
+          message: "Failed to Deleting Product!",
+          type: "error",
+        })
+      );
     }
   };
 

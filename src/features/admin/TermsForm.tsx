@@ -14,7 +14,10 @@ interface FormField {
 }
 const TermsForm = () => {
   const dispatch: AppDispatch = useDispatch();
-  const [addTerms, isLoading] = useAddTermsMutation();
+  const [
+    addTerms,
+    // isLoading
+  ] = useAddTermsMutation();
   const [termsForm, setTermsForm] = useState<TermsFormData>({
     title: "",
     description: "",
@@ -40,13 +43,13 @@ const TermsForm = () => {
   const handleAddTerms = async () => {
     const newErrors: Record<string, string> = {};
     for (const key of Object.keys(termsForm) as (keyof TermsFormData)[]) {
-      if (!termsForm[key].trim()) {
+      const value = String(termsForm[key]);
+      if (!value.trim()) {
         newErrors[key] = `${key} is required**`;
       }
     }
 
     if (Object.keys(newErrors).length > 0) {
-      console.log("New Errors: ", newErrors);
       setErrors(newErrors);
       return;
     }
@@ -65,6 +68,7 @@ const TermsForm = () => {
         title: "",
         description: "",
       });
+      return data;
     } catch (error) {
       dispatch(
         addToast({

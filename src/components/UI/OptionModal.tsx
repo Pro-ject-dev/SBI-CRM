@@ -55,7 +55,7 @@ const OptionModal: React.FC<OptionModalProps> = ({
 
   const handleSubmit = () => {
     const newErrors: Record<string, string> = {};
-    fields.forEach(({ key, label }) => {
+    fields.forEach(({ key }) => {
       if (!formData[key]?.trim()) {
         newErrors[key] = `${key} is required`;
       }

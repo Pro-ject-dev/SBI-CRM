@@ -18,7 +18,10 @@ interface FormField {
 
 const BanksForm = () => {
   const dispatch: AppDispatch = useDispatch();
-  const [addBanks, isLoading] = useAddBanksMutation();
+  const [
+    addBanks,
+    // isLoading
+  ] = useAddBanksMutation();
   const accountTypeOptions = [
     { label: "Savings Account", value: "savings account" },
     { label: "Current Account", value: "current account" },
@@ -58,13 +61,13 @@ const BanksForm = () => {
   const handleAddBanks = async () => {
     const newErrors: Record<string, string> = {};
     for (const key of Object.keys(banksForm) as (keyof BanksFormData)[]) {
-      if (!banksForm[key].trim()) {
+      const value = String(banksForm[key]);
+      if (!value.trim()) {
         newErrors[key] = `${key} is required**`;
       }
     }
 
     if (Object.keys(newErrors).length > 0) {
-      console.log("New Errors: ", newErrors);
       setErrors(newErrors);
       return;
     }
@@ -83,6 +86,17 @@ const BanksForm = () => {
       dispatch(
         addToast({ message: "Banks Added Successfully", type: "success" })
       );
+
+      setBanksForm({
+        bankAccountTitle: "",
+        accountHolderName: "",
+        accountType: "",
+        ifscCode: "",
+        bankName: "",
+        accountNumber: "",
+        micrCode: "",
+      });
+      return data;
     } catch (error) {
       dispatch(
         addToast({

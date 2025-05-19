@@ -23,7 +23,6 @@ const ProductManagement = () => {
     }
     const selectedTab = tabItems.find((obj) => obj.id === activeTab);
     setActiveComponent(() => selectedTab?.component || null);
-    console.log("Active Tab: ", { activeTab });
   }, [activeTab, tabItems]);
 
   return (

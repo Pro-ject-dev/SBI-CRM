@@ -8,8 +8,6 @@ import {
 } from "../../app/api/addonsProductApi";
 import { InputBox } from "../../components/UI/InputBox";
 import { useSearchParams } from "react-router-dom";
-import CustomToast from "../../components/UI/CustomToast";
-import toast from "react-hot-toast";
 import { calculateTotalAmount } from "../../utils/calculateTotalAmount";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../app/store";
@@ -32,16 +30,21 @@ const AddonsForm = () => {
 
   const {
     data,
-    isLoading: fetchLoading,
-    isError,
-    refetch,
+    // isLoading: fetchLoading,
+    // isError,
+    // refetch,
   } = useGetAddonsByIdQuery(
     { id: id || "" },
     { skip: !id || tabId !== "addons" }
   );
-  const [addAddons, { isLoading: addLoading }] = useAddAddonsMutation();
-  const [updateAddons, { isLoading: updateLoading }] =
-    useUpdateAddonsMutation();
+  const [
+    addAddons,
+    // { isLoading: addLoading }
+  ] = useAddAddonsMutation();
+  const [
+    updateAddons,
+    // { isLoading: updateLoading }
+  ] = useUpdateAddonsMutation();
 
   const [addonsForm, setAddonsForm] = useState<AddonsFormData>({
     productName: "",
@@ -119,13 +122,13 @@ const AddonsForm = () => {
   const handleAddAddons = async () => {
     const newErrors: Record<string, string> = {};
     for (const key of Object.keys(addonsForm) as (keyof AddonsFormData)[]) {
-      if (!addonsForm[key].trim()) {
+      const value = String(addonsForm[key]);
+      if (!value.trim()) {
         newErrors[key] = `${key} is required**`;
       }
     }
 
     if (Object.keys(newErrors).length > 0) {
-      console.log("New Errors: ", newErrors);
       setErrors(newErrors);
       return;
     }
@@ -146,11 +149,13 @@ const AddonsForm = () => {
           totalAmount: `${addonsForm.totalAmount}`,
           remark: `${addonsForm.remark}`,
         });
+
         dispatch(
           addToast({ message: "Product Updated Successfully", type: "success" })
         );
+        return updateData;
       } else {
-        const data = await addAddons({
+        const addData = await addAddons({
           date: "2025-05-14",
           name: `${addonsForm.productName}`,
           ratePerKg: `${addonsForm.ratePerKg}`,
@@ -164,24 +169,25 @@ const AddonsForm = () => {
           totalAmount: `${addonsForm.totalAmount}`,
           remark: `${addonsForm.remark}`,
         });
+
         dispatch(
           addToast({ message: "Product Added Successfully", type: "success" })
         );
+        setAddonsForm({
+          productName: "",
+          ratePerKg: "",
+          weight: "",
+          grade: "",
+          length: "",
+          width: "",
+          thickness: "",
+          minLimit: "",
+          gst: "",
+          remark: "",
+          totalAmount: "",
+        });
+        return addData;
       }
-
-      // setAddonsForm({
-      //   productName: "",
-      //   ratePerKg: "",
-      //   weight: "",
-      //   grade: "",
-      //   length: "",
-      //   width: "",
-      //   thickness: "",
-      //   minLimit: "",
-      //   gst: "",
-      //   remark: "",
-      //   totalAmount: "",
-      // });
     } catch (error) {
       dispatch(
         addToast({

@@ -12,7 +12,6 @@ import { calculateTotalAmount } from "../../utils/calculateTotalAmount";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../app/store";
 import { addToast } from "../../app/slices/toastSlice";
-import OptionModal from "../../components/UI/OptionModal";
 
 interface FormField {
   label: string;
@@ -30,16 +29,21 @@ const StandardForm = () => {
   const tabId = searchParams.get("tab");
   const {
     data,
-    isLoading: fetchLoading,
-    isError,
-    refetch,
+    // isLoading: fetchLoading,
+    // isError,
+    // refetch,
   } = useGetStandardByIdQuery(
     { id: id || "" },
     { skip: !id || tabId !== "standard" }
   );
-  const [addStandard, { isLoading: addLoading }] = useAddStandardMutation();
-  const [UpdateStandard, { isLoading: updateLoading }] =
-    useUpdateStandardMutation();
+  const [
+    addStandard,
+    // { isLoading: addLoading }
+  ] = useAddStandardMutation();
+  const [
+    UpdateStandard,
+    // { isLoading: updateLoading }
+  ] = useUpdateStandardMutation();
 
   const [standardForm, setStandardForm] = useState<StandardFormData>({
     productName: "",
@@ -113,19 +117,17 @@ const StandardForm = () => {
     }
   }, [id, data]);
 
-  console.log("Edit Data: ", standardForm);
-
   const handleAddStandard = async () => {
     const newErrors: Record<string, string> = {};
 
     for (const key of Object.keys(standardForm) as (keyof StandardFormData)[]) {
-      if (!standardForm[key].trim()) {
+      const value = String(standardForm[key]);
+      if (!value.trim()) {
         newErrors[key] = `${key} is required**`;
       }
     }
 
     if (Object.keys(newErrors).length > 0) {
-      console.log("New Errors: ", newErrors);
       setErrors(newErrors);
       return;
     }
@@ -149,8 +151,9 @@ const StandardForm = () => {
         dispatch(
           addToast({ message: "Product Updated Successfully", type: "success" })
         );
+        return updateData;
       } else {
-        const AddData = await addStandard({
+        const addData = await addStandard({
           date: "2025-05-14",
           productName: `${standardForm.productName}`,
           ratePerQuantity: `${standardForm.ratePerQuantity}`,
@@ -167,18 +170,19 @@ const StandardForm = () => {
         dispatch(
           addToast({ message: "Product Added Successfully", type: "success" })
         );
+        setStandardForm({
+          productName: "",
+          ratePerQuantity: "",
+          grade: "",
+          size: "",
+          thickness: "",
+          minimumCost: "",
+          gst: "",
+          remark: "",
+          totalAmount: "",
+        });
+        return addData;
       }
-      setStandardForm({
-        productName: "",
-        ratePerQuantity: "",
-        grade: "",
-        size: "",
-        thickness: "",
-        minimumCost: "",
-        gst: "",
-        remark: "",
-        totalAmount: "",
-      });
     } catch (error) {
       dispatch(
         addToast({

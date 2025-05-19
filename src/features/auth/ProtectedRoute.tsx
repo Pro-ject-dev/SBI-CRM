@@ -1,6 +1,4 @@
 import type { JSX } from "react";
-import { useSelector } from "react-redux";
-import type { RootState } from "../../app/store";
 import { Navigate } from "react-router-dom";
 
 interface ProtectedRouteProps {
@@ -10,8 +8,6 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const role = localStorage.getItem("role");
-
-  console.log("User: ", role);
 
   if (!role) {
     return <Navigate to="/login" replace />;
