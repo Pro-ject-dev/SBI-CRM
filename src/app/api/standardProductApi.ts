@@ -15,10 +15,10 @@ export const standardProductApi = createApi({
   tagTypes: ["Standard"],
   endpoints: (builder) => ({
     getStandard: builder.query({
-      query: ({ isStandard }: { isStandard: string }) => {
-        return `${localStorage.getItem(
-          "api_endpoint"
-        )}/getProduct?isStandard=${isStandard}`;
+      query: ({ isStandard }: { isStandard?: string }) => {
+        return `${localStorage.getItem("api_endpoint")}/getProduct${
+          isStandard ? `?isStandard=${isStandard}` : ""
+        }`;
       },
       providesTags: ["Standard"],
     }),

@@ -4,6 +4,7 @@ import { Outlet } from "react-router-dom";
 import { Box } from "@mui/material";
 import RoleBasedSidebar from "../components/Layout/RoleBasedSideBar";
 import Header from "../components/Layout/Header";
+import CustomToast from "../components/UI/CustomToast";
 
 const AdminLayout: React.FC = () => {
   // const theme = useTheme();
@@ -14,7 +15,7 @@ const AdminLayout: React.FC = () => {
 
       <Box flex={1} display="flex" flexDirection="column">
         <Header />
-
+        <CustomToast />
         <Box p={2}>
           <Outlet />
         </Box>

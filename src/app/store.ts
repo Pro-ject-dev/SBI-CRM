@@ -1,5 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./slices/authSlice";
+import toastReducer from "./slices/toastSlice";
 import { standardProductApi } from "./api/standardProductApi";
 import { customizedProductApi } from "./api/customizedProductApi";
 import { addonsProductApi } from "./api/addonsProductApi";
@@ -10,6 +11,7 @@ import { combosMappingApi } from "./api/combosMappingApi";
 export const store = configureStore({
   reducer: {
     auth: authReducer,
+    toast: toastReducer,
     [standardProductApi.reducerPath]: standardProductApi.reducer,
     [customizedProductApi.reducerPath]: customizedProductApi.reducer,
     [addonsProductApi.reducerPath]: addonsProductApi.reducer,
