@@ -14,7 +14,10 @@ interface FormField {
 }
 const TermsForm = () => {
   const dispatch: AppDispatch = useDispatch();
-  const [addTerms, isLoading] = useAddTermsMutation();
+  const [
+    addTerms,
+    // isLoading
+  ] = useAddTermsMutation();
   const [termsForm, setTermsForm] = useState<TermsFormData>({
     title: "",
     description: "",
@@ -47,7 +50,6 @@ const TermsForm = () => {
     }
 
     if (Object.keys(newErrors).length > 0) {
-      console.log("New Errors: ", newErrors);
       setErrors(newErrors);
       return;
     }
@@ -66,6 +68,7 @@ const TermsForm = () => {
         title: "",
         description: "",
       });
+      return data;
     } catch (error) {
       dispatch(
         addToast({

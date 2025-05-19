@@ -38,7 +38,7 @@ const CustomTabs = ({
           p: 0.5,
         }}
       >
-        {tabItems.map((tab, index) => (
+        {tabItems.map((tab) => (
           <Button
             key={tab.id}
             onClick={() => handleTabChange(tab.id)}

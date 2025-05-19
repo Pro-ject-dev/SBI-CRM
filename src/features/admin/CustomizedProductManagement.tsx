@@ -6,15 +6,25 @@ import { DataTable } from "../../components/UI/DataTable";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useDeleteCustomizedMutation } from "../../app/api/customizedProductApi";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "../../app/store";
+import { addToast } from "../../app/slices/toastSlice";
 
 const CustomizedProductManagement = () => {
+  const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
-  const { data, isLoading, isError, refetch } = useGetStandardQuery({
+  const {
+    data,
+    // isLoading, isError,
+    refetch,
+  } = useGetStandardQuery({
     isStandard: "0",
   });
 
-  const [deleteCustomized, { isLoading: deleteLoading }] =
-    useDeleteCustomizedMutation();
+  const [
+    deleteCustomized,
+    // { isLoading: deleteLoading }
+  ] = useDeleteCustomizedMutation();
 
   const [productData, setProductData] = useState<
     StandardCustomizedResponse[] | []
@@ -33,10 +43,18 @@ const CustomizedProductManagement = () => {
     try {
       if (id) {
         const deleteData = await deleteCustomized({ id });
-        console.log("Data Deleted: ", deleteData);
+        dispatch(
+          addToast({ message: "Product Deleted Successfully", type: "success" })
+        );
+        return deleteData;
       }
     } catch (error) {
-      console.log(`Deleting Data: ${error}`);
+      dispatch(
+        addToast({
+          message: "Failed to Deleting Product!",
+          type: "error",
+        })
+      );
     }
   };
 

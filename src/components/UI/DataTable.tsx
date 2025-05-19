@@ -2,7 +2,7 @@ import { TableCell } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { DataGrid } from "@mui/x-data-grid";
 
-export const Cell = styled(TableCell)(({ theme }) => ({
+export const Cell = styled(TableCell)(({}) => ({
   fontSize: "0.8rem",
   borderBottomColor: "gray",
   textAlign: "left",

@@ -29,17 +29,32 @@ interface FormField {
 
 const CombosMappingForm = () => {
   const dispatch: AppDispatch = useDispatch();
-  const { data: comboData, isLoading: comboLoading } = useGetComboQuery("");
-  const { data: categoryData, isLoading: categoryLoading } =
-    useGetCategoryQuery("");
-  const [addCombosMap, { isLoading: combosMapLoading }] =
-    useAddComboMapMutation();
-  const { data: productData, isLoading: productLoading } = useGetStandardQuery({
+  const {
+    data: comboData,
+    // isLoading: comboLoading
+  } = useGetComboQuery("");
+  const {
+    data: categoryData,
+    // isLoading: categoryLoading
+  } = useGetCategoryQuery("");
+  const [
+    addCombosMap,
+    // { isLoading: combosMapLoading }
+  ] = useAddComboMapMutation();
+  const {
+    data: productData,
+    // isLoading: productLoading
+  } = useGetStandardQuery({
     isStandard: undefined,
   });
-  const [addCombo, { isLoading: addComboLoading }] = useAddComboMutation();
-  const [addCategory, { isLoading: addCategoryLoading }] =
-    useAddCategoryMutation();
+  const [
+    addCombo,
+    // { isLoading: addComboLoading }
+  ] = useAddComboMutation();
+  const [
+    addCategory,
+    // { isLoading: addCategoryLoading }
+  ] = useAddCategoryMutation();
 
   const [comboOptions, setComboOptions] = useState<Option[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<Option[]>([]);
@@ -80,6 +95,7 @@ const CombosMappingForm = () => {
         dispatch(
           addToast({ message: "New Combo Added Successfully", type: "success" })
         );
+        console.log(data);
       } catch (error) {
         dispatch(
           addToast({
@@ -96,6 +112,7 @@ const CombosMappingForm = () => {
         dispatch(
           addToast({ message: "New Combo Added Successfully", type: "success" })
         );
+        console.log(data);
       }
     } catch (error) {
       dispatch(
@@ -128,7 +145,6 @@ const CombosMappingForm = () => {
     }
 
     if (Object.keys(newErrors).length > 0) {
-      console.log("New Errors: ", newErrors);
       setErrors(newErrors);
       return;
     }
@@ -151,6 +167,7 @@ const CombosMappingForm = () => {
           type: "success",
         })
       );
+      return data;
     } catch (error) {
       dispatch(
         addToast({

@@ -8,8 +8,6 @@ import {
 } from "../../app/api/customizedProductApi";
 import { InputBox } from "../../components/UI/InputBox";
 import { useSearchParams } from "react-router-dom";
-import CustomToast from "../../components/UI/CustomToast";
-import toast from "react-hot-toast";
 import { calculateTotalAmount } from "../../utils/calculateTotalAmount";
 import type { AppDispatch } from "../../app/store";
 import { useDispatch } from "react-redux";
@@ -32,16 +30,21 @@ const CustomizedForm = () => {
 
   const {
     data,
-    isLoading: fetchLoading,
-    isError,
-    refetch,
+    // isLoading: fetchLoading,
+    // isError,
+    // refetch,
   } = useGetCustomizedByIdQuery(
     { id: id || "" },
     { skip: !id || tabId !== "customized" }
   );
-  const [addCustomized, { isLoading: addLoading }] = useAddCustomizedMutation();
-  const [updateCustomized, { isLoading: updateLoading }] =
-    useUpdateCustomizedMutation();
+  const [
+    addCustomized,
+    // { isLoading: addLoading }
+  ] = useAddCustomizedMutation();
+  const [
+    updateCustomized,
+    // { isLoading: updateLoading }
+  ] = useUpdateCustomizedMutation();
 
   const [customizedForm, setCustomizedForm] = useState<CustomizedFormData>({
     productName: "",
@@ -129,7 +132,6 @@ const CustomizedForm = () => {
     }
 
     if (Object.keys(newErrors).length > 0) {
-      console.log("New Errors: ", newErrors);
       setErrors(newErrors);
       return;
     }
@@ -154,6 +156,7 @@ const CustomizedForm = () => {
         dispatch(
           addToast({ message: "Product Updated Successfully", type: "success" })
         );
+        return updateData;
       } else {
         const addData = await addCustomized({
           date: "2025-05-14",
@@ -173,21 +176,21 @@ const CustomizedForm = () => {
         dispatch(
           addToast({ message: "Product Added Successfully", type: "success" })
         );
+        setCustomizedForm({
+          productName: "",
+          ratePerKg: "",
+          weight: "",
+          grade: "",
+          length: "",
+          width: "",
+          thickness: "",
+          minLimit: "",
+          gst: "",
+          remark: "",
+          totalAmount: "",
+        });
+        return addData;
       }
-
-      setCustomizedForm({
-        productName: "",
-        ratePerKg: "",
-        weight: "",
-        grade: "",
-        length: "",
-        width: "",
-        thickness: "",
-        minLimit: "",
-        gst: "",
-        remark: "",
-        totalAmount: "",
-      });
     } catch (error) {
       dispatch(
         addToast({

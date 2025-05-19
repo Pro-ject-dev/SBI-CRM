@@ -42,8 +42,6 @@ const LoginPage = () => {
     } else {
       throw new Error("Invalid role from server");
     }
-
-    console.log("Login attempt:", { email, password, rememberMe });
   };
 
   const fakeLoginAPI = async (
