@@ -119,7 +119,7 @@ const StandardForm = () => {
           gst: `${standardForm.gst}`,
           totalAmount: `${standardForm.totalAmount}`,
           remark: `${standardForm.remark}`,
-          isstandard: "1",
+          isStandard: "1",
         });
         toast.custom(
           <CustomToast message="Product Updated Successfully" toast="success" />
@@ -137,7 +137,7 @@ const StandardForm = () => {
           gst: `${standardForm.gst}`,
           totalAmount: `${standardForm.totalAmount}`,
           remark: `${standardForm.remark}`,
-          isstandard: "1",
+          isStandard: "1",
         });
         toast.custom(
           <CustomToast message="Product Added Successfully" toast="success" />

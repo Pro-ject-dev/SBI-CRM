@@ -72,7 +72,7 @@ interface AddonsResponse {
   gst: string;
   remark: string;
   totalAmount: string;
-  minSqIn: string;
+  maxSqIn: string;
   status: string;
   createdAt: string;
   updatedAt: string;

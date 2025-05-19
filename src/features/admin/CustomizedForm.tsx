@@ -123,7 +123,7 @@ const CustomizedForm = () => {
           gst: `${customizedForm.gst}`,
           totalAmount: `${customizedForm.totalAmount}`,
           remark: `${customizedForm.remark}`,
-          isstandard: "0",
+          isStandard: "0",
         });
         toast.custom(
           <CustomToast message="Product Updated Successfully" toast="success" />

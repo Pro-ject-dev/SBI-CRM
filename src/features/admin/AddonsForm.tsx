@@ -83,7 +83,7 @@ const AddonsForm = () => {
         width: data?.data?.width,
         weight: data?.data?.weightOfObject,
         thickness: data?.data?.thickness,
-        minLimit: data?.data?.minSqIn,
+        minLimit: data?.data?.maxSqIn,
         gst: data?.data?.gst,
         remark: data?.data?.remark,
         totalAmount: data?.data?.totalAmount,
@@ -133,7 +133,7 @@ const AddonsForm = () => {
           length: `${addonsForm.length}`,
           width: `${addonsForm.width}`,
           thickness: `${addonsForm.thickness}`,
-          minSqIn: `${addonsForm.minLimit}`,
+          maxSqIn: `${addonsForm.minLimit}`,
           gst: `${addonsForm.gst}`,
           totalAmount: `${addonsForm.totalAmount}`,
           remark: `${addonsForm.remark}`,
@@ -143,19 +143,19 @@ const AddonsForm = () => {
         );
       }
 
-      setAddonsForm({
-        productName: "",
-        ratePerKg: "",
-        weight: "",
-        grade: "",
-        length: "",
-        width: "",
-        thickness: "",
-        minLimit: "",
-        gst: "",
-        remark: "",
-        totalAmount: "",
-      });
+      // setAddonsForm({
+      //   productName: "",
+      //   ratePerKg: "",
+      //   weight: "",
+      //   grade: "",
+      //   length: "",
+      //   width: "",
+      //   thickness: "",
+      //   minLimit: "",
+      //   gst: "",
+      //   remark: "",
+      //   totalAmount: "",
+      // });
     } catch (error) {
       toast.custom(<CustomToast message="Error Updating Data" toast="Error" />);
     }
