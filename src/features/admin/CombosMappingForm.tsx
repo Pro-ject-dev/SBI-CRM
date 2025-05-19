@@ -1,12 +1,20 @@
 import { useEffect, useState } from "react";
 import {
+  useAddCategoryMutation,
   useAddComboMapMutation,
+  useAddComboMutation,
   useGetCategoryQuery,
   useGetComboQuery,
 } from "../../app/api/combosMappingApi";
 import { Box, Button, Container, Grid, Paper, Typography } from "@mui/material";
 import { SelectBox } from "../../components/UI/SelectBox";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import { useGetStandardQuery } from "../../app/api/standardProductApi";
+import OptionModal from "../../components/UI/OptionModal";
+import AddIcon from "@mui/icons-material/Add";
+import type { AppDispatch } from "../../app/store";
+import { useDispatch } from "react-redux";
+import { addToast } from "../../app/slices/toastSlice";
 
 interface Option {
   label: string;
@@ -20,18 +28,22 @@ interface FormField {
 }
 
 const CombosMappingForm = () => {
+  const dispatch: AppDispatch = useDispatch();
   const { data: comboData, isLoading: comboLoading } = useGetComboQuery("");
   const { data: categoryData, isLoading: categoryLoading } =
     useGetCategoryQuery("");
   const [addCombosMap, { isLoading: combosMapLoading }] =
     useAddComboMapMutation();
+  const { data: productData, isLoading: productLoading } = useGetStandardQuery({
+    isStandard: undefined,
+  });
+  const [addCombo, { isLoading: addComboLoading }] = useAddComboMutation();
+  const [addCategory, { isLoading: addCategoryLoading }] =
+    useAddCategoryMutation();
 
   const [comboOptions, setComboOptions] = useState<Option[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<Option[]>([]);
-  const [productOptions, setProductOptions] = useState<Option[]>([
-    { label: "product 1", value: "1" },
-    { label: "product 2", value: "2" },
-  ]);
+  const [productOptions, setProductOptions] = useState<Option[]>([]);
 
   const [combosForm, setCombosForm] = useState<CombosMappingFormData>({
     combo: "",
@@ -47,9 +59,57 @@ const CombosMappingForm = () => {
     { label: "Select Product", key: "product", type: "select" },
   ];
 
+  const [modalOpen, setModalOpen] = useState<Record<string, boolean>>({
+    combo: false,
+    category: false,
+  });
+  const modalInput = {
+    combo: [{ key: "combo", label: "Enter Combo name", type: "text" }],
+    category: [{ key: "category", label: "Enter Category name", type: "text" }],
+  };
+  const [modalData, setModalData] = useState({
+    combo: { name: "" },
+    category: { name: "" },
+  });
+
+  useEffect(() => {
+    if (modalData.combo.name) {
+      try {
+        const data = addCombo(modalData.combo);
+        setModalData((prev) => ({ ...prev, combo: { name: "" } }));
+        dispatch(
+          addToast({ message: "New Combo Added Successfully", type: "success" })
+        );
+      } catch (error) {
+        dispatch(
+          addToast({
+            message: "Failed to Adding New Combo!",
+            type: "error",
+          })
+        );
+      }
+    }
+    try {
+      if (modalData.category.name) {
+        const data = addCategory(modalData.category);
+        setModalData((prev) => ({ ...prev, category: { name: "" } }));
+        dispatch(
+          addToast({ message: "New Combo Added Successfully", type: "success" })
+        );
+      }
+    } catch (error) {
+      dispatch(
+        addToast({
+          message: "Failed to Adding New Category!",
+          type: "error",
+        })
+      );
+    }
+  }, [modalData]);
+
   const handleCombosChange = (key: string, value: string) => {
     setCombosForm((prev) => ({ ...prev, [key]: value }));
-    if (value.trim()) {
+    if (value) {
       const removeError = Object.fromEntries(
         Object.entries(errors).filter(([objKey]) => objKey !== key)
       );
@@ -62,7 +122,7 @@ const CombosMappingForm = () => {
     for (const key of Object.keys(
       combosForm
     ) as (keyof CombosMappingFormData)[]) {
-      if (!combosForm[key].trim()) {
+      if (!combosForm[key]) {
         newErrors[key] = `${key} is required**`;
       }
     }
@@ -80,9 +140,24 @@ const CombosMappingForm = () => {
         comboId: Number(combosForm?.combo),
         productId: Number(combosForm?.product),
       });
-      console.log("Combos Mapping: ", data);
+      setCombosForm({
+        combo: "",
+        category: "",
+        product: "",
+      });
+      dispatch(
+        addToast({
+          message: "Combo Mapping Added Successfully",
+          type: "success",
+        })
+      );
     } catch (error) {
-      console.error("Error adding Combos: ", error);
+      dispatch(
+        addToast({
+          message: "Failed to Adding Combo Mapping!",
+          type: "error",
+        })
+      );
     }
   };
 
@@ -105,7 +180,16 @@ const CombosMappingForm = () => {
         }));
       setCategoryOptions(filteredData);
     }
-  }, [comboData, categoryData]);
+    if (productData?.data) {
+      const filteredData: Option[] = productData.data
+        .filter((obj: any) => obj.id && obj.productName)
+        .map((obj: any) => ({
+          label: String(obj.productName),
+          value: obj.id,
+        }));
+      setProductOptions(filteredData);
+    }
+  }, [comboData, categoryData, productData]);
 
   const renderField = (field: FormField) => (
     <Grid container spacing={2} key={field.key}>
@@ -154,6 +238,33 @@ const CombosMappingForm = () => {
           Combo Mapping
         </Typography>
       </Box>
+      <Button
+        variant="contained"
+        color="primary"
+        startIcon={<AddIcon />}
+        sx={{ py: 1.2, px: 3 }}
+        onClick={() => setModalOpen((prev) => ({ ...prev, combo: true }))}
+      >
+        New Combo
+      </Button>
+      <Button
+        variant="contained"
+        color="primary"
+        startIcon={<AddIcon />}
+        sx={{ py: 1.2, px: 3, ml: 2 }}
+        onClick={() => setModalOpen((prev) => ({ ...prev, category: true }))}
+      >
+        New Category
+      </Button>
+
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          gap: 2,
+          mt: 3,
+        }}
+      ></Box>
 
       <Paper
         elevation={1}
@@ -189,6 +300,29 @@ const CombosMappingForm = () => {
           Cancel
         </Button>
       </Box>
+      <OptionModal
+        open={modalOpen.combo}
+        detail="Add New Combo Option"
+        fields={modalInput.combo}
+        handleClose={() => setModalOpen((prev) => ({ ...prev, combo: false }))}
+        onSubmit={(data) => {
+          setModalData((prev) => ({ ...prev, combo: { name: data.combo } }));
+        }}
+      />
+      <OptionModal
+        open={modalOpen.category}
+        detail="Add New Category Option"
+        fields={modalInput.category}
+        handleClose={() =>
+          setModalOpen((prev) => ({ ...prev, category: false }))
+        }
+        onSubmit={(data) => {
+          setModalData((prev) => ({
+            ...prev,
+            category: { name: data.category },
+          }));
+        }}
+      />
     </Container>
   );
 };

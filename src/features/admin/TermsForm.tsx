@@ -3,6 +3,9 @@ import { useAddTermsMutation } from "../../app/api/termsApi";
 import { Box, Button, Container, Grid, Paper, Typography } from "@mui/material";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { InputBox } from "../../components/UI/InputBox";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "../../app/store";
+import { addToast } from "../../app/slices/toastSlice";
 
 interface FormField {
   label: string;
@@ -10,6 +13,7 @@ interface FormField {
   type: string;
 }
 const TermsForm = () => {
+  const dispatch: AppDispatch = useDispatch();
   const [addTerms, isLoading] = useAddTermsMutation();
   const [termsForm, setTermsForm] = useState<TermsFormData>({
     title: "",
@@ -53,14 +57,21 @@ const TermsForm = () => {
         description: `${termsForm.description}`,
       });
 
-      console.log("Api Data: ", data);
+      dispatch(
+        addToast({ message: "Terms Added Successfully", type: "success" })
+      );
 
       setTermsForm({
         title: "",
         description: "",
       });
     } catch (error) {
-      console.error("Error adding Terms:", error);
+      dispatch(
+        addToast({
+          message: "Failed to Adding Terms!",
+          type: "error",
+        })
+      );
     }
   };
 

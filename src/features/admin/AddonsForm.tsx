@@ -10,6 +10,10 @@ import { InputBox } from "../../components/UI/InputBox";
 import { useSearchParams } from "react-router-dom";
 import CustomToast from "../../components/UI/CustomToast";
 import toast from "react-hot-toast";
+import { calculateTotalAmount } from "../../utils/calculateTotalAmount";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "../../app/store";
+import { addToast } from "../../app/slices/toastSlice";
 
 interface FormField {
   label: string;
@@ -17,18 +21,24 @@ interface FormField {
   type: string;
   min?: number;
   max?: number;
+  readonly?: boolean;
 }
 
 const AddonsForm = () => {
+  const dispatch: AppDispatch = useDispatch();
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
+  const tabId = searchParams.get("tab");
 
   const {
     data,
     isLoading: fetchLoading,
     isError,
     refetch,
-  } = useGetAddonsByIdQuery({ id: id || "" }, { skip: !id });
+  } = useGetAddonsByIdQuery(
+    { id: id || "" },
+    { skip: !id || tabId !== "addons" }
+  );
   const [addAddons, { isLoading: addLoading }] = useAddAddonsMutation();
   const [updateAddons, { isLoading: updateLoading }] =
     useUpdateAddonsMutation();
@@ -60,7 +70,13 @@ const AddonsForm = () => {
     { label: "GST", key: "gst", type: "number", min: 0, max: 100 },
     { label: "Remark", key: "remark", type: "text" },
     { label: "Min Limit / sq.in", key: "minLimit", type: "number", min: 0 },
-    { label: "Total Amount", key: "totalAmount", type: "number", min: 0 },
+    {
+      label: "Total Amount",
+      key: "totalAmount",
+      type: "number",
+      min: 0,
+      readonly: true,
+    },
   ];
 
   const handleAddonsChange = (key: string, value: string) => {
@@ -72,6 +88,15 @@ const AddonsForm = () => {
       setErrors(removeError);
     }
   };
+
+  useEffect(() => {
+    const totalAmount = calculateTotalAmount(
+      addonsForm.gst,
+      addonsForm.ratePerKg
+    );
+    const key: string = "totalAmount";
+    setAddonsForm((prev) => ({ ...prev, [key]: totalAmount }));
+  }, [addonsForm.gst, addonsForm.ratePerKg]);
 
   useEffect(() => {
     if (id && data) {
@@ -121,8 +146,8 @@ const AddonsForm = () => {
           totalAmount: `${addonsForm.totalAmount}`,
           remark: `${addonsForm.remark}`,
         });
-        toast.custom(
-          <CustomToast message="Product Updated Successfully" toast="success" />
+        dispatch(
+          addToast({ message: "Product Updated Successfully", type: "success" })
         );
       } else {
         const data = await addAddons({
@@ -132,14 +157,15 @@ const AddonsForm = () => {
           grade: `${addonsForm.grade}`,
           length: `${addonsForm.length}`,
           width: `${addonsForm.width}`,
+          weightOfObject: `${addonsForm.weight}`,
           thickness: `${addonsForm.thickness}`,
           maxSqIn: `${addonsForm.minLimit}`,
           gst: `${addonsForm.gst}`,
           totalAmount: `${addonsForm.totalAmount}`,
           remark: `${addonsForm.remark}`,
         });
-        toast.custom(
-          <CustomToast message="Product Added Successfully" toast="success" />
+        dispatch(
+          addToast({ message: "Product Added Successfully", type: "success" })
         );
       }
 
@@ -157,7 +183,12 @@ const AddonsForm = () => {
       //   totalAmount: "",
       // });
     } catch (error) {
-      toast.custom(<CustomToast message="Error Updating Data" toast="Error" />);
+      dispatch(
+        addToast({
+          message: "Failed to Adding Product!",
+          type: "error",
+        })
+      );
     }
   };
 
@@ -201,6 +232,7 @@ const AddonsForm = () => {
               },
             }}
             error={errors[field.key]}
+            readonly={field.readonly}
           />
         )}
       </Box>

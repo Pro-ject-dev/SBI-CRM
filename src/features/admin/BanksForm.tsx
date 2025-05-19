@@ -4,6 +4,9 @@ import { InputBox } from "../../components/UI/InputBox";
 import { SelectBox } from "../../components/UI/SelectBox";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { useAddBanksMutation } from "../../app/api/banksApi";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "../../app/store";
+import { addToast } from "../../app/slices/toastSlice";
 
 interface FormField {
   label: string;
@@ -14,6 +17,7 @@ interface FormField {
 }
 
 const BanksForm = () => {
+  const dispatch: AppDispatch = useDispatch();
   const [addBanks, isLoading] = useAddBanksMutation();
   const accountTypeOptions = [
     { label: "Savings Account", value: "savings account" },
@@ -76,9 +80,16 @@ const BanksForm = () => {
         micrCode: `${banksForm.micrCode}`,
       });
 
-      console.log("Api Data: ");
+      dispatch(
+        addToast({ message: "Banks Added Successfully", type: "success" })
+      );
     } catch (error) {
-      console.error("Error adding Banks:", error);
+      dispatch(
+        addToast({
+          message: "Failed to Adding Banks!",
+          type: "error",
+        })
+      );
     }
   };
 

@@ -8,8 +8,11 @@ import {
 } from "../../app/api/standardProductApi";
 import { InputBox } from "../../components/UI/InputBox";
 import { useSearchParams } from "react-router-dom";
-import CustomToast from "../../components/UI/CustomToast";
-import toast from "react-hot-toast";
+import { calculateTotalAmount } from "../../utils/calculateTotalAmount";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "../../app/store";
+import { addToast } from "../../app/slices/toastSlice";
+import OptionModal from "../../components/UI/OptionModal";
 
 interface FormField {
   label: string;
@@ -17,17 +20,23 @@ interface FormField {
   type: string;
   min?: number;
   max?: number;
+  readonly?: boolean;
 }
 
 const StandardForm = () => {
+  const dispatch: AppDispatch = useDispatch();
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
+  const tabId = searchParams.get("tab");
   const {
     data,
     isLoading: fetchLoading,
     isError,
     refetch,
-  } = useGetStandardByIdQuery({ id: id || "" }, { skip: !id });
+  } = useGetStandardByIdQuery(
+    { id: id || "" },
+    { skip: !id || tabId !== "standard" }
+  );
   const [addStandard, { isLoading: addLoading }] = useAddStandardMutation();
   const [UpdateStandard, { isLoading: updateLoading }] =
     useUpdateStandardMutation();
@@ -59,11 +68,18 @@ const StandardForm = () => {
     { label: "Minimum Cost", key: "minimumCost", type: "number", min: 0 },
     { label: "GST", key: "gst", type: "number", min: 0, max: 100 },
     { label: "Remark", key: "remark", type: "text" },
-    { label: "Total Amount", key: "totalAmount", type: "number", min: 0 },
+    {
+      label: "Total Amount",
+      key: "totalAmount",
+      type: "number",
+      min: 0,
+      readonly: true,
+    },
   ];
 
   const handleStandardChange = (key: string, value: string) => {
     setStandardForm((prev) => ({ ...prev, [key]: value }));
+
     if (value.trim()) {
       const removeError = Object.fromEntries(
         Object.entries(errors).filter(([objKey]) => objKey !== key)
@@ -71,6 +87,15 @@ const StandardForm = () => {
       setErrors(removeError);
     }
   };
+
+  useEffect(() => {
+    const totalAmount = calculateTotalAmount(
+      standardForm.gst,
+      standardForm.ratePerQuantity
+    );
+    const key: string = "totalAmount";
+    setStandardForm((prev) => ({ ...prev, [key]: totalAmount }));
+  }, [standardForm.gst, standardForm.ratePerQuantity]);
 
   useEffect(() => {
     if (id && data) {
@@ -121,8 +146,8 @@ const StandardForm = () => {
           remark: `${standardForm.remark}`,
           isStandard: "1",
         });
-        toast.custom(
-          <CustomToast message="Product Updated Successfully" toast="success" />
+        dispatch(
+          addToast({ message: "Product Updated Successfully", type: "success" })
         );
       } else {
         const AddData = await addStandard({
@@ -139,8 +164,8 @@ const StandardForm = () => {
           remark: `${standardForm.remark}`,
           isStandard: "1",
         });
-        toast.custom(
-          <CustomToast message="Product Added Successfully" toast="success" />
+        dispatch(
+          addToast({ message: "Product Added Successfully", type: "success" })
         );
       }
       setStandardForm({
@@ -155,7 +180,12 @@ const StandardForm = () => {
         totalAmount: "",
       });
     } catch (error) {
-      toast.custom(<CustomToast message="Error Updating Data" toast="Error" />);
+      dispatch(
+        addToast({
+          message: "Failed to Adding Product!",
+          type: "error",
+        })
+      );
     }
   };
 
@@ -199,6 +229,7 @@ const StandardForm = () => {
               },
             }}
             error={errors[field.key]}
+            readonly={field.readonly}
           />
         )}
       </Box>
