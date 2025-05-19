@@ -58,7 +58,8 @@ const BanksForm = () => {
   const handleAddBanks = async () => {
     const newErrors: Record<string, string> = {};
     for (const key of Object.keys(banksForm) as (keyof BanksFormData)[]) {
-      if (!banksForm[key].trim()) {
+      const value = String(banksForm[key]);
+      if (!value.trim()) {
         newErrors[key] = `${key} is required**`;
       }
     }

@@ -40,7 +40,8 @@ const TermsForm = () => {
   const handleAddTerms = async () => {
     const newErrors: Record<string, string> = {};
     for (const key of Object.keys(termsForm) as (keyof TermsFormData)[]) {
-      if (!termsForm[key].trim()) {
+      const value = String(termsForm[key]);
+      if (!value.trim()) {
         newErrors[key] = `${key} is required**`;
       }
     }

@@ -12,7 +12,6 @@ import { calculateTotalAmount } from "../../utils/calculateTotalAmount";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../app/store";
 import { addToast } from "../../app/slices/toastSlice";
-import OptionModal from "../../components/UI/OptionModal";
 
 interface FormField {
   label: string;
@@ -119,7 +118,8 @@ const StandardForm = () => {
     const newErrors: Record<string, string> = {};
 
     for (const key of Object.keys(standardForm) as (keyof StandardFormData)[]) {
-      if (!standardForm[key].trim()) {
+      const value = String(standardForm[key]);
+      if (!value.trim()) {
         newErrors[key] = `${key} is required**`;
       }
     }

@@ -94,7 +94,7 @@ const AddonsProductManagement = () => {
     },
 
     {
-      field: "minSqIn",
+      field: "maxSqIn",
       headerName: "Min Limit / sq.in",
       flex: 1,
       headerAlign: "center",

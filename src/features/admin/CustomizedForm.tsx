@@ -122,7 +122,8 @@ const CustomizedForm = () => {
     for (const key of Object.keys(
       customizedForm
     ) as (keyof CustomizedFormData)[]) {
-      if (!customizedForm[key].trim()) {
+      const value = String(customizedForm[key]);
+      if (!value.trim()) {
         newErrors[key] = `${key} is required**`;
       }
     }

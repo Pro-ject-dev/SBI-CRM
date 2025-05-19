@@ -8,8 +8,6 @@ import {
 } from "../../app/api/addonsProductApi";
 import { InputBox } from "../../components/UI/InputBox";
 import { useSearchParams } from "react-router-dom";
-import CustomToast from "../../components/UI/CustomToast";
-import toast from "react-hot-toast";
 import { calculateTotalAmount } from "../../utils/calculateTotalAmount";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../app/store";
@@ -108,7 +106,7 @@ const AddonsForm = () => {
         width: data?.data?.width,
         weight: data?.data?.weightOfObject,
         thickness: data?.data?.thickness,
-        minLimit: data?.data?.minSqIn,
+        minLimit: data?.data?.maxSqIn,
         gst: data?.data?.gst,
         remark: data?.data?.remark,
         totalAmount: data?.data?.totalAmount,
@@ -119,7 +117,8 @@ const AddonsForm = () => {
   const handleAddAddons = async () => {
     const newErrors: Record<string, string> = {};
     for (const key of Object.keys(addonsForm) as (keyof AddonsFormData)[]) {
-      if (!addonsForm[key].trim()) {
+      const value = String(addonsForm[key]);
+      if (!value.trim()) {
         newErrors[key] = `${key} is required**`;
       }
     }
@@ -159,7 +158,7 @@ const AddonsForm = () => {
           width: `${addonsForm.width}`,
           weightOfObject: `${addonsForm.weight}`,
           thickness: `${addonsForm.thickness}`,
-          minSqIn: `${addonsForm.minLimit}`,
+          maxSqIn: `${addonsForm.minLimit}`,
           gst: `${addonsForm.gst}`,
           totalAmount: `${addonsForm.totalAmount}`,
           remark: `${addonsForm.remark}`,
