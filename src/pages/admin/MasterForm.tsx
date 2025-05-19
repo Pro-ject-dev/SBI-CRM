@@ -18,8 +18,8 @@ const MasterForm = () => {
     );
 
   const handleTabChange = (id: string) => {
-    setActiveTab(id);
     navigate(location.pathname, { replace: true });
+    setActiveTab(id);
   };
 
   useEffect(() => {
