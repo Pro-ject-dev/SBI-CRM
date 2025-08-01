@@ -4,6 +4,7 @@ import {
   Inventory as InventoryIcon,
 } from "@mui/icons-material";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import WarehouseIcon from "@mui/icons-material/Warehouse";
 import type { SideBar } from "../../types/sideBar";
 
 export const adminMenuItems: SideBar[] = [
@@ -30,5 +31,11 @@ export const adminMenuItems: SideBar[] = [
     label: "Pdf Generation",
     icon: PictureAsPdfIcon,
     path: "/admin/pdf-generation",
+  },
+  {
+    id: "warehouse",
+    label: "Warehouse",
+    icon: WarehouseIcon,
+    path: "/admin/warehouse",
   },
 ];

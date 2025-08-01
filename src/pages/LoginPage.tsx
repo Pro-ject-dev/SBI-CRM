@@ -17,7 +17,7 @@ const LoginPage = () => {
 
     const response = await fakeLoginAPI(email, password);
 
-    const allowedRoles = ["admin", "sales_manager"] as const;
+    const allowedRoles = ["admin", "sales_manager", "warehouse_manager"] as const;
 
     const { userName, role, idToken, refreshToken } = response;
 
@@ -38,6 +38,8 @@ const LoginPage = () => {
         navigate("/admin/dashboard");
       } else if (role === "sales_manager") {
         navigate("/sales/dashboard");
+      } else if (role === "warehouse_manager") {
+        navigate("/warehouse/dashboard");
       }
     } else {
       throw new Error("Invalid role from server");
@@ -53,7 +55,11 @@ const LoginPage = () => {
         () =>
           resolve({
             userName: "user_name",
-            role: email === "admin@test.com" ? "admin" : "sales_manager",
+            role: email === "admin@test.com" 
+              ? "admin" 
+              : email === "warehouse@test.com" 
+              ? "warehouse_manager" 
+              : "sales_manager",
             idToken: "fake-token-123",
             refreshToken: password,
           }),

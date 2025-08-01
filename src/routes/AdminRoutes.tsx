@@ -5,6 +5,7 @@ import AdminLayout from "../layouts/AdminLayout";
 import MasterForm from "../pages/admin/MasterForm";
 import ProductManagement from "../pages/admin/ProductManagement";
 import EstimationPdfGeneration from "../pages/admin/EstimationPdfGeneration";
+import WarehouseOverview from "../pages/admin/WarehouseOverview";
 
 const AdminRoutes = () => (
   <>
@@ -20,6 +21,7 @@ const AdminRoutes = () => (
       <Route path="master-form" element={<MasterForm />} />
       <Route path="view-products" element={<ProductManagement />} />
       <Route path="pdf-generation" element={<EstimationPdfGeneration />} />
+      <Route path="warehouse" element={<WarehouseOverview />} />
     </Route>
   </>
 );

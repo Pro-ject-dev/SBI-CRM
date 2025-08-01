@@ -7,6 +7,10 @@ import { addonsProductApi } from "./api/addonsProductApi";
 import { banksApi } from "./api/banksApi";
 import { termsApi } from "./api/termsApi";
 import { combosMappingApi } from "./api/combosMappingApi";
+import { rawMaterialsApi } from "./api/rawMaterialsApi";
+import { vendorsApi } from "./api/vendorsApi";
+import { purchaseOrdersApi } from "./api/purchaseOrdersApi";
+import { stockAssignmentApi } from "./api/stockAssignmentApi";
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +22,10 @@ export const store = configureStore({
     [banksApi.reducerPath]: banksApi.reducer,
     [termsApi.reducerPath]: termsApi.reducer,
     [combosMappingApi.reducerPath]: combosMappingApi.reducer,
+    [rawMaterialsApi.reducerPath]: rawMaterialsApi.reducer,
+    [vendorsApi.reducerPath]: vendorsApi.reducer,
+    [purchaseOrdersApi.reducerPath]: purchaseOrdersApi.reducer,
+    [stockAssignmentApi.reducerPath]: stockAssignmentApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -26,7 +34,11 @@ export const store = configureStore({
       addonsProductApi.middleware,
       banksApi.middleware,
       termsApi.middleware,
-      combosMappingApi.middleware
+      combosMappingApi.middleware,
+      rawMaterialsApi.middleware,
+      vendorsApi.middleware,
+      purchaseOrdersApi.middleware,
+      stockAssignmentApi.middleware
     ),
 });
 
