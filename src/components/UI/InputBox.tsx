@@ -28,6 +28,7 @@ export const InputBox: React.FC<InputBoxProps> = ({
   maxRows,
   min,
   max,
+  handleIsProductExist,
   ...props
 }) => {
   const [inputValue, setInputValue] = useState<string>(value);
@@ -39,6 +40,11 @@ export const InputBox: React.FC<InputBoxProps> = ({
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
+    if (handleIsProductExist) {
+      setInputValue(e.target.value);
+      handleIsProductExist(id, e.target.value);
+      return;
+    }
     if (type === "text") {
       setInputValue(e.target.value);
       return;

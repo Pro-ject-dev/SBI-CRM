@@ -8,22 +8,23 @@ export const Cell = styled(TableCell)(({}) => ({
   textAlign: "left",
 }));
 
-export const DataTable = styled(DataGrid)(({ theme }) => ({
+export const DataTable = styled(DataGrid)(() => ({
   width: "100%",
   minHeight: "100%",
-  borderRadius: "5px !important",
+  borderRadius: "16px !important",
+
   "& .MuiDataGrid-columnHeader": {
-    backgroundColor: theme.palette.primary.main,
+    backgroundColor: "#F8F8F8",
     lineHeight: 10,
   },
   "& .MuiDataGrid-columnHeaderTitle": {
-    color: "white",
+    color: "#080808",
     fontSize: "15px",
   },
   "& .MuiDataGrid-iconButtonContainer": {
-    color: "white",
+    color: "#080808",
   },
   "& .MuiDataGrid-sortIcon": {
-    color: "white",
+    color: "#080808",
   },
 }));

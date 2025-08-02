@@ -1,5 +1,5 @@
 import { Box, Button, Container, Grid, Paper, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import {
   useAddAddonsMutation,
@@ -8,10 +8,10 @@ import {
 } from "../../app/api/addonsProductApi";
 import { InputBox } from "../../components/UI/InputBox";
 import { useSearchParams } from "react-router-dom";
-import { calculateTotalAmount } from "../../utils/calculateTotalAmount";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../app/store";
 import { addToast } from "../../app/slices/toastSlice";
+import { useIsProductExistMutation } from "../../app/api/standardProductApi";
 
 interface FormField {
   label: string;
@@ -20,6 +20,7 @@ interface FormField {
   min?: number;
   max?: number;
   readonly?: boolean;
+  required?: boolean;
 }
 
 const AddonsForm = () => {
@@ -27,6 +28,11 @@ const AddonsForm = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
   const tabId = searchParams.get("tab");
+  const [skipProductName, setSkipProductName] = useState<string | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [productExist, setProductExist] = useState<Record<string, boolean>>({
+    productName: false,
+  });
 
   const {
     data,
@@ -45,6 +51,7 @@ const AddonsForm = () => {
     updateAddons,
     // { isLoading: updateLoading }
   ] = useUpdateAddonsMutation();
+  const [isProductExist] = useIsProductExistMutation();
 
   const [addonsForm, setAddonsForm] = useState<AddonsFormData>({
     productName: "",
@@ -53,11 +60,11 @@ const AddonsForm = () => {
     grade: "",
     length: "",
     width: "",
+    height: "",
     thickness: "",
-    minLimit: "",
-    gst: "",
+    minimumCost: "",
+    maximumCost: "",
     remark: "",
-    totalAmount: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -65,25 +72,27 @@ const AddonsForm = () => {
   const formFields: FormField[] = [
     { label: "Product Name", key: "productName", type: "text" },
     { label: "Rate per kg", key: "ratePerKg", type: "number", min: 0 },
-    { label: "Weight of the object", key: "weight", type: "number", min: 0 },
-    { label: "Grade", key: "grade", type: "text" },
-    { label: "Length", key: "length", type: "number", min: 0 },
-    { label: "Width", key: "width", type: "number", min: 0 },
-    { label: "Thickness", key: "thickness", type: "number", min: 0 },
-    { label: "GST", key: "gst", type: "number", min: 0, max: 100 },
-    { label: "Remark", key: "remark", type: "text" },
-    { label: "Min Limit / sq.in", key: "minLimit", type: "number", min: 0 },
     {
-      label: "Total Amount",
-      key: "totalAmount",
+      label: "Weight of the object(kg)",
+      key: "weight",
       type: "number",
       min: 0,
-      readonly: true,
     },
+    { label: "Grade", key: "grade", type: "text" },
+    { label: "Length(inch)", key: "length", type: "number", min: 0 },
+    { label: "Width(inch)", key: "width", type: "number", min: 0 },
+    { label: "Height(inch)", key: "height", type: "number", min: 0 },
+    { label: "Thickness(inch)", key: "thickness", type: "number", min: 0 },
+    { label: "Minimum Cost", key: "minimumCost", type: "number", min: 0 },
+    { label: "Maximum Cost", key: "maximumCost", type: "number", min: 0 },
+    { label: "Remark", key: "remark", type: "text", required: false },
   ];
 
   const handleAddonsChange = (key: string, value: string) => {
     setAddonsForm((prev) => ({ ...prev, [key]: value }));
+    if (productExist.hasOwnProperty(key) && productExist[key] === true) {
+      return;
+    }
     if (value.trim()) {
       const removeError = Object.fromEntries(
         Object.entries(errors).filter(([objKey]) => objKey !== key)
@@ -93,15 +102,6 @@ const AddonsForm = () => {
   };
 
   useEffect(() => {
-    const totalAmount = calculateTotalAmount(
-      addonsForm.gst,
-      addonsForm.ratePerKg
-    );
-    const key: string = "totalAmount";
-    setAddonsForm((prev) => ({ ...prev, [key]: totalAmount }));
-  }, [addonsForm.gst, addonsForm.ratePerKg]);
-
-  useEffect(() => {
     if (id && data) {
       setAddonsForm({
         productName: data?.data?.name,
@@ -109,13 +109,14 @@ const AddonsForm = () => {
         grade: data?.data?.grade,
         length: data?.data?.length,
         width: data?.data?.width,
+        height: data?.data?.height,
         weight: data?.data?.weightOfObject,
         thickness: data?.data?.thickness,
-        minLimit: data?.data?.maxSqIn,
-        gst: data?.data?.gst,
+        minimumCost: data?.data?.minCost,
+        maximumCost: data?.data?.maxCost,
         remark: data?.data?.remark,
-        totalAmount: data?.data?.totalAmount,
       });
+      setSkipProductName(data?.data?.name);
     }
   }, [id, data]);
 
@@ -123,8 +124,12 @@ const AddonsForm = () => {
     const newErrors: Record<string, string> = {};
     for (const key of Object.keys(addonsForm) as (keyof AddonsFormData)[]) {
       const value = String(addonsForm[key]);
-      if (!value.trim()) {
-        newErrors[key] = `${key} is required**`;
+      const optional = formFields.find((value) => value.key === key);
+      if (!value.trim() && (optional?.required ?? true)) {
+        newErrors[key] = `${optional?.label} is required**`;
+      }
+      if (productExist.hasOwnProperty(key) && productExist[key] === true) {
+        newErrors[key] = errors[key];
       }
     }
 
@@ -137,16 +142,15 @@ const AddonsForm = () => {
       if (id && data) {
         const updateData = await updateAddons({
           id: `${id}`,
+          date: "2025-05-14",
           name: `${addonsForm.productName}`,
           ratePerKg: `${addonsForm.ratePerKg}`,
           grade: `${addonsForm.grade}`,
-          weightOfObject: `${addonsForm.weight}`,
           length: `${addonsForm.length}`,
           width: `${addonsForm.width}`,
           thickness: `${addonsForm.thickness}`,
-          maxSqIn: `${addonsForm.minLimit}`,
-          gst: `${addonsForm.gst}`,
-          totalAmount: `${addonsForm.totalAmount}`,
+          maxCost: `${addonsForm.maximumCost}`,
+          minCost: `${addonsForm.minimumCost}`,
           remark: `${addonsForm.remark}`,
         });
 
@@ -164,9 +168,8 @@ const AddonsForm = () => {
           width: `${addonsForm.width}`,
           weightOfObject: `${addonsForm.weight}`,
           thickness: `${addonsForm.thickness}`,
-          maxSqIn: `${addonsForm.minLimit}`,
-          gst: `${addonsForm.gst}`,
-          totalAmount: `${addonsForm.totalAmount}`,
+          maxCost: `${addonsForm.maximumCost}`,
+          minCost: `${addonsForm.minimumCost}`,
           remark: `${addonsForm.remark}`,
         });
 
@@ -180,11 +183,11 @@ const AddonsForm = () => {
           grade: "",
           length: "",
           width: "",
+          height: "",
           thickness: "",
-          minLimit: "",
-          gst: "",
+          minimumCost: "",
+          maximumCost: "",
           remark: "",
-          totalAmount: "",
         });
         return addData;
       }
@@ -195,6 +198,47 @@ const AddonsForm = () => {
           type: "error",
         })
       );
+    }
+  };
+
+  const handleIsProductExist = (id: string, value: string) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    if (!value.trim()) {
+      const removeError = Object.fromEntries(
+        Object.entries(errors).filter(([objKey]) => objKey !== id)
+      );
+      setErrors(removeError);
+      setProductExist((prev) => ({ ...prev, [id]: false }));
+    }
+    if (
+      !skipProductName ||
+      (skipProductName && skipProductName.toLowerCase() !== value.toLowerCase())
+    ) {
+      debounceTimerRef.current = setTimeout(async () => {
+        try {
+          const response = await isProductExist(value).unwrap();
+          if (response.status === true) {
+            setErrors((prev) => ({ ...prev, [id]: "Product already exist!" }));
+            setProductExist((prev) => ({ ...prev, [id]: true }));
+          } else {
+            const removeError = Object.fromEntries(
+              Object.entries(errors).filter(([objKey]) => objKey !== id)
+            );
+            setErrors(removeError);
+            setProductExist((prev) => ({ ...prev, [id]: false }));
+          }
+        } catch (error) {
+          console.error("product exist api error");
+        }
+      }, 700);
+    } else {
+      const removeError = Object.fromEntries(
+        Object.entries(errors).filter(([objKey]) => objKey !== id)
+      );
+      setErrors(removeError);
+      setProductExist((prev) => ({ ...prev, [id]: false }));
     }
   };
 
@@ -222,6 +266,7 @@ const AddonsForm = () => {
               },
             }}
             error={errors[field.key]}
+            {...(field.key === "productName" && { handleIsProductExist })}
           />
         ) : (
           <InputBox
@@ -246,19 +291,27 @@ const AddonsForm = () => {
   );
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 2 }}>
       <Box
         sx={{
-          p: 2,
-          mb: 3,
-          color: "white",
-          textAlign: "center",
-          borderRadius: "16px",
-          background: "linear-gradient(to right, #94a3b8, #334155, #0f172a)",
-          boxShadow: 3,
+          display: "flex",
+          alignItems: "center",
         }}
       >
-        <Typography variant="h6" component="h3">
+        <Box
+          sx={{
+            width: "8px",
+            height: "24px",
+            backgroundColor: "#2563eb",
+            mr: 1.5,
+            borderRadius: "3px",
+          }}
+        />
+        <Typography
+          variant="h6"
+          component="h3"
+          sx={{ fontWeight: "bold", color: "#4b5563" }}
+        >
           Add-ons Products
         </Typography>
       </Box>
@@ -266,12 +319,13 @@ const AddonsForm = () => {
       <Paper
         elevation={1}
         sx={{
-          p: 3,
-          borderRadius: "12px",
+          p: 2,
+          mt: 2,
+          borderRadius: "16px",
           border: "1px solid #e0e0e0",
         }}
       >
-        <Grid container spacing={3}>
+        <Grid container spacing={2}>
           {formFields.map(renderField)}
         </Grid>
       </Paper>
@@ -281,20 +335,34 @@ const AddonsForm = () => {
           display: "flex",
           justifyContent: "center",
           gap: 2,
-          mt: 3,
+          mt: 2,
         }}
       >
+        <Button
+          variant="outlined"
+          sx={{
+            py: 1.2,
+            px: 2.2,
+            borderRadius: "16px",
+            color: "#2563eb",
+            borderColor: "#2563eb",
+          }}
+        >
+          Cancel
+        </Button>
         <Button
           variant="contained"
           color="primary"
           endIcon={<ArrowForwardIosIcon />}
-          sx={{ py: 1.2, px: 3 }}
+          sx={{
+            py: 1.2,
+            px: 2.2,
+            borderRadius: "16px",
+            backgroundColor: "#2563eb",
+          }}
           onClick={() => handleAddAddons()}
         >
           {id ? "Update Product" : "Add Product"}
-        </Button>
-        <Button variant="outlined" color="primary" sx={{ py: 1.2, px: 3 }}>
-          Cancel
         </Button>
       </Box>
     </Container>

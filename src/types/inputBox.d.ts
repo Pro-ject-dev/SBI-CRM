@@ -15,4 +15,5 @@ export interface InputBoxProps {
   max?: number;
   multiline?: boolean;
   readonly?: boolean;
+  handleIsProductExist?: (key: string, value: string) => void | null;
 }

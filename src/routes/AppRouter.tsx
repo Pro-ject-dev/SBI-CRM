@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import AdminRoutes from "./AdminRoutes";
 import SalesManagerRoutes from "./SalesManagerRoutes";
 import LoginPage from "../pages/LoginPage";
+import OperationManagerRoutes from "./OperationManagerRoutes";
 
 const AppRouter = () => {
   return (
@@ -10,6 +11,7 @@ const AppRouter = () => {
 
       {AdminRoutes()}
       {SalesManagerRoutes()}
+      {OperationManagerRoutes()}
 
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

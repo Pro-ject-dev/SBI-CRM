@@ -1,14 +1,14 @@
 import { Box, Button, Container, Grid, Paper, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import {
   useAddStandardMutation,
   useGetStandardByIdQuery,
+  useIsProductExistMutation,
   useUpdateStandardMutation,
 } from "../../app/api/standardProductApi";
 import { InputBox } from "../../components/UI/InputBox";
 import { useSearchParams } from "react-router-dom";
-import { calculateTotalAmount } from "../../utils/calculateTotalAmount";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../app/store";
 import { addToast } from "../../app/slices/toastSlice";
@@ -20,6 +20,7 @@ interface FormField {
   min?: number;
   max?: number;
   readonly?: boolean;
+  required?: boolean;
 }
 
 const StandardForm = () => {
@@ -27,6 +28,8 @@ const StandardForm = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
   const tabId = searchParams.get("tab");
+  const [skipProductName, setSkipProductName] = useState<string | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const {
     data,
     // isLoading: fetchLoading,
@@ -45,18 +48,24 @@ const StandardForm = () => {
     // { isLoading: updateLoading }
   ] = useUpdateStandardMutation();
 
+  const [isProductExist] = useIsProductExistMutation();
+
   const [standardForm, setStandardForm] = useState<StandardFormData>({
     productName: "",
     ratePerQuantity: "",
     grade: "",
-    size: "",
+    length: "",
+    width: "",
+    height: "",
     thickness: "",
     minimumCost: "",
-    gst: "",
+    maximumCost: "",
     remark: "",
-    totalAmount: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [productExist, setProductExist] = useState<Record<string, boolean>>({
+    productName: false,
+  });
 
   const formFields: FormField[] = [
     { label: "Product Name", key: "productName", type: "text" },
@@ -67,23 +76,21 @@ const StandardForm = () => {
       min: 0,
     },
     { label: "Grade", key: "grade", type: "text" },
-    { label: "Size", key: "size", type: "number", min: 0 },
-    { label: "Thickness", key: "thickness", type: "number", min: 0 },
+    { label: "Length(inch)", key: "length", type: "number", min: 0 },
+    { label: "Width(inch)", key: "width", type: "number", min: 0 },
+    { label: "Height(inch)", key: "height", type: "number", min: 0 },
+    { label: "Thickness(inch)", key: "thickness", type: "number", min: 0 },
     { label: "Minimum Cost", key: "minimumCost", type: "number", min: 0 },
-    { label: "GST", key: "gst", type: "number", min: 0, max: 100 },
-    { label: "Remark", key: "remark", type: "text" },
-    {
-      label: "Total Amount",
-      key: "totalAmount",
-      type: "number",
-      min: 0,
-      readonly: true,
-    },
+    { label: "Maximum Cost", key: "maximumCost", type: "number", min: 0 },
+    { label: "Remark", key: "remark", type: "text", required: false },
   ];
 
   const handleStandardChange = (key: string, value: string) => {
     setStandardForm((prev) => ({ ...prev, [key]: value }));
 
+    if (productExist.hasOwnProperty(key) && productExist[key] === true) {
+      return;
+    }
     if (value.trim()) {
       const removeError = Object.fromEntries(
         Object.entries(errors).filter(([objKey]) => objKey !== key)
@@ -93,27 +100,20 @@ const StandardForm = () => {
   };
 
   useEffect(() => {
-    const totalAmount = calculateTotalAmount(
-      standardForm.gst,
-      standardForm.ratePerQuantity
-    );
-    const key: string = "totalAmount";
-    setStandardForm((prev) => ({ ...prev, [key]: totalAmount }));
-  }, [standardForm.gst, standardForm.ratePerQuantity]);
-
-  useEffect(() => {
     if (id && data) {
       setStandardForm({
         productName: data?.data?.productName,
         ratePerQuantity: data?.data?.ratePerQuantity,
         grade: data?.data?.grade,
-        size: data?.data?.length,
+        length: data?.data?.length,
+        width: data?.data?.width,
+        height: data?.data?.height,
         thickness: data?.data?.thickness,
-        minimumCost: data?.data?.maxCost,
-        gst: data?.data?.gst,
+        minimumCost: data?.data?.minCost,
+        maximumCost: data?.data?.maxCost,
         remark: data?.data?.remark,
-        totalAmount: data?.data?.totalAmount,
       });
+      setSkipProductName(data?.data?.productName);
     }
   }, [id, data]);
 
@@ -122,8 +122,12 @@ const StandardForm = () => {
 
     for (const key of Object.keys(standardForm) as (keyof StandardFormData)[]) {
       const value = String(standardForm[key]);
-      if (!value.trim()) {
-        newErrors[key] = `${key} is required**`;
+      const optional = formFields.find((value) => value.key === key);
+      if (!value.trim() && (optional?.required ?? true)) {
+        newErrors[key] = `${optional?.label} is required**`;
+      }
+      if (productExist.hasOwnProperty(key) && productExist[key] === true) {
+        newErrors[key] = errors[key];
       }
     }
 
@@ -139,12 +143,11 @@ const StandardForm = () => {
           productName: `${standardForm.productName}`,
           ratePerQuantity: `${standardForm.ratePerQuantity}`,
           grade: `${standardForm.grade}`,
-          length: `${standardForm.size}`,
-          width: `${standardForm.size}`,
+          length: `${standardForm.length}`,
+          width: `${standardForm.width}`,
           thickness: `${standardForm.thickness}`,
-          maxCost: `${standardForm.minimumCost}`,
-          gst: `${standardForm.gst}`,
-          totalAmount: `${standardForm.totalAmount}`,
+          minCost: `${standardForm.minimumCost}`,
+          maxCost: `${standardForm.maximumCost}`,
           remark: `${standardForm.remark}`,
           isStandard: "1",
         });
@@ -158,12 +161,11 @@ const StandardForm = () => {
           productName: `${standardForm.productName}`,
           ratePerQuantity: `${standardForm.ratePerQuantity}`,
           grade: `${standardForm.grade}`,
-          length: `${standardForm.size}`,
-          width: `${standardForm.size}`,
+          length: `${standardForm.length}`,
+          width: `${standardForm.width}`,
           thickness: `${standardForm.thickness}`,
-          maxCost: `${standardForm.minimumCost}`,
-          gst: `${standardForm.gst}`,
-          totalAmount: `${standardForm.totalAmount}`,
+          minCost: `${standardForm.minimumCost}`,
+          maxCost: `${standardForm.maximumCost}`,
           remark: `${standardForm.remark}`,
           isStandard: "1",
         });
@@ -174,12 +176,13 @@ const StandardForm = () => {
           productName: "",
           ratePerQuantity: "",
           grade: "",
-          size: "",
+          width: "",
+          length: "",
+          height: "",
           thickness: "",
           minimumCost: "",
-          gst: "",
+          maximumCost: "",
           remark: "",
-          totalAmount: "",
         });
         return addData;
       }
@@ -190,6 +193,52 @@ const StandardForm = () => {
           type: "error",
         })
       );
+    }
+  };
+
+  const handleIsProductExist = (id: string, value: string) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    if (!value.trim()) {
+      const removeError = Object.fromEntries(
+        Object.entries(errors).filter(([objKey]) => objKey !== id)
+      );
+      setErrors(removeError);
+      setProductExist((prev) => ({ ...prev, [id]: false }));
+    }
+    console.log(
+      skipProductName,
+      skipProductName?.toLowerCase(),
+      value.toLowerCase()
+    );
+    if (
+      !skipProductName ||
+      (skipProductName && skipProductName.toLowerCase() !== value.toLowerCase())
+    ) {
+      debounceTimerRef.current = setTimeout(async () => {
+        try {
+          const response = await isProductExist(value).unwrap();
+          if (response.status === true) {
+            setErrors((prev) => ({ ...prev, [id]: "Product already exist!" }));
+            setProductExist((prev) => ({ ...prev, [id]: true }));
+          } else {
+            const removeError = Object.fromEntries(
+              Object.entries(errors).filter(([objKey]) => objKey !== id)
+            );
+            setErrors(removeError);
+            setProductExist((prev) => ({ ...prev, [id]: false }));
+          }
+        } catch (error) {
+          console.error("product exist api error");
+        }
+      }, 700);
+    } else {
+      const removeError = Object.fromEntries(
+        Object.entries(errors).filter(([objKey]) => objKey !== id)
+      );
+      setErrors(removeError);
+      setProductExist((prev) => ({ ...prev, [id]: false }));
     }
   };
 
@@ -217,6 +266,7 @@ const StandardForm = () => {
               },
             }}
             error={errors[field.key]}
+            {...(field.key === "productName" && { handleIsProductExist })}
           />
         ) : (
           <InputBox
@@ -241,20 +291,27 @@ const StandardForm = () => {
   );
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 2 }}>
       <Box
         sx={{
-          p: 2,
-          mb: 3,
-          color: "white",
-          textAlign: "center",
-          borderRadius: "16px",
-
-          background: "linear-gradient(to right, #94a3b8, #334155, #0f172a)",
-          boxShadow: 3,
+          display: "flex",
+          alignItems: "center",
         }}
       >
-        <Typography variant="h6" component="h3">
+        <Box
+          sx={{
+            width: "8px",
+            height: "24px",
+            backgroundColor: "#2563eb",
+            mr: 1.5,
+            borderRadius: "3px",
+          }}
+        />
+        <Typography
+          variant="h6"
+          component="h3"
+          sx={{ fontWeight: "bold", color: "#4b5563" }}
+        >
           Standard Products
         </Typography>
       </Box>
@@ -262,12 +319,13 @@ const StandardForm = () => {
       <Paper
         elevation={1}
         sx={{
-          p: 3,
-          borderRadius: "12px",
+          p: 2,
+          mt: 2,
+          borderRadius: "16px",
           border: "1px solid #e0e0e0",
         }}
       >
-        <Grid container spacing={3}>
+        <Grid container spacing={2}>
           {formFields.map(renderField)}
         </Grid>
       </Paper>
@@ -277,20 +335,33 @@ const StandardForm = () => {
           display: "flex",
           justifyContent: "center",
           gap: 2,
-          mt: 3,
+          mt: 2,
         }}
       >
         <Button
+          variant="outlined"
+          sx={{
+            py: 1.2,
+            px: 2.2,
+            borderRadius: "16px",
+            color: "#2563eb",
+            borderColor: "#2563eb",
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
           variant="contained"
-          color="primary"
           endIcon={<ArrowForwardIosIcon />}
-          sx={{ py: 1.2, px: 3 }}
+          sx={{
+            py: 1.2,
+            px: 2.2,
+            borderRadius: "16px",
+            backgroundColor: "#2563eb",
+          }}
           onClick={() => handleAddStandard()}
         >
           {id ? "Update Product" : "Add Product"}
-        </Button>
-        <Button variant="outlined" color="primary" sx={{ py: 1.2, px: 3 }}>
-          Cancel
         </Button>
       </Box>
     </Container>

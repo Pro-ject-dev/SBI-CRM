@@ -30,6 +30,32 @@ export const standardProductApi = createApi({
       },
       providesTags: ["Standard"],
     }),
+    getStandardByFilter: builder.query({
+      query: ({
+        isStandard,
+        page,
+        size,
+        productName,
+        startDate,
+        endDate,
+        grade,
+      }: {
+        isStandard: string;
+        page: number;
+        size: number;
+        productName: string;
+        startDate: string;
+        endDate: string;
+        grade: string;
+      }) => {
+        return `${localStorage.getItem(
+          "api_endpoint"
+        )}/GetProductsByFilter?isStandard=${isStandard}&page=${
+          page + 1
+        }&size=${size}&productName=${productName}&startDate=${startDate}&endDate=${endDate}&grade=${grade}`;
+      },
+      providesTags: ["Standard"],
+    }),
     addStandard: builder.mutation({
       query: (payload) => ({
         url: `${localStorage.getItem("api_endpoint")}/addProduct`,
@@ -54,13 +80,42 @@ export const standardProductApi = createApi({
       }),
       invalidatesTags: ["Standard"],
     }),
+    isProductExist: builder.mutation({
+      query: (searchTerm: string) => ({
+        url: `${localStorage.getItem(
+          "api_endpoint"
+        )}/isProductExists?productName=${searchTerm}`,
+        method: "POST",
+      }),
+    }),
+    updateProductCost: builder.mutation({
+      query: (payload) => ({
+        url: `${localStorage.getItem("api_endpoint")}/updateProductCost`,
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: ["Standard"],
+    }),
+
+    // isProductExist: builder.mutation({
+    //   query: () => ({
+    //     url: `${localStorage.getItem("api_endpoint")}/isProductExists`,
+    //     method: "PUT",
+    //     body: payload,
+    //   })
+    // })
   }),
 });
 
 export const {
   useGetStandardQuery,
+  useLazyGetStandardQuery,
   useGetStandardByIdQuery,
   useAddStandardMutation,
   useUpdateStandardMutation,
   useDeleteStandardMutation,
+  useIsProductExistMutation,
+  useLazyGetStandardByFilterQuery,
+  useGetStandardByFilterQuery,
+  useUpdateProductCostMutation,
 } = standardProductApi;

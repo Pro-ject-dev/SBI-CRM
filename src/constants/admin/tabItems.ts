@@ -1,6 +1,7 @@
 import AddonsForm from "../../features/admin/AddonsForm";
 import AddonsProductManagement from "../../features/admin/AddonsProductManagement";
 import BanksForm from "../../features/admin/BanksForm";
+import ComboMappingManagement from "../../features/admin/ComboMappingManagement";
 import CombosMappingForm from "../../features/admin/CombosMappingForm";
 import CustomizedForm from "../../features/admin/CustomizedForm";
 import CustomizedProductManagement from "../../features/admin/CustomizedProductManagement";
@@ -45,5 +46,10 @@ export const productManagementTabItems: TabBar[] = [
     id: "addons",
     label: "Add-ons Products",
     component: AddonsProductManagement,
+  },
+  {
+    id: "combo",
+    label: "Combo Mapping",
+    component: ComboMappingManagement,
   },
 ];

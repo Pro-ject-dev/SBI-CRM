@@ -7,6 +7,7 @@ import { useAddBanksMutation } from "../../app/api/banksApi";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../app/store";
 import { addToast } from "../../app/slices/toastSlice";
+import type { OptionProps } from "../../types/selectBox";
 
 interface FormField {
   label: string;
@@ -48,9 +49,9 @@ const BanksForm = () => {
     { label: "MICR Code", key: "micrCode", type: "text" },
   ];
 
-  const handleBanksChange = (key: string, value: string) => {
+  const handleBanksChange = (key: string, value: string | OptionProps[]) => {
     setBanksForm((prev) => ({ ...prev, [key]: value }));
-    if (value.trim()) {
+    if (typeof value === "string" && value.trim()) {
       const removeError = Object.fromEntries(
         Object.entries(errors).filter(([objKey]) => objKey !== key)
       );
@@ -161,19 +162,27 @@ const BanksForm = () => {
   );
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 2 }}>
       <Box
         sx={{
-          p: 2,
-          mb: 3,
-          color: "white",
-          textAlign: "center",
-          borderRadius: "16px",
-          background: "linear-gradient(to right, #94a3b8, #334155, #0f172a)",
-          boxShadow: 3,
+          display: "flex",
+          alignItems: "center",
         }}
       >
-        <Typography variant="h6" component="h3">
+        <Box
+          sx={{
+            width: "8px",
+            height: "24px",
+            backgroundColor: "#2563eb",
+            mr: 1.5,
+            borderRadius: "3px",
+          }}
+        />
+        <Typography
+          variant="h6"
+          component="h3"
+          sx={{ fontWeight: "bold", color: "#4b5563" }}
+        >
           Bank Details
         </Typography>
       </Box>
@@ -181,12 +190,13 @@ const BanksForm = () => {
       <Paper
         elevation={1}
         sx={{
-          p: 3,
-          borderRadius: "12px",
+          p: 2,
+          mt: 2,
+          borderRadius: "16px",
           border: "1px solid #e0e0e0",
         }}
       >
-        <Grid container spacing={3}>
+        <Grid container spacing={2}>
           {formFields.map(renderField)}
         </Grid>
       </Paper>
@@ -196,20 +206,34 @@ const BanksForm = () => {
           display: "flex",
           justifyContent: "center",
           gap: 2,
-          mt: 3,
+          mt: 2,
         }}
       >
+        <Button
+          variant="outlined"
+          sx={{
+            py: 1.2,
+            px: 2.2,
+            borderRadius: "16px",
+            color: "#2563eb",
+            borderColor: "#2563eb",
+          }}
+        >
+          Cancel
+        </Button>
         <Button
           variant="contained"
           color="primary"
           endIcon={<ArrowForwardIosIcon />}
-          sx={{ py: 1.2, px: 3 }}
+          sx={{
+            py: 1.2,
+            px: 2.2,
+            borderRadius: "16px",
+            backgroundColor: "#2563eb",
+          }}
           onClick={() => handleAddBanks()}
         >
           Add Bank
-        </Button>
-        <Button variant="outlined" color="primary" sx={{ py: 1.2, px: 3 }}>
-          Cancel
         </Button>
       </Box>
     </Container>

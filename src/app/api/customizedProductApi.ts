@@ -30,6 +30,32 @@ export const customizedProductApi = createApi({
       },
       providesTags: ["Customized"],
     }),
+    getCustomizedByFilter: builder.query({
+      query: ({
+        isStandard,
+        page,
+        size,
+        productName,
+        startDate,
+        endDate,
+        grade,
+      }: {
+        isStandard: string;
+        page: number;
+        size: number;
+        productName: string;
+        startDate: string;
+        endDate: string;
+        grade: string;
+      }) => {
+        return `${localStorage.getItem(
+          "api_endpoint"
+        )}/GetProductsByFilter?isStandard=${isStandard}&page=${
+          page + 1
+        }&size=${size}&productName=${productName}&startDate=${startDate}&endDate=${endDate}&grade=${grade}`;
+      },
+      providesTags: ["Customized"],
+    }),
     addCustomized: builder.mutation({
       query: (payload) => ({
         url: `${localStorage.getItem("api_endpoint")}/addProduct`,
@@ -54,13 +80,25 @@ export const customizedProductApi = createApi({
       }),
       invalidatesTags: ["Customized"],
     }),
+    updateProductCost: builder.mutation({
+      query: (payload) => ({
+        url: `${localStorage.getItem("api_endpoint")}/updateProductCost`,
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: ["Customized"],
+    }),
   }),
 });
 
 export const {
   useGetCustomizedQuery,
+  useLazyGetCustomizedQuery,
   useGetCustomizedByIdQuery,
+  useGetCustomizedByFilterQuery,
+  useLazyGetCustomizedByFilterQuery,
   useAddCustomizedMutation,
   useUpdateCustomizedMutation,
   useDeleteCustomizedMutation,
+  useUpdateProductCostMutation,
 } = customizedProductApi;

@@ -26,6 +26,30 @@ export const addonsProductApi = createApi({
       },
       providesTags: ["Addons"],
     }),
+    getAddonsByFilter: builder.query({
+      query: ({
+        page,
+        size,
+        productName,
+        startDate,
+        endDate,
+        grade,
+      }: {
+        page: number;
+        size: number;
+        productName: string;
+        startDate: string;
+        endDate: string;
+        grade: string;
+      }) => {
+        return `${localStorage.getItem(
+          "api_endpoint"
+        )}/GetAddonsByFilter?page=${
+          page + 1
+        }&size=${size}&name=${productName}&startDate=${startDate}&endDate=${endDate}&grade=${grade}`;
+      },
+      providesTags: ["Addons"],
+    }),
     addAddons: builder.mutation({
       query: (payload) => ({
         url: `${localStorage.getItem("api_endpoint")}/addAddons`,
@@ -50,13 +74,25 @@ export const addonsProductApi = createApi({
       }),
       invalidatesTags: ["Addons"],
     }),
+    updateProductCost: builder.mutation({
+      query: (payload) => ({
+        url: `${localStorage.getItem("api_endpoint")}/updateAddonsCost`,
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: ["Addons"],
+    }),
   }),
 });
 
 export const {
   useGetAddonsQuery,
+  useLazyGetAddonsQuery,
   useGetAddonsByIdQuery,
+  useLazyGetAddonsByFilterQuery,
+  useGetAddonsByFilterQuery,
   useAddAddonsMutation,
   useUpdateAddonsMutation,
   useDeleteAddonsMutation,
+  useUpdateProductCostMutation,
 } = addonsProductApi;

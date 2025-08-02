@@ -15,7 +15,7 @@ const CustomTabs = ({
     bgGray100: "#f3f4f6",
     textGray600: "#4b5563",
     textGray900: "#111827",
-    bgSlate700: "#334155",
+    bgSlate700: "#2563eb",
     textWhite: "#ffffff",
   };
 
@@ -27,13 +27,12 @@ const CustomTabs = ({
       sx={{
         display: "flex",
         justifyContent: "center",
-        mb: 4,
       }}
     >
       <Box
         sx={{
           display: "inline-flex",
-          borderRadius: "9999px",
+          borderRadius: "16px",
           backgroundColor: colors.bgGray100,
           p: 0.5,
         }}
@@ -45,7 +44,7 @@ const CustomTabs = ({
             sx={{
               px: 3,
               py: 1.5,
-              borderRadius: "9999px",
+              borderRadius: "16px",
               fontSize: "0.875rem",
               fontWeight: 500,
               textTransform: "none",

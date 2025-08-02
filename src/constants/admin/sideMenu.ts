@@ -3,7 +3,6 @@ import {
   People as PeopleIcon,
   Inventory as InventoryIcon,
 } from "@mui/icons-material";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import type { SideBar } from "../../types/sideBar";
 
 export const adminMenuItems: SideBar[] = [
@@ -20,15 +19,9 @@ export const adminMenuItems: SideBar[] = [
     path: "/admin/master-form",
   },
   {
-    id: "viewproducts",
-    label: "View Products",
+    id: "productmanagement",
+    label: "Product Management",
     icon: InventoryIcon,
-    path: "/admin/view-products",
-  },
-  {
-    id: "pdfgeneration",
-    label: "Pdf Generation",
-    icon: PictureAsPdfIcon,
-    path: "/admin/pdf-generation",
+    path: "/admin/product-management",
   },
 ];
