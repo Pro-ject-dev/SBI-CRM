@@ -15,7 +15,7 @@ export const stockAssignmentApi = createApi({
   tagTypes: ["StockAssignments"],
   endpoints: (builder) => ({
     getStockAssignments: builder.query({
-      query: ({ orderId, search } = {}) => {
+      query: ({ orderId, search }: { orderId?: string; search?: string } = {}) => {
         const params = new URLSearchParams();
         if (orderId) params.append('orderId', orderId);
         if (search) params.append('search', search);

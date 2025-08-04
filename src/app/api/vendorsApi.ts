@@ -14,11 +14,11 @@ export const vendorsApi = createApi({
   }),
   tagTypes: ["Vendors"],
   endpoints: (builder) => ({
-    getVendors: builder.query({
+    getVendors: builder.query<any, { search?: string }>({
       query: ({ search } = {}) => {
         const params = new URLSearchParams();
         if (search) params.append('search', search);
-        return `${localStorage.getItem("api_endpoint")}/getVendors?${params.toString()}`;
+        return `${localStorage.getItem("api_endpoint")}/getAllVendors?${params.toString()}`;
       },
       providesTags: ["Vendors"],
     }),
@@ -47,7 +47,7 @@ export const vendorsApi = createApi({
     deleteVendor: builder.mutation({
       query: (payload) => ({
         url: `${localStorage.getItem("api_endpoint")}/deleteVendor`,
-        method: "PUT",
+        method: "DELETE",
         body: payload,
       }),
       invalidatesTags: ["Vendors"],

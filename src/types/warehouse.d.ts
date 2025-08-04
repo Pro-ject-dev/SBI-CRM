@@ -1,16 +1,15 @@
-// Raw Materials Types
 export interface RawMaterial {
   id: number;
   name: string;
   description: string;
-  unit: string; // kg, pieces, liters, etc.
+  unit: string;
   category: string;
   minimumStock: number;
   currentStock: number;
   unitPrice: number;
   vendorId?: number;
   vendor?: Vendor;
-  status: 'active' | 'inactive';
+  status: '1' | '0';
   createdAt: string;
   updatedAt: string;
 }
@@ -26,7 +25,6 @@ export interface RawMaterialFormData {
   vendorId: string;
 }
 
-// Vendor Types
 export interface Vendor {
   id: number;
   name: string;
@@ -36,7 +34,7 @@ export interface Vendor {
   address: string;
   gstNumber?: string;
   paymentTerms: string;
-  status: 'active' | 'inactive';
+  status: '1' | '0';
   createdAt: string;
   updatedAt: string;
 }
@@ -51,7 +49,7 @@ export interface VendorFormData {
   paymentTerms: string;
 }
 
-// Purchase Order Types
+
 export interface PurchaseOrderItem {
   id?: number;
   rawMaterialId: number;
@@ -88,7 +86,7 @@ export interface PurchaseOrderFormData {
   notes: string;
 }
 
-// Stock Assignment Types
+
 export interface StockAssignment {
   id: number;
   orderId: number;

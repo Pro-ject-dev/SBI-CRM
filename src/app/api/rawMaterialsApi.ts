@@ -15,7 +15,7 @@ export const rawMaterialsApi = createApi({
   tagTypes: ["RawMaterials"],
   endpoints: (builder) => ({
     getRawMaterials: builder.query({
-      query: ({ search, category } = {}) => {
+      query: ({ search, category }: { search?: string; category?: string } = {}) => {
         const params = new URLSearchParams();
         if (search) params.append('search', search);
         if (category) params.append('category', category);

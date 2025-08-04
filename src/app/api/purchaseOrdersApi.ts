@@ -15,7 +15,8 @@ export const purchaseOrdersApi = createApi({
   tagTypes: ["PurchaseOrders"],
   endpoints: (builder) => ({
     getPurchaseOrders: builder.query({
-      query: ({ status, search } = {}) => {
+      query: (args?: { status?: string; search?: string }) => {
+        const { status, search } = args || {};
         const params = new URLSearchParams();
         if (status) params.append('status', status);
         if (search) params.append('search', search);

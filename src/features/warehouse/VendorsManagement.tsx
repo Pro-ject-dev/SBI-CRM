@@ -117,20 +117,20 @@ const VendorsManagement = () => {
       headerAlign: "center",
       align: "center",
     },
-    {
-      field: "status",
-      headerName: "Status",
-      flex: 1,
-      headerAlign: "center",
-      align: "center",
-      renderCell: (params) => (
-        <Chip
-          label={params.row.status}
-          color={params.row.status === "active" ? "success" : "default"}
-          size="small"
-        />
-      ),
-    },
+    // {
+    //   field: "status",
+    //   headerName: "Status",
+    //   flex: 1,
+    //   headerAlign: "center",
+    //   align: "center",
+    //   renderCell: (params) => (
+    //     <Chip
+    //       label={params.row.status}
+    //       color={params.row.status === "active" ? "success" : "default"}
+    //       size="small"
+    //     />
+    //   ),
+    // },
     {
       field: "actions",
       headerName: "Actions",
