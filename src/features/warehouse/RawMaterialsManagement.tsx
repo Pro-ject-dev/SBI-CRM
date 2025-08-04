@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { Delete, Edit, Add, Warning } from "@mui/icons-material";
 import { DataTable } from "../../components/UI/DataTable";
 import type { GridColDef } from "@mui/x-data-grid";
-import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../app/store";
 import { addToast } from "../../app/slices/toastSlice";
@@ -12,12 +11,14 @@ import {
   useDeleteRawMaterialMutation,
 } from "../../app/api/rawMaterialsApi";
 import type { RawMaterial } from "../../types/warehouse";
+import RawMaterialModal from "../../components/UI/RawMaterialModal";
 
 const RawMaterialsManagement = () => {
   const dispatch: AppDispatch = useDispatch();
-  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingMaterial, setEditingMaterial] = useState<RawMaterial | null>(null);
 
   const {
     data,
@@ -57,11 +58,21 @@ const RawMaterialsManagement = () => {
   };
 
   const handleEditRow = (id: string) => {
-    navigate(`/warehouse/raw-materials/form?id=${id}`);
+    const material = materialData.find(m => m.id.toString() === id);
+    if (material) {
+      setEditingMaterial(material);
+      setModalOpen(true);
+    }
   };
 
   const handleAddNew = () => {
-    navigate("/warehouse/raw-materials/form");
+    setEditingMaterial(null);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setEditingMaterial(null);
   };
 
   const getStockStatus = (current: number, minimum: number) => {
@@ -205,6 +216,13 @@ const RawMaterialsManagement = () => {
           <DataTable rows={materialData} columns={columns} disableColumnMenu />
         </Box>
       </Box>
+
+      {/* Modal */}
+      <RawMaterialModal
+        open={modalOpen}
+        onClose={handleCloseModal}
+        material={editingMaterial}
+      />
     </Container>
   );
 };

@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { Delete, Edit, Add } from "@mui/icons-material";
 import { DataTable } from "../../components/UI/DataTable";
 import type { GridColDef } from "@mui/x-data-grid";
-import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../app/store";
 import { addToast } from "../../app/slices/toastSlice";
@@ -12,11 +11,13 @@ import {
   useDeleteVendorMutation,
 } from "../../app/api/vendorsApi";
 import type { Vendor } from "../../types/warehouse";
+import VendorModal from "../../components/UI/VendorModal";
 
 const VendorsManagement = () => {
   const dispatch: AppDispatch = useDispatch();
-  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingVendor, setEditingVendor] = useState<Vendor | null>(null);
 
   const {
     data,
@@ -55,11 +56,21 @@ const VendorsManagement = () => {
   };
 
   const handleEditRow = (id: string) => {
-    navigate(`/warehouse/vendors/form?id=${id}`);
+    const vendor = vendorData.find(v => v.id.toString() === id);
+    if (vendor) {
+      setEditingVendor(vendor);
+      setModalOpen(true);
+    }
   };
 
   const handleAddNew = () => {
-    navigate("/warehouse/vendors/form");
+    setEditingVendor(null);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setEditingVendor(null);
   };
 
   const columns: GridColDef[] = [
@@ -179,6 +190,13 @@ const VendorsManagement = () => {
           <DataTable rows={vendorData} columns={columns} disableColumnMenu />
         </Box>
       </Box>
+
+      {/* Modal */}
+      <VendorModal
+        open={modalOpen}
+        onClose={handleCloseModal}
+        vendor={editingVendor}
+      />
     </Container>
   );
 };

@@ -1,9 +1,8 @@
 import { Box, Button, Container, TextField, Chip } from "@mui/material";
 import { useEffect, useState } from "react";
-import { Delete, Edit, Add, Visibility } from "@mui/icons-material";
+import { Delete, Edit, Add, Visibility, Assignment } from "@mui/icons-material";
 import { DataTable } from "../../components/UI/DataTable";
 import type { GridColDef } from "@mui/x-data-grid";
-import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../app/store";
 import { addToast } from "../../app/slices/toastSlice";
@@ -13,12 +12,16 @@ import {
   useUpdatePurchaseOrderStatusMutation,
 } from "../../app/api/purchaseOrdersApi";
 import type { PurchaseOrder } from "../../types/warehouse";
+import PurchaseOrderModal from "../../components/UI/PurchaseOrderModal";
+import StockAssignmentModal from "../../components/UI/StockAssignmentModal";
 
 const PurchaseOrdersManagement = () => {
   const dispatch: AppDispatch = useDispatch();
-  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [purchaseOrderModalOpen, setPurchaseOrderModalOpen] = useState(false);
+  const [stockAssignmentModalOpen, setStockAssignmentModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<{ id: string; orderNumber: string } | null>(null);
 
   const {
     data,
@@ -59,15 +62,26 @@ const PurchaseOrdersManagement = () => {
   };
 
   const handleEditRow = (id: string) => {
-    navigate(`/warehouse/purchase-orders/form?id=${id}`);
+    // For now, just show a message that editing is not implemented
+    dispatch(
+      addToast({ message: "Edit functionality coming soon", type: "warning" })
+    );
   };
 
   const handleViewRow = (id: string) => {
-    navigate(`/warehouse/purchase-orders/view?id=${id}`);
+    // For now, just show a message that view is not implemented
+    dispatch(
+      addToast({ message: "View functionality coming soon", type: "warning" })
+    );
   };
 
   const handleAddNew = () => {
-    navigate("/warehouse/purchase-orders/form");
+    setPurchaseOrderModalOpen(true);
+  };
+
+  const handleStockAssignment = (id: string, orderNumber: string) => {
+    setSelectedOrder({ id, orderNumber });
+    setStockAssignmentModalOpen(true);
   };
 
   const handleStatusChange = async (id: string, status: string) => {
@@ -163,9 +177,18 @@ const PurchaseOrdersManagement = () => {
       renderCell: (params: any) => (
         <Box sx={{ display: "flex", gap: 0.5 }}>
           <Button
+            color="success"
+            sx={{ p: "4px", minWidth: "auto" }}
+            onClick={() => handleStockAssignment(params.row.id, params.row.orderNumber)}
+            title="Assign Stock"
+          >
+            <Assignment fontSize="small" />
+          </Button>
+          <Button
             color="info"
             sx={{ p: "4px", minWidth: "auto" }}
             onClick={() => handleViewRow(params.row.id)}
+            title="View Details"
           >
             <Visibility fontSize="small" />
           </Button>
@@ -175,6 +198,7 @@ const PurchaseOrdersManagement = () => {
                 color="primary"
                 sx={{ p: "4px", minWidth: "auto" }}
                 onClick={() => handleEditRow(params.row.id)}
+                title="Edit Order"
               >
                 <Edit fontSize="small" />
               </Button>
@@ -182,6 +206,7 @@ const PurchaseOrdersManagement = () => {
                 color="error"
                 sx={{ p: "4px", minWidth: "auto" }}
                 onClick={() => handleDeleteRow(params.row.id)}
+                title="Delete Order"
               >
                 <Delete fontSize="small" />
               </Button>
@@ -240,6 +265,22 @@ const PurchaseOrdersManagement = () => {
           <DataTable rows={orderData} columns={columns} disableColumnMenu />
         </Box>
       </Box>
+
+      {/* Modals */}
+      <PurchaseOrderModal
+        open={purchaseOrderModalOpen}
+        onClose={() => setPurchaseOrderModalOpen(false)}
+      />
+      
+      <StockAssignmentModal
+        open={stockAssignmentModalOpen}
+        onClose={() => {
+          setStockAssignmentModalOpen(false);
+          setSelectedOrder(null);
+        }}
+        orderId={selectedOrder?.id}
+        orderNumber={selectedOrder?.orderNumber}
+      />
     </Container>
   );
 };
