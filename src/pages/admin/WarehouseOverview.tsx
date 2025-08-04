@@ -1,6 +1,6 @@
 import { Box, Container, Grid, Card, CardContent, Typography, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { Package, People, ShoppingCart, Assignment } from "@mui/icons-material";
+import { Inventory, People, ShoppingCart, Assignment } from "@mui/icons-material";
 
 const WarehouseOverview = () => {
   const navigate = useNavigate();
@@ -9,7 +9,7 @@ const WarehouseOverview = () => {
     {
       title: "Raw Materials",
       description: "Manage inventory of raw materials",
-      icon: Package,
+      icon: Inventory,
       path: "/warehouse/raw-materials",
       color: "primary",
     },
