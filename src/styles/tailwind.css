@@ -7,3 +7,14 @@
 .dark {
   @apply bg-darkBackground text-white;
 } */
+
+@layer utilities {
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hidden {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+}

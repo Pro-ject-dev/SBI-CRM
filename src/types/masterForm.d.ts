@@ -2,12 +2,13 @@ interface StandardFormData {
   productName: string;
   ratePerQuantity: string;
   grade: string;
-  size: string;
+  length: string;
+  width: string;
+  height: string;
   thickness: string;
   minimumCost: string;
-  gst: string;
+  maximumCost: string;
   remark: string;
-  totalAmount: string;
 }
 
 interface CustomizedFormData {
@@ -17,11 +18,11 @@ interface CustomizedFormData {
   grade: string;
   length: string;
   width: string;
+  height: string;
   thickness: string;
-  minLimit: string;
-  gst: string;
+  minimumCost: string;
+  maximumCost: string;
   remark: string;
-  totalAmount: string;
 }
 
 interface StandardCustomizedResponse {
@@ -34,11 +35,9 @@ interface StandardCustomizedResponse {
   length: string;
   width: string;
   thickness: string;
-  gst: string;
   remark: string;
-  totalAmount: string;
-  maxCost: string | null;
-  maxSqIn: string | null;
+  minCost: string;
+  maxCost: string;
   isStandard: string;
   status: string;
   createdAt: string;
@@ -52,11 +51,11 @@ interface AddonsFormData {
   grade: string;
   length: string;
   width: string;
+  height: string;
   thickness: string;
-  minLimit: string;
-  gst: string;
+  minimumCost: string;
+  maximumCost: string;
   remark: string;
-  totalAmount: string;
 }
 
 interface AddonsResponse {
@@ -69,13 +68,28 @@ interface AddonsResponse {
   length: string;
   width: string;
   thickness: string;
-  gst: string;
+  minCost: string;
+  maxCost: string;
   remark: string;
-  totalAmount: string;
-  maxSqIn: string;
   status: string;
   createdAt: string;
   updatedAt: string;
+}
+
+interface ComboResponse {
+  id: number;
+  date: string;
+  comboId: string;
+  catId: string;
+  productId: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  productName: string;
+  grade: string;
+  ratePerQuantity: string;
+  categoryName: string;
+  comboName: string;
 }
 
 interface BanksFormData {
@@ -92,9 +106,24 @@ interface TermsFormData {
   title: string;
   description: string;
 }
-
+interface Option {
+  label: string;
+  value: string;
+  checked?: boolean;
+}
 interface CombosMappingFormData {
   combo: string;
   category: string;
-  product: string;
+  product: Option[];
 }
+
+type modalKeys = "combo" | "category";
+type ComboMappingModalData = {
+  [key in modalKeys]: {
+    open: boolean;
+    value: string;
+    error: string;
+    submit: boolean;
+    disabled: boolean;
+  };
+};

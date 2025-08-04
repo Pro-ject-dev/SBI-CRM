@@ -127,19 +127,27 @@ const TermsForm = () => {
   );
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 2 }}>
       <Box
         sx={{
-          p: 2,
-          mb: 3,
-          color: "white",
-          textAlign: "center",
-          borderRadius: "16px",
-          background: "linear-gradient(to right, #94a3b8, #334155, #0f172a)",
-          boxShadow: 3,
+          display: "flex",
+          alignItems: "center",
         }}
       >
-        <Typography variant="h6" component="h3">
+        <Box
+          sx={{
+            width: "8px",
+            height: "24px",
+            backgroundColor: "#2563eb",
+            mr: 1.5,
+            borderRadius: "3px",
+          }}
+        />
+        <Typography
+          variant="h6"
+          component="h3"
+          sx={{ fontWeight: "bold", color: "#4b5563" }}
+        >
           Term Mapping
         </Typography>
       </Box>
@@ -147,14 +155,15 @@ const TermsForm = () => {
       <Paper
         elevation={1}
         sx={{
-          p: 3,
-          borderRadius: "12px",
+          p: 2,
+          mt: 2,
+          borderRadius: "16px",
           border: "1px solid #e0e0e0",
         }}
       >
         <Grid
           container
-          spacing={3}
+          spacing={2}
           sx={{ display: "flex", flexDirection: "column" }}
         >
           {formFields.map(renderField)}
@@ -166,20 +175,34 @@ const TermsForm = () => {
           display: "flex",
           justifyContent: "center",
           gap: 2,
-          mt: 3,
+          mt: 2,
         }}
       >
+        <Button
+          variant="outlined"
+          sx={{
+            py: 1.2,
+            px: 2.2,
+            borderRadius: "16px",
+            color: "#2563eb",
+            borderColor: "#2563eb",
+          }}
+        >
+          Cancel
+        </Button>
         <Button
           variant="contained"
           color="primary"
           endIcon={<ArrowForwardIosIcon />}
-          sx={{ py: 1.2, px: 3 }}
+          sx={{
+            py: 1.2,
+            px: 2.2,
+            borderRadius: "16px",
+            backgroundColor: "#2563eb",
+          }}
           onClick={() => handleAddTerms()}
         >
           Add Term
-        </Button>
-        <Button variant="outlined" color="primary" sx={{ py: 1.2, px: 3 }}>
-          Cancel
         </Button>
       </Box>
     </Container>

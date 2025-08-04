@@ -3,6 +3,7 @@ import AdminRoutes from "./AdminRoutes";
 import SalesManagerRoutes from "./SalesManagerRoutes";
 import WarehouseRoutes from "./WarehouseRoutes";
 import LoginPage from "../pages/LoginPage";
+import OperationManagerRoutes from "./OperationManagerRoutes";
 
 const AppRouter = () => {
   return (
@@ -11,6 +12,7 @@ const AppRouter = () => {
 
       {AdminRoutes()}
       {SalesManagerRoutes()}
+      {OperationManagerRoutes()}
       {WarehouseRoutes()}
 
       <Route path="*" element={<Navigate to="/login" replace />} />

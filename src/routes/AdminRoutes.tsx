@@ -7,6 +7,7 @@ import ProductManagement from "../pages/admin/ProductManagement";
 import EstimationPdfGeneration from "../pages/admin/EstimationPdfGeneration";
 import WarehouseOverview from "../pages/admin/WarehouseOverview";
 
+
 const AdminRoutes = () => (
   <>
     <Route
@@ -19,9 +20,11 @@ const AdminRoutes = () => (
     >
       <Route path="dashboard" element={<AdminDashboard />} />
       <Route path="master-form" element={<MasterForm />} />
+      <Route path="product-management" element={<ProductManagement />} />
       <Route path="view-products" element={<ProductManagement />} />
       <Route path="pdf-generation" element={<EstimationPdfGeneration />} />
       <Route path="warehouse" element={<WarehouseOverview />} />
+
     </Route>
   </>
 );
