@@ -13,7 +13,7 @@ const RoleBasedSidebar = () => {
       sideMenuItems = adminMenuItems;
       break;
     case "sales_manager":
-      sideMenuItem s= salesManagerMenuItems;
+      sideMenuItems= salesManagerMenuItems;
       break;
     case "warehouse_manager":
       sideMenuItems = warehouseMenuItems;

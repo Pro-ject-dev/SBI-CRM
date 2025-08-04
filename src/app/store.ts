@@ -46,7 +46,7 @@ export const store = configureStore({
       banksApi.middleware,
       termsApi.middleware,
       combosMappingApi.middleware,
-      orderManagementApi.middleware
+      orderManagementApi.middleware,
       rawMaterialsApi.middleware,
       vendorsApi.middleware,
       purchaseOrdersApi.middleware,
