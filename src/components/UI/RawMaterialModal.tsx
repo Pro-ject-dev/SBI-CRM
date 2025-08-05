@@ -79,7 +79,7 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
     { label: "Other", value: "other" },
   ];
 
-  const vendorOptions = vendorsData?.data?.map((vendor: any) => ({
+  const vendorOptions = vendorsData?.data.map((vendor: any) => ({
     label: vendor.name,
     value: vendor.id.toString(),
   })) || [];

@@ -24,7 +24,7 @@ export const vendorsApi = createApi({
     }),
     getVendorById: builder.query({
       query: ({ id }: { id: string }) => {
-        return `${localStorage.getItem("api_endpoint")}/getVendorById?id=${id}`;
+        return `${localStorage.getItem("api_endpoint")}/getVendorbyId?id=${id}`;
       },
       providesTags: ["Vendors"],
     }),
@@ -37,18 +37,21 @@ export const vendorsApi = createApi({
       invalidatesTags: ["Vendors"],
     }),
     updateVendor: builder.mutation({
-      query: (payload) => ({
-        url: `${localStorage.getItem("api_endpoint")}/updateVendor`,
+      query: ({ id, ...payload }) => ({
+        url: `${localStorage.getItem(
+          "api_endpoint"          
+        )}/updateVendor?id=${id}`,
         method: "PUT",
         body: payload,
       }),
       invalidatesTags: ["Vendors"],
     }),
     deleteVendor: builder.mutation({
-      query: (payload) => ({
-        url: `${localStorage.getItem("api_endpoint")}/deleteVendor`,
+      query: ({ id }) => ({
+        url: `${localStorage.getItem(
+          "api_endpoint"
+        )}/deleteVendor?id=${id}`,
         method: "DELETE",
-        body: payload,
       }),
       invalidatesTags: ["Vendors"],
     }),

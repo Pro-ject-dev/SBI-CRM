@@ -20,7 +20,21 @@ export const orderManagementApi = createApi({
       },
       providesTags: ["OrderManagement"],
     }),
+    updateOrderDeadline: builder.mutation({
+      query: ({ id, startDate, endDate }) => ({
+        url: `${localStorage.getItem("api_endpoint")}/updateDeadline?id=${id}`,
+        method: "PUT",
+        body: { id, start: startDate, end: endDate },
+      }),
+      invalidatesTags: ["OrderManagement"],
+    }),
+    getOrderById: builder.query({
+      query: ({ id }) => {
+        return `${localStorage.getItem("api_endpoint")}/getOrderById?id=${id}`;
+      },
+      providesTags: ["OrderManagement"],
+    }),
   }),
 });
 
-export const { useGetAllOrdersQuery } = orderManagementApi;
+export const { useGetAllOrdersQuery, useUpdateOrderDeadlineMutation, useGetOrderByIdQuery } = orderManagementApi;

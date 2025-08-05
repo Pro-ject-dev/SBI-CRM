@@ -1,14 +1,8 @@
-import { TableCell } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { DataGrid } from "@mui/x-data-grid";
 
-export const Cell = styled(TableCell)(({}) => ({
-  fontSize: "0.8rem",
-  borderBottomColor: "gray",
-  textAlign: "left",
-}));
-
 export const DataTable = styled(DataGrid)(() => ({
+  disableColumnReorder: true,
   width: "100%",
   minHeight: "100%",
   borderRadius: "16px !important",
@@ -27,4 +21,16 @@ export const DataTable = styled(DataGrid)(() => ({
   "& .MuiDataGrid-sortIcon": {
     color: "#080808",
   },
+
+  // ✅ Fixes the unwanted horizontal space on the right
+  "& .MuiDataGrid-virtualScrollerRenderZone": {
+    overflowX: "hidden",
+  },
+
+  // Optional: Prevent content shift due to scrollbar
+  "& .MuiDataGrid-virtualScroller": {
+    overflowX: "hidden",
+  },
 }));
+
+

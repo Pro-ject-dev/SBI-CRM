@@ -1,4 +1,14 @@
-import { Box, Button, Container, TextField, Chip } from "@mui/material";
+import {
+  Box,
+  Button,
+  Container,
+  TextField,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from "@mui/material";
 import { useEffect, useState } from "react";
 import { Delete, Edit, Add } from "@mui/icons-material";
 import { DataTable } from "../../components/UI/DataTable";
@@ -18,6 +28,8 @@ const VendorsManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingVendor, setEditingVendor] = useState<Vendor | null>(null);
+  const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
+  const [vendorToDelete, setVendorToDelete] = useState<string | null>(null);
 
   const {
     data,
@@ -35,28 +47,41 @@ const VendorsManagement = () => {
   }, [searchTerm]);
 
   useEffect(() => {
+    console.log("Vendor API Response:", data);
     const vendors = data?.data || [];
     setVendorData(vendors);
   }, [data]);
 
-  const handleDeleteRow = async (id: string) => {
-    try {
-      await deleteVendor({ id });
-      dispatch(
-        addToast({ message: "Vendor Deleted Successfully", type: "success" })
-      );
-    } catch (error) {
-      dispatch(
-        addToast({
-          message: "Failed to Delete Vendor!",
-          type: "error",
-        })
-      );
+  const handleDeleteRow = (id: string) => {
+    setVendorToDelete(id);
+    setDeleteConfirmationOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (vendorToDelete) {
+      try {
+        await deleteVendor({ id: vendorToDelete });
+        dispatch(
+          addToast({ message: "Vendor Deleted Successfully", type: "success" })
+        );
+      } catch (error) {
+        dispatch(
+          addToast({
+            message: "Failed to Delete Vendor!",
+            type: "error",
+          })
+        );
+      }
+      setDeleteConfirmationOpen(false);
+      setVendorToDelete(null);
     }
   };
 
   const handleEditRow = (id: string) => {
-    const vendor = vendorData.find(v => v.id.toString() === id);
+    console.log("Editing vendor with id:", id);
+    console.log("Vendor data:", vendorData);
+    const vendor = vendorData.find(v => v.id == id);
+    console.log("Found vendor:", vendor);
     if (vendor) {
       setEditingVendor(vendor);
       setModalOpen(true);
@@ -68,9 +93,12 @@ const VendorsManagement = () => {
     setModalOpen(true);
   };
 
-  const handleCloseModal = () => {
+  const handleCloseModal = (shouldRefetch?: boolean) => {
     setModalOpen(false);
     setEditingVendor(null);
+    if (shouldRefetch) {
+      refetch();
+    }
   };
 
   const columns: GridColDef[] = [
@@ -78,6 +106,7 @@ const VendorsManagement = () => {
       field: "name",
       headerName: "Vendor Name",
       flex: 1,
+      minWidth: 150,
       headerAlign: "center",
       align: "center",
     },
@@ -85,6 +114,7 @@ const VendorsManagement = () => {
       field: "contactPerson",
       headerName: "Contact Person",
       flex: 1,
+      minWidth: 150,
       headerAlign: "center",
       align: "center",
     },
@@ -92,6 +122,7 @@ const VendorsManagement = () => {
       field: "email",
       headerName: "Email",
       flex: 1,
+      minWidth: 150,
       headerAlign: "center",
       align: "center",
     },
@@ -99,6 +130,7 @@ const VendorsManagement = () => {
       field: "phone",
       headerName: "Phone",
       flex: 1,
+      minWidth: 150,
       headerAlign: "center",
       align: "center",
     },
@@ -106,6 +138,7 @@ const VendorsManagement = () => {
       field: "gstNumber",
       headerName: "GST Number",
       flex: 1,
+      minWidth: 150,
       headerAlign: "center",
       align: "center",
       renderCell: (params) => params.row.gstNumber || "N/A",
@@ -114,6 +147,7 @@ const VendorsManagement = () => {
       field: "paymentTerms",
       headerName: "Payment Terms",
       flex: 1,
+      minWidth: 150,
       headerAlign: "center",
       align: "center",
     },
@@ -121,6 +155,7 @@ const VendorsManagement = () => {
     //   field: "status",
     //   headerName: "Status",
     //   flex: 1,
+    //   minWidth: 150,
     //   headerAlign: "center",
     //   align: "center",
     //   renderCell: (params) => (
@@ -135,6 +170,8 @@ const VendorsManagement = () => {
       field: "actions",
       headerName: "Actions",
       sortable: false,
+      flex: 1,
+      minWidth: 100,
       headerAlign: "center",
       align: "center",
       renderCell: (params: any) => (
@@ -197,6 +234,26 @@ const VendorsManagement = () => {
         onClose={handleCloseModal}
         vendor={editingVendor}
       />
+
+      <Dialog
+        open={deleteConfirmationOpen}
+        onClose={() => setDeleteConfirmationOpen(false)}
+      >
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this vendor?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmationOpen(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={confirmDelete} color="error">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

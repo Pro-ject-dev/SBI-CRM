@@ -19,7 +19,7 @@ export const rawMaterialsApi = createApi({
         const params = new URLSearchParams();
         if (search) params.append('search', search);
         if (category) params.append('category', category);
-        return `${localStorage.getItem("api_endpoint")}/getRawMaterials?${params.toString()}`;
+        return `${localStorage.getItem("api_endpoint")}/getAllRawMaterials?${params.toString()}`;
       },
       providesTags: ["RawMaterials"],
     }),
@@ -38,18 +38,21 @@ export const rawMaterialsApi = createApi({
       invalidatesTags: ["RawMaterials"],
     }),
     updateRawMaterial: builder.mutation({
-      query: (payload) => ({
-        url: `${localStorage.getItem("api_endpoint")}/updateRawMaterial`,
+      query: ({ id, ...payload }) => ({
+        url: `${localStorage.getItem(
+          "api_endpoint"
+        )}/updateRawMaterial?id=${id}`,
         method: "PUT",
         body: payload,
       }),
       invalidatesTags: ["RawMaterials"],
     }),
     deleteRawMaterial: builder.mutation({
-      query: (payload) => ({
-        url: `${localStorage.getItem("api_endpoint")}/deleteRawMaterial`,
-        method: "PUT",
-        body: payload,
+      query: ({ id }) => ({
+        url: `${localStorage.getItem(
+          "api_endpoint"
+        )}/deleteRawMaterial?id=${id}`,
+        method: "DELETE",
       }),
       invalidatesTags: ["RawMaterials"],
     }),

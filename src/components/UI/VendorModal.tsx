@@ -125,7 +125,7 @@ const VendorModal: React.FC<VendorModalProps> = ({
         );
       }
       
-      onClose();
+      onClose(true);
     } catch (error) {
       dispatch(
         addToast({

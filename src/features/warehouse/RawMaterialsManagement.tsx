@@ -1,4 +1,15 @@
-import { Box, Button, Container, TextField, Chip } from "@mui/material";
+import {
+  Box,
+  Button,
+  Container,
+  TextField,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from "@mui/material";
 import { useEffect, useState } from "react";
 import { Delete, Edit, Add, Warning } from "@mui/icons-material";
 import { DataTable } from "../../components/UI/DataTable";
@@ -18,7 +29,11 @@ const RawMaterialsManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingMaterial, setEditingMaterial] = useState<RawMaterial | null>(null);
+  const [editingMaterial, setEditingMaterial] = useState<RawMaterial | null>(
+    null
+  );
+  const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
+  const [materialToDelete, setMaterialToDelete] = useState<string | null>(null);
 
   const {
     data,
@@ -41,24 +56,33 @@ const RawMaterialsManagement = () => {
     setMaterialData(materials);
   }, [data]);
 
-  const handleDeleteRow = async (id: string) => {
-    try {
-      await deleteRawMaterial({ id });
-      dispatch(
-        addToast({ message: "Raw Material Deleted Successfully", type: "success" })
-      );
-    } catch (error) {
-      dispatch(
-        addToast({
-          message: "Failed to Delete Raw Material!",
-          type: "error",
-        })
-      );
+  const handleDeleteRow = (id: string) => {
+    setMaterialToDelete(id);
+    setDeleteConfirmationOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (materialToDelete) {
+      try {
+        await deleteRawMaterial({ id: materialToDelete });
+        dispatch(
+          addToast({ message: "Raw Material Deleted Successfully", type: "success" })
+        );
+      } catch (error) {
+        dispatch(
+          addToast({
+            message: "Failed to Delete Raw Material!",
+            type: "error",
+          })
+        );
+      }
+      setDeleteConfirmationOpen(false);
+      setMaterialToDelete(null);
     }
   };
 
   const handleEditRow = (id: string) => {
-    const material = materialData.find(m => m.id.toString() === id);
+    const material = materialData.find(m => m.id == id);
     if (material) {
       setEditingMaterial(material);
       setModalOpen(true);
@@ -90,6 +114,7 @@ const RawMaterialsManagement = () => {
       field: "name",
       headerName: "Material Name",
       flex: 1,
+      minWidth: 150,
       headerAlign: "center",
       align: "center",
     },
@@ -97,6 +122,7 @@ const RawMaterialsManagement = () => {
       field: "category",
       headerName: "Category",
       flex: 1,
+      minWidth: 150,
       headerAlign: "center",
       align: "center",
     },
@@ -104,6 +130,7 @@ const RawMaterialsManagement = () => {
       field: "currentStock",
       headerName: "Current Stock",
       flex: 1,
+      minWidth: 150,
       headerAlign: "center",
       align: "center",
       renderCell: (params) => (
@@ -119,6 +146,7 @@ const RawMaterialsManagement = () => {
       field: "minimumStock",
       headerName: "Min Stock",
       flex: 1,
+      minWidth: 150,
       headerAlign: "center",
       align: "center",
       renderCell: (params) => `${params.row.minimumStock} ${params.row.unit}`,
@@ -127,6 +155,7 @@ const RawMaterialsManagement = () => {
       field: "unitPrice",
       headerName: "Unit Price",
       flex: 1,
+      minWidth: 150,
       headerAlign: "center",
       align: "center",
       renderCell: (params) => `₹${params.row.unitPrice}`,
@@ -135,6 +164,7 @@ const RawMaterialsManagement = () => {
       field: "status",
       headerName: "Stock Status",
       flex: 1,
+      minWidth: 150,
       headerAlign: "center",
       align: "center",
       renderCell: (params) =>
@@ -144,6 +174,7 @@ const RawMaterialsManagement = () => {
       field: "vendor",
       headerName: "Vendor",
       flex: 1,
+      minWidth: 150,
       headerAlign: "center",
       align: "center",
       renderCell: (params) => params.row.vendor?.name || "N/A",
@@ -152,6 +183,8 @@ const RawMaterialsManagement = () => {
       field: "actions",
       headerName: "Actions",
       sortable: false,
+      flex: 1,
+      minWidth: 170,
       headerAlign: "center",
       align: "center",
       renderCell: (params: any) => (
@@ -212,7 +245,7 @@ const RawMaterialsManagement = () => {
       </Box>
 
       <Box sx={{ width: "100%", marginTop: "8px" }}>
-        <Box sx={{ height: 600 }}>
+        <Box sx={{ height: 600 }}>          
           <DataTable rows={materialData} columns={columns} disableColumnMenu />
         </Box>
       </Box>
@@ -223,6 +256,26 @@ const RawMaterialsManagement = () => {
         onClose={handleCloseModal}
         material={editingMaterial}
       />
+
+      <Dialog
+        open={deleteConfirmationOpen}
+        onClose={() => setDeleteConfirmationOpen(false)}
+      >
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this raw material?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmationOpen(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={confirmDelete} color="error">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
