@@ -78,10 +78,8 @@ export const InputBox: React.FC<InputBoxProps> = ({
       minRows={minRows}
       maxRows={maxRows}
       multiline={multiline}
-      slotProps={{
-        input: {
-          readOnly: readonly,
-        },
+      InputProps={{
+        readOnly: readonly,
       }}
       sx={{ ...sx }}
       {...props}

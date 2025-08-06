@@ -12,7 +12,6 @@ import {
   Select, 
   InputLabel, 
   FormControl, 
-  Grid, 
   Paper,
   Alert,
   Table,
@@ -25,6 +24,9 @@ import {
   Chip,
   DialogContentText
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
+import Gridd from '@mui/material/Grid';
+
 import { useEffect, useState } from 'react';
 import { AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
 import { 

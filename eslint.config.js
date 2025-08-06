@@ -1,37 +1,30 @@
 module.exports = {
   root: true,
-  env: {
-    browser: true,
-    es2021: true,
-  },
+  parser: '@typescript-eslint/parser',
+  plugins: ['@typescript-eslint', 'react', 'react-hooks'],
   extends: [
     'eslint:recommended',
     'plugin:react/recommended',
+    'plugin:react-hooks/recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:@typescript-eslint/eslint-recommended',
   ],
   parserOptions: {
-    ecmaVersion: 'latest',
+    ecmaVersion: 2020,
     sourceType: 'module',
     ecmaFeatures: {
       jsx: true,
     },
   },
-  plugins: ['react'],
-  rules: {
-    // ✅ Flag unused variables as errors
-    'no-unused-vars': ['error', { vars: 'all', args: 'after-used', ignoreRestSiblings: true }],
-
-    // Optional: Auto-ignore unused function args or vars starting with "_"
-    // 'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-
-    // Optional: Turn off if using TypeScript and letting ts handle it
-    // 'no-unused-vars': 'off',
-
-    // Other useful rules
-    'react/react-in-jsx-scope': 'off', // For React 17+
-  },
   settings: {
     react: {
       version: 'detect',
     },
+  },
+  rules: {
+    // Customize rules as needed
+    'react/react-in-jsx-scope': 'off', // Next.js or React 17+
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
+    '@typescript-eslint/no-unused-vars': ['warn'],
   },
 };

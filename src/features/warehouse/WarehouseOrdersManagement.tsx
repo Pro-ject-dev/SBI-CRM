@@ -2,24 +2,42 @@
 // This screen is for the warehouse team to manage stock assignment for production orders only.
 // No purchase order or vendor logic should be present here.
 
-import  { useState } from "react";
+import  {SetStateAction, useState } from "react";
 import {
   useGetAllOrdersQuery,
 } from "../../app/api/orderManagementApi";
-import {
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Chip, Typography, Box
-} from "@mui/material";
+
 import StockAssignmentModal from "../../components/UI/StockAssignmentModal";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableContainer from "@mui/material/TableContainer";
+import Typography from "@mui/material/Typography";
+import TableRow from "@mui/material/TableRow";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import Chip from "@mui/material/Chip";
+import Button from "@mui/material/Button";
+import Box from "@mui/material/Box";
+import Paper from "@mui/material/Paper";
+
 
 const WarehouseOrdersManagement = () => {
-  const { data: orders, isLoading } = useGetAllOrdersQuery();
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const { data: orders, isLoading } = useGetAllOrdersQuery("");
+  type WarehouseOrder = {
+    id: string | number;
+    orderNumber?: string | number;
+    estimation?: { customerName?: string };
+    rawMaterials: { id: string | number; rawMaterial: string; qty: number }[];
+    orderStatus: string;
+  };
+
+  const [selectedOrder, setSelectedOrder] = useState<WarehouseOrder | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
   // Only show orders with orderStatus != 0
-  const warehouseOrders = orders?.filter(order => order.orderStatus !== "0");
+  const warehouseOrders = orders?.filter((order: { orderStatus: string; }) => order.orderStatus !== "0");
 
-  const handleOpenModal = (order) => {
+  const handleOpenModal = (order: SetStateAction<{ id: string | number; orderNumber?: string | number; estimation?: { customerName?: string; }; rawMaterials: { id: string | number; rawMaterial: string; qty: number; }[]; orderStatus: string; } | null>) => {
     setSelectedOrder(order);
     setModalOpen(true);
   };
@@ -49,8 +67,8 @@ const WarehouseOrdersManagement = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {warehouseOrders?.map(order => (
-                <TableRow key={order.id}>
+              {warehouseOrders?.map((order: WarehouseOrder) => (
+                <TableRow key={String(order.id)}>
                   <TableCell>{order.id}</TableCell>
                   <TableCell>{order.estimation?.customerName}</TableCell>
                   <TableCell>
@@ -101,8 +119,8 @@ const WarehouseOrdersManagement = () => {
       <StockAssignmentModal
         open={modalOpen}
         onClose={handleCloseModal}
-        orderId={selectedOrder?.id}
-        orderNumber={selectedOrder?.orderNumber}
+        orderId={selectedOrder?.id !== undefined ? String(selectedOrder.id) : undefined}
+        orderNumber={selectedOrder?.orderNumber !== undefined ? String(selectedOrder.orderNumber) : undefined}
       />
     </Box>
   );

@@ -5,9 +5,9 @@ import {
   Typography,
   Button,
   TextField,
-  Grid,
   IconButton,
 } from "@mui/material";
+import Grid from "@mui/material/Grid"; // ✅ Use default import
 import { Close } from "@mui/icons-material";
 import {
   useAddVendorMutation,
@@ -17,6 +17,7 @@ import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../app/store";
 import { addToast } from "../../app/slices/toastSlice";
 import type { Vendor } from "../../types/warehouse";
+
 
 const modalStyle = {
   position: "absolute" as const,

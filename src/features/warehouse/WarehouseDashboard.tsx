@@ -1,9 +1,16 @@
-import { Package, ShoppingCart, AlertTriangle, TrendingUp } from "lucide-react";
+import { Package, ShoppingCart, AlertTriangle, TrendingUp, List } from "lucide-react";
+import Box from "@mui/material/Box";
 import Dashboard from "../dashboard/Dashboard";
 import { useGetLowStockAlertsQuery } from "../../app/api/rawMaterialsApi";
 import { useGetPurchaseOrdersQuery } from "../../app/api/purchaseOrdersApi";
 import { useGetRawMaterialsQuery } from "../../app/api/rawMaterialsApi";
-import { Box, Card, CardContent, Typography, List, ListItem, ListItemText, Chip } from "@mui/material";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Typography from "@mui/material/Typography";
+import ListItem from "@mui/material/ListItem";
+import ListItemText from "@mui/material/ListItemText";
+import Chip from "@mui/material/Chip";
+
 
 const WarehouseDashboard = () => {
   const { data: alertsData } = useGetLowStockAlertsQuery({});

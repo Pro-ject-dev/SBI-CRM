@@ -41,14 +41,12 @@ export const SearchTextField: React.FC<SearchTextFieldProps> = ({
         width: 220,
         ...styles.root,
       }}
-      slotProps={{
-        input: {
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchOutlinedIcon sx={{ color: "#1976D2" }} />
-            </InputAdornment>
-          ),
-        },
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position="start">
+            <SearchOutlinedIcon sx={{ color: "#1976D2" }} />
+          </InputAdornment>
+        ),
       }}
     />
   );

@@ -1,6 +1,12 @@
-import { Box, Container, Card, CardContent, Typography, Button,Grid } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { Inventory, People, ShoppingCart, Assignment } from "@mui/icons-material";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import Grid from "@mui/material/Grid";
+import CardContent from "@mui/material/CardContent";
+import Container from "@mui/material/Container";
+import Button from "@mui/material/Button";
 
 const WarehouseOverview = () => {
   const navigate = useNavigate();
@@ -59,7 +65,7 @@ const WarehouseOverview = () => {
 
       <Grid container spacing={4}>
         {warehouseModules.map((module, index) => (
-          <Grid item xs={12} sm={6} md={6} key={index}>
+          <Grid xs={12} sm={6} md={6} key={index}>
             <Card
               sx={{
                 height: "100%",

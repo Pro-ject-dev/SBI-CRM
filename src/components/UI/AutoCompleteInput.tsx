@@ -36,11 +36,9 @@ export const AutocompleteInput: React.FC<SelectBoxProps> = ({
           placeholder={placeholder}
           error={error ? true : false}
           helperText={error}
-          slotProps={{
-            htmlInput: {
-              ...params.inputProps,
-              autoComplete: "new-password",
-            },
+          inputProps={{
+            ...params.inputProps,
+            autoComplete: "new-password",
           }}
         />
       )}
