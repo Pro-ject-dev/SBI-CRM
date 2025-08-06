@@ -34,7 +34,37 @@ export const orderManagementApi = createApi({
       },
       providesTags: ["OrderManagement"],
     }),
+    createRawMaterialsByOrder: builder.mutation({
+      query: ({ orderId, items }) => ({
+        url: `${localStorage.getItem("api_endpoint")}/createRawMaterialsByOrder`,
+        method: "POST",
+        body: { orderId, items },
+      }),
+      invalidatesTags: ["OrderManagement"],
+    }),
+    createDeadlineByOrder: builder.mutation({
+      query: ({ orderId, items }) => ({
+        url: `${localStorage.getItem("api_endpoint")}/createDeadlineByOrder`,
+        method: "POST",
+        body: { orderId, items },
+      }),
+      invalidatesTags: ["OrderManagement"],
+    }),
+    updateOrderStatus: builder.mutation({
+      query: ({ id, status }) => ({
+        url: `${localStorage.getItem("api_endpoint")}/updateOrderStatus?id=${id}&status=${status}`,
+        method: "PUT",
+      }),
+      invalidatesTags: ["OrderManagement"],
+    }),
   }),
 });
 
-export const { useGetAllOrdersQuery, useUpdateOrderDeadlineMutation, useGetOrderByIdQuery } = orderManagementApi;
+export const { 
+  useGetAllOrdersQuery, 
+  useUpdateOrderDeadlineMutation, 
+  useGetOrderByIdQuery,
+  useCreateRawMaterialsByOrderMutation,
+  useCreateDeadlineByOrderMutation,
+  useUpdateOrderStatusMutation
+} = orderManagementApi;
