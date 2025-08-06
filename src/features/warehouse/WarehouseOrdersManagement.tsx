@@ -2,7 +2,7 @@
 // This screen is for the warehouse team to manage stock assignment for production orders only.
 // No purchase order or vendor logic should be present here.
 
-import React, { useState } from "react";
+import  { useState } from "react";
 import {
   useGetAllOrdersQuery,
 } from "../../app/api/orderManagementApi";

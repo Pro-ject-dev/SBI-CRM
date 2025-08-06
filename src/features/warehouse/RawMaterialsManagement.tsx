@@ -82,7 +82,7 @@ const RawMaterialsManagement = () => {
   };
 
   const handleEditRow = (id: string) => {
-    const material = materialData.find(m => m.id == id);
+    const material = materialData.find(m => m.id === Number(id));
     if (material) {
       setEditingMaterial(material);
       setModalOpen(true);

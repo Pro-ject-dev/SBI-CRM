@@ -246,7 +246,7 @@ const StandardProductManagement = () => {
         percentage,
       }: {
         ids: Array<number>;
-        percentage: Number;
+        percentage: number;
       }) => ReturnType<typeof updateProductCost>
     ) => {
       try {

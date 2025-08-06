@@ -4,7 +4,7 @@
 
 import { Box, Button, Container, TextField, Chip, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import { Edit, Add, Visibility, Assignment } from "@mui/icons-material";
+import { Edit, Add, Visibility } from "@mui/icons-material";
 import { DataTable } from "../../components/UI/DataTable";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useDispatch } from "react-redux";
@@ -16,15 +16,12 @@ import {
 } from "../../app/api/purchaseOrdersApi";
 import type { PurchaseOrder } from "../../types/warehouse";
 import PurchaseOrderModal from "../../components/UI/PurchaseOrderModal";
-import StockAssignmentModal from "../../components/UI/StockAssignmentModal";
 
 const PurchaseOrdersManagement = () => {
   const dispatch: AppDispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [purchaseOrderModalOpen, setPurchaseOrderModalOpen] = useState(false);
-  const [stockAssignmentModalOpen, setStockAssignmentModalOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<{ id: string; orderNumber: string } | null>(null);
 
   const {
     data,

@@ -11,9 +11,7 @@ import {
   Chip,
   Alert,
 } from "@mui/material";
-import { Close, Add, Delete } from "@mui/icons-material";
-import { SelectBox } from "./SelectBox";
-import { useGetRawMaterialsQuery } from "../../app/api/rawMaterialsApi";
+import { Close} from "@mui/icons-material";
 import { useAssignStockMutation } from "../../app/api/stockAssignmentApi";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../app/store";
@@ -81,29 +79,7 @@ const StockAssignmentModal: React.FC<StockAssignmentModalProps> = ({
     }
   }, [open, orderDetailsData]);
 
-  const rawMaterialOptions = orderDetailsData?.data?.rawMaterials?.map((material: any) => ({
-    label: `${material.rawMaterial} (${material.availableStock} ${material.unit} available)`,
-    value: material.id.toString(),
-  })) || [];
 
-  const handleAddAssignment = () => {
-    setAssignments([
-      ...assignments,
-      {
-        rawMaterialId: "",
-        rawMaterialName: "",
-        availableStock: 0,
-        unit: "",
-        quantityAssigned: "",
-      },
-    ]);
-  };
-
-  const handleRemoveAssignment = (index: number) => {
-    if (assignments.length > 1) {
-      setAssignments(assignments.filter((_, i) => i !== index));
-    }
-  };
 
   const handleAssignmentChange = (index: number, field: string, value: string) => {
     const newAssignments = [...assignments];

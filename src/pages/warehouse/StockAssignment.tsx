@@ -1,10 +1,10 @@
-import StockAssignmentManagement from "@/features/warehouse/StockAssignmentManagement";
-import WarehouseLayout from "@/layouts/WarehouseLayout";
+import WarehouseLayout from "../../layouts/WarehouseLayout";
+import WarehouseOrdersManagement from "../../features/warehouse/WarehouseOrdersManagement";
 
 const StockAssignment = () => {
   return (
     <WarehouseLayout>
-      <StockAssignmentManagement />
+      <WarehouseOrdersManagement />
     </WarehouseLayout>
   );
 };

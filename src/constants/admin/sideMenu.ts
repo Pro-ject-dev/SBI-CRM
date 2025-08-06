@@ -4,7 +4,6 @@ import {
   Inventory as InventoryIcon,
 } from "@mui/icons-material";
 
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import WarehouseIcon from "@mui/icons-material/Warehouse";
 
 import type { SideBar } from "../../types/sideBar";

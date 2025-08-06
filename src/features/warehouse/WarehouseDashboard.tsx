@@ -1,4 +1,4 @@
-import { BarChart2, Package, ShoppingCart, AlertTriangle, TrendingUp } from "lucide-react";
+import { Package, ShoppingCart, AlertTriangle, TrendingUp } from "lucide-react";
 import Dashboard from "../dashboard/Dashboard";
 import { useGetLowStockAlertsQuery } from "../../app/api/rawMaterialsApi";
 import { useGetPurchaseOrdersQuery } from "../../app/api/purchaseOrdersApi";

@@ -37,8 +37,7 @@ import {
 import { useGetRawMaterialsQuery } from '../../app/api/rawMaterialsApi';
 import { useDispatch } from 'react-redux';
 import { addToast } from '../../app/slices/toastSlice';
-import type { Product, Addon } from '../../types/orderManagement';
-import { AutocompleteInput } from './AutoCompleteInput';
+import type { Product } from '../../types/orderManagement';
 
 interface OrderDetailsModalProps {
   open: boolean;
@@ -115,13 +114,13 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
   const [createDeadlines, { isLoading: isUpdatingDeadlines }] = useCreateDeadlineByOrderMutation();
   const [updateOrderStatus, { isLoading: isUpdatingOrderStatus }] = useUpdateOrderStatusMutation();
   
-  const { data: orderDetailsData, isLoading: isOrderDetailsLoading, isError: isOrderDetailsError, refetch } = useGetOrderByIdQuery({ id: orderId! }, { 
+  const { data: orderDetailsData, isLoading: isOrderDetailsLoading, refetch } = useGetOrderByIdQuery({ id: orderId! }, { 
     skip: !orderId || !open,
     refetchOnMountOrArgChange: true,
     refetchOnFocus: false
   });
   
-  const { data: rawMaterialsList, isLoading: isRawMaterialsLoading } = useGetRawMaterialsQuery({});
+  const { data: rawMaterialsList } = useGetRawMaterialsQuery({});
   
   const dispatch = useDispatch();
 
@@ -159,7 +158,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
       // Map raw materials with proper dropdown selection
       if (orderDetailsData.rawMaterials && Array.isArray(orderDetailsData.rawMaterials)) {
         setRawMaterials(
-          orderDetailsData.rawMaterials.map(rm => {
+          orderDetailsData.rawMaterials.map((rm: RawMaterial) => {
             // Check if this material exists in dropdown options
             const existsInDropdown = rawMaterialsList?.data?.some((dropdownRm: any) => 
               dropdownRm.name === rm.rawMaterial
@@ -491,44 +490,6 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
     }
   };
 
-  const handleSave = () => {
-    setError('');
-
-    if (mainDeadlineStartDate && mainDeadlineEndDate) {
-      if (new Date(mainDeadlineStartDate) >= new Date(mainDeadlineEndDate)) {
-        setError('Main deadline start date must be before end date.');
-        return;
-      }
-    }
-
-    const validRawMaterials = rawMaterials.filter(rm => rm.rawMaterial.trim());
-    const validDeadlines = internalDeadlines.filter(dl => 
-      dl.name.trim() && dl.startAt && dl.endAt && dl.status
-    );
-
-    for (const deadline of validDeadlines) {
-      if (!validateDeadline(deadline.startAt, deadline.endAt)) {
-        setError(`Deadline "${deadline.name}" must be within the main deadline period.`);
-        return;
-      }
-
-      if (new Date(deadline.startAt) > new Date(deadline.endAt)) {
-        setError(`Deadline "${deadline.name}" start date must be before end date.`);
-        return;
-      }
-    }
-
-    console.log('Saving order data:', {
-      orderId,
-      rawMaterials: validRawMaterials,
-      internalDeadlines: validDeadlines,
-      mainDeadlineStartDate,
-      mainDeadlineEndDate
-    });
-
-    onClose();
-  };
-
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle>Order Details - {orderId}</DialogTitle>
@@ -606,7 +567,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                                 label={`${product.addons.length} addon${product.addons.length > 1 ? 's' : ''}`} 
                                 color="secondary" 
                                 size="small"
-                                onClick={() => toggleExpandedRow(product.id)}
+                                onClick={() => toggleExpandedRow(String(product.id))}
                                 sx={{ cursor: 'pointer' }}
                               />
                             ) : (
@@ -617,10 +578,10 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                             <Button
                               size="small"
                               variant="outlined"
-                              onClick={() => toggleExpandedRow(product.id)}
+                              onClick={() => toggleExpandedRow(String(product.id))}
                               disabled={!product.addons?.length}
                             >
-                              {expandedRows.has(product.id) ? 'Hide' : 'View'} Details
+                              {expandedRows.has(String(product.id)) ? 'Hide' : 'View'} Details
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -628,7 +589,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                         {/* Expanded row for product details and addons */}
                         <TableRow>
                           <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={7}>
-                            <Collapse in={expandedRows.has(product.id)} timeout="auto" unmountOnExit>
+                            <Collapse in={expandedRows.has(String(product.id))} timeout="auto" unmountOnExit>
                               <Box sx={{ margin: 1 }}>
                                 <Typography variant="h6" gutterBottom component="div">
                                   Product Details
@@ -736,7 +697,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
               Raw Materials:
             </Typography>
             <Paper elevation={1} sx={{ p: 2, mb: 3 }}>
-              {rawMaterials.map((material, idx) => (
+              {rawMaterials.map((material) => (
                 <Box key={material.id} sx={{ mb: 2, borderBottom: '1px solid #eee', pb: 2 }}>
                   <Grid container spacing={2} alignItems="center">
                     {/* Show dropdown only if material exists in dropdown or no material is set */}
@@ -887,7 +848,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                       <FormControl fullWidth>
                         <InputLabel>Status</InputLabel>
                         <Select
-                          value={deadline.status}
+                          value={String(deadline.status)}
                           label="Status"
                           onChange={(e) => updateInternalDeadline(deadline.id, 'status', e.target.value)}
                         >
@@ -898,7 +859,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                         </Select>
                       </FormControl>
                     </Grid>
-                    {deadline.status === "4" && (
+                    {String(deadline.status) === "4" && (
                       <Grid item xs={12} sm={4}>
                         <TextField
                           label="Delay Reason"
@@ -962,7 +923,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
             )}
 
             {/* Warehouse Status Display */}
-            {orderDetails?.orderStatus === "1" && (
+            {String(orderDetails?.orderStatus) === "1" && (
               <>
                 <Typography variant="h6" sx={{ mt: 3 }} gutterBottom>
                   Warehouse Status:

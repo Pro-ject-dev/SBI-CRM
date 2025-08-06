@@ -19,6 +19,7 @@ import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../app/store";
 import { addToast } from "../../app/slices/toastSlice";
 import type { RawMaterial } from "../../types/warehouse";
+import { OptionProps } from "../../types/selectBox.d";
 
 const modalStyle = {
   position: "absolute" as const,
@@ -111,7 +112,7 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
     setErrors({});
   }, [material, open]);
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: string, value: string | OptionProps[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: "" }));
@@ -224,7 +225,7 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
                 id="category"
                 value={formData.category}
                 options={categoryOptions}
-                onChange={(_, value) => handleChange("category", value)}
+                onChange={(_, value) => handleChange("category", value as string)}
                 error={errors.category}
                 fullWidth
               />
@@ -254,7 +255,7 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
                 id="unit"
                 value={formData.unit}
                 options={unitOptions}
-                onChange={(_, value) => handleChange("unit", value)}
+                onChange={(_, value) => handleChange("unit", value as string)}
                 error={errors.unit}
                 fullWidth
               />
@@ -313,7 +314,7 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
                 id="vendorId"
                 value={formData.vendorId}
                 options={vendorOptions}
-                onChange={(_, value) => handleChange("vendorId", value)}
+                onChange={(_, value) => handleChange("vendorId", value as string)}
                 error={errors.vendorId}
                 fullWidth
               />
