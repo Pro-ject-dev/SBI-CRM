@@ -22,7 +22,9 @@ import Paper from "@mui/material/Paper";
 
 
 const WarehouseOrdersManagement = () => {
-  const { data: orders, isLoading } = useGetAllOrdersQuery("");
+  // Add refetch to the destructured values
+  const { data: orders, isLoading, refetch } = useGetAllOrdersQuery("");
+  
   type WarehouseOrder = {
     id: string | number;
     orderNumber?: string | number;
@@ -42,11 +44,12 @@ const WarehouseOrdersManagement = () => {
     setModalOpen(true);
   };
 
+  // Now refetch is available and will work
   const handleCloseModal = () => {
     setSelectedOrder(null);
     setModalOpen(false);
+    refetch(); // This will now work correctly
   };
-
   return (
     <Box sx={{ mt: 4 }}>
       <Typography variant="h4" gutterBottom>

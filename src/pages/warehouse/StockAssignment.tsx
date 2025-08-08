@@ -4,7 +4,7 @@ import WarehouseOrdersManagement from "../../features/warehouse/WarehouseOrdersM
 const StockAssignment = () => {
   return (
     <WarehouseOrdersManagement />
-  );
+    );
 };
 
 export default StockAssignment;

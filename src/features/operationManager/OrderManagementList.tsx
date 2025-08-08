@@ -28,7 +28,7 @@ const OrderManagementList = () => {
     const order: OrderManagementColumnData[] = data?.map(
       (obj: OrderManagementDataDto) => ({
         id: obj.id,
-        orderId: "xyghkl" + obj.id,
+        orderId:   obj.id,
         date: textDate(obj.date),
         totalProduct: obj.estimation.products.length,
         status: obj.orderStatus,

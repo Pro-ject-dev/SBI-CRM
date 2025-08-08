@@ -3,7 +3,7 @@
 // No warehouse or stock assignment logic should be present here.
 
 import { Box, Button, Container, TextField, Chip, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
+import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
 import { Edit, Add, Visibility } from "@mui/icons-material";
 import { DataTable } from "../../components/UI/DataTable";
 import type { GridColDef } from "@mui/x-data-grid";
@@ -107,7 +107,7 @@ const PurchaseOrdersManagement = () => {
       minWidth: 150,
       headerAlign: "center",
       align: "center",
-      renderCell: (params) => params.row.vendor?.name || "N/A",
+      renderCell: (params: { row: { vendor: { name: any; }; }; }) => params.row.vendor?.name || "N/A",
     },
     {
       field: "totalAmount",
@@ -116,7 +116,7 @@ const PurchaseOrdersManagement = () => {
       minWidth: 150,
       headerAlign: "center",
       align: "center",
-      renderCell: (params) => `₹${params.row.totalAmount?.toFixed(2)}`,
+      renderCell: (params: { row: { totalAmount: number; }; }) => `₹${params.row.totalAmount?.toFixed(2)}`,
     },
     {
       field: "status",
@@ -125,10 +125,10 @@ const PurchaseOrdersManagement = () => {
       minWidth: 150,
       headerAlign: "center",
       align: "center",
-      renderCell: (params) => (
+      renderCell: (params: { row: { status: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; }; }) => (
         <Chip
           label={params.row.status}
-          color={getStatusColor(params.row.status)}
+          color={getStatusColor(String(params.row.status ?? ""))}
           size="small"
         />
       ),
@@ -148,7 +148,7 @@ const PurchaseOrdersManagement = () => {
       minWidth: 150,
       headerAlign: "center",
       align: "center",
-      renderCell: (params) => new Date(params.row.requestedDate).toLocaleDateString(),
+      renderCell: (params: { row: { requestedDate: string | number | Date; }; }) => new Date(params.row.requestedDate).toLocaleDateString(),
     },
     {
       field: "actions",

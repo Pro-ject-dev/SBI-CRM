@@ -245,7 +245,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
         status: '1',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        inputMode: 'manual', // Start with manual mode for new materials
+        inputMode: 'manual', 
         selectedRawMaterial: '',
       },
     ]);
@@ -809,6 +809,25 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
               >
                 {isUpdatingRawMaterials ? 'Saving...' : 'Save Raw Materials'}
               </Button>
+              <Button 
+                    variant="contained" 
+                    color="primary" 
+                    onClick={handleSendToWarehouse}
+                    disabled={isUpdatingOrderStatus || !(orderDetails?.rawMaterials && orderDetails.rawMaterials.length > 0)}
+                    sx={{ 
+                      backgroundColor: '#1976d2',
+                      '&:hover': {
+                        backgroundColor: '#1565c0'
+                      }
+                    }}
+                  >
+                    {isUpdatingOrderStatus ? 'Sending...' : 'Send to Warehouse Team'}
+                  </Button>
+                  {(!orderDetails?.rawMaterials || orderDetails.rawMaterials.length === 0) && (
+                    <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+                      At least one raw material is required to send the request to the warehouse team.
+                    </Typography>
+                  )}
             </Paper>
 
             <Typography variant="h6" sx={{ mt: 3 }} gutterBottom>
