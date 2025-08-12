@@ -80,7 +80,7 @@ const VendorsManagement = () => {
   const handleEditRow = (id: string) => {
     console.log("Editing vendor with id:", id);
     console.log("Vendor data:", vendorData);
-    const vendor = vendorData.find(v => v.id == id);
+    const vendor = vendorData.find(v => v.id === Number(id));
     console.log("Found vendor:", vendor);
     if (vendor) {
       setEditingVendor(vendor);

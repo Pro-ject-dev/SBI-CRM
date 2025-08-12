@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Modal,
   Box,
@@ -236,7 +236,10 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
                 id="vendorId"
                 value={vendorId}
                 options={vendorOptions}
-                onChange={(_, value) => setVendorId(value)}
+                onChange={(_, value) => {
+                  if (typeof value === "string") setVendorId(value);
+                  else setVendorId("");
+                }}
                 error={errors.vendorId}
                 fullWidth
               />
@@ -274,7 +277,11 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
                     id={`material-${index}`}
                     value={item.rawMaterialId}
                     options={rawMaterialOptions}
-                    onChange={(_, value) => handleItemChange(index, "rawMaterialId", value)}
+                    onChange={(_, value) => {
+                      if (typeof value === "string") {
+                        handleItemChange(index, "rawMaterialId", value);
+                      }
+                    }}
                     error={errors[`${index}-rawMaterialId`]}
                     fullWidth
                   />

@@ -195,7 +195,7 @@ const ComboMappingManagement = () => {
     comboSelector.filterData.comboId,
   ]);
 
-  const handleDeleteRow = async (ids: Number[]) => {
+  const handleDeleteRow = async (ids: number[]) => {
     try {
       if (ids) {
         const deleteData = await deleteCombo({ ids });

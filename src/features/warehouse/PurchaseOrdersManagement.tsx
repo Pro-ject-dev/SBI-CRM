@@ -1,6 +1,10 @@
-import { Box, Button, Container, TextField, Chip } from "@mui/material";
-import { useEffect, useState } from "react";
-import { Delete, Edit, Add, Visibility, Assignment } from "@mui/icons-material";
+// PurchaseOrdersManagement.tsx
+// This screen is for procurement team to manage purchase orders to vendors only.
+// No warehouse or stock assignment logic should be present here.
+
+import { Box, Button, Container, TextField, Chip, Typography } from "@mui/material";
+import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
+import { Edit, Add, Visibility } from "@mui/icons-material";
 import { DataTable } from "../../components/UI/DataTable";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useDispatch } from "react-redux";
@@ -8,20 +12,16 @@ import type { AppDispatch } from "../../app/store";
 import { addToast } from "../../app/slices/toastSlice";
 import {
   useGetPurchaseOrdersQuery,
-  useDeletePurchaseOrderMutation,
   useUpdatePurchaseOrderStatusMutation,
 } from "../../app/api/purchaseOrdersApi";
 import type { PurchaseOrder } from "../../types/warehouse";
 import PurchaseOrderModal from "../../components/UI/PurchaseOrderModal";
-import StockAssignmentModal from "../../components/UI/StockAssignmentModal";
 
 const PurchaseOrdersManagement = () => {
   const dispatch: AppDispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [purchaseOrderModalOpen, setPurchaseOrderModalOpen] = useState(false);
-  const [stockAssignmentModalOpen, setStockAssignmentModalOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<{ id: string; orderNumber: string } | null>(null);
 
   const {
     data,
@@ -31,7 +31,6 @@ const PurchaseOrdersManagement = () => {
     status: statusFilter,
   });
 
-  const [deletePurchaseOrder] = useDeletePurchaseOrderMutation();
   const [updatePurchaseOrderStatus] = useUpdatePurchaseOrderStatusMutation();
 
   const [orderData, setOrderData] = useState<PurchaseOrder[]>([]);
@@ -45,31 +44,13 @@ const PurchaseOrdersManagement = () => {
     setOrderData(orders);
   }, [data]);
 
-  const handleDeleteRow = async (id: string) => {
-    try {
-      await deletePurchaseOrder({ id });
-      dispatch(
-        addToast({ message: "Purchase Order Deleted Successfully", type: "success" })
-      );
-    } catch (error) {
-      dispatch(
-        addToast({
-          message: "Failed to Delete Purchase Order!",
-          type: "error",
-        })
-      );
-    }
-  };
-
   const handleEditRow = (id: string) => {
-    // For now, just show a message that editing is not implemented
     dispatch(
       addToast({ message: "Edit functionality coming soon", type: "warning" })
     );
   };
 
   const handleViewRow = (id: string) => {
-    // For now, just show a message that view is not implemented
     dispatch(
       addToast({ message: "View functionality coming soon", type: "warning" })
     );
@@ -77,11 +58,6 @@ const PurchaseOrdersManagement = () => {
 
   const handleAddNew = () => {
     setPurchaseOrderModalOpen(true);
-  };
-
-  const handleStockAssignment = (id: string, orderNumber: string) => {
-    setSelectedOrder({ id, orderNumber });
-    setStockAssignmentModalOpen(true);
   };
 
   const handleStatusChange = async (id: string, status: string) => {
@@ -131,7 +107,7 @@ const PurchaseOrdersManagement = () => {
       minWidth: 150,
       headerAlign: "center",
       align: "center",
-      renderCell: (params) => params.row.vendor?.name || "N/A",
+      renderCell: (params: { row: { vendor: { name: any; }; }; }) => params.row.vendor?.name || "N/A",
     },
     {
       field: "totalAmount",
@@ -140,7 +116,7 @@ const PurchaseOrdersManagement = () => {
       minWidth: 150,
       headerAlign: "center",
       align: "center",
-      renderCell: (params) => `₹${params.row.totalAmount?.toFixed(2)}`,
+      renderCell: (params: { row: { totalAmount: number; }; }) => `₹${params.row.totalAmount?.toFixed(2)}`,
     },
     {
       field: "status",
@@ -149,10 +125,10 @@ const PurchaseOrdersManagement = () => {
       minWidth: 150,
       headerAlign: "center",
       align: "center",
-      renderCell: (params) => (
+      renderCell: (params: { row: { status: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; }; }) => (
         <Chip
           label={params.row.status}
-          color={getStatusColor(params.row.status)}
+          color={getStatusColor(String(params.row.status ?? ""))}
           size="small"
         />
       ),
@@ -172,7 +148,7 @@ const PurchaseOrdersManagement = () => {
       minWidth: 150,
       headerAlign: "center",
       align: "center",
-      renderCell: (params) => new Date(params.row.requestedDate).toLocaleDateString(),
+      renderCell: (params: { row: { requestedDate: string | number | Date; }; }) => new Date(params.row.requestedDate).toLocaleDateString(),
     },
     {
       field: "actions",
@@ -185,14 +161,6 @@ const PurchaseOrdersManagement = () => {
       renderCell: (params: any) => (
         <Box sx={{ display: "flex", gap: 0.5 }}>
           <Button
-            color="success"
-            sx={{ p: "4px", minWidth: "auto" }}
-            onClick={() => handleStockAssignment(params.row.id, params.row.orderNumber)}
-            title="Assign Stock"
-          >
-            <Assignment fontSize="small" />
-          </Button>
-          <Button
             color="info"
             sx={{ p: "4px", minWidth: "auto" }}
             onClick={() => handleViewRow(params.row.id)}
@@ -201,24 +169,14 @@ const PurchaseOrdersManagement = () => {
             <Visibility fontSize="small" />
           </Button>
           {params.row.status === "pending" && (
-            <>
-              <Button
-                color="primary"
-                sx={{ p: "4px", minWidth: "auto" }}
-                onClick={() => handleEditRow(params.row.id)}
-                title="Edit Order"
-              >
-                <Edit fontSize="small" />
-              </Button>
-              <Button
-                color="error"
-                sx={{ p: "4px", minWidth: "auto" }}
-                onClick={() => handleDeleteRow(params.row.id)}
-                title="Delete Order"
-              >
-                <Delete fontSize="small" />
-              </Button>
-            </>
+            <Button
+              color="primary"
+              sx={{ p: "4px", minWidth: "auto" }}
+              onClick={() => handleEditRow(params.row.id)}
+              title="Edit Order"
+            >
+              <Edit fontSize="small" />
+            </Button>
           )}
         </Box>
       ),
@@ -227,6 +185,9 @@ const PurchaseOrdersManagement = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Purchase Orders Management (Procurement)
+      </Typography>
       <Box
         sx={{
           display: "flex",
@@ -278,16 +239,6 @@ const PurchaseOrdersManagement = () => {
       <PurchaseOrderModal
         open={purchaseOrderModalOpen}
         onClose={() => setPurchaseOrderModalOpen(false)}
-      />
-      
-      <StockAssignmentModal
-        open={stockAssignmentModalOpen}
-        onClose={() => {
-          setStockAssignmentModalOpen(false);
-          setSelectedOrder(null);
-        }}
-        orderId={selectedOrder?.id}
-        orderNumber={selectedOrder?.orderNumber}
       />
     </Container>
   );

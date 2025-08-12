@@ -154,7 +154,7 @@ const AddonsProductManagement = () => {
     fetchData();
   }, [addonsSelector, data]);
 
-  const handleDeleteRow = async (ids: Number[]) => {
+  const handleDeleteRow = async (ids: number[]) => {
     try {
       if (ids) {
         const deleteData = await deleteAddons({ ids });
@@ -245,7 +245,7 @@ const AddonsProductManagement = () => {
         percentage,
       }: {
         ids: Array<number>;
-        percentage: Number;
+        percentage: number;
       }) => ReturnType<typeof updateProductCost>
     ) => {
       try {

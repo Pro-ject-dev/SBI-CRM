@@ -1,4 +1,3 @@
-import { Box, Button, Container } from "@mui/material";
 import type { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import { DataTable } from "../../components/UI/DataTable";
@@ -11,110 +10,128 @@ import type {
 import OrderStatusChip from "./common/OrderStatusChip";
 import { textDate } from "../../utils/dateConversion";
 import OrderDetailsModal from "../../components/UI/OrderDetailsModal"; // New import
+import Button from "@mui/material/Button";
+import Box from "@mui/material/Box";
+import Container from "@mui/material/Container";
 
 const OrderManagementList = () => {
-  const { data, isLoading, isError } = useGetAllOrdersQuery({});
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [orderData, setOrderData] = useState<OrderManagementColumnData[] | []>(
+    []
+  );
+  const [modalOpen, setModalOpen] = useState(false); // New state
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null); // New state
 
-  const handleView = (id: number) => {
-    const order = data?.orders.find((o: any) => o.id === id);
-    setSelectedOrder(order);
-    setIsModalOpen(true);
+  const { data } = useGetAllOrdersQuery("");
+
+  useEffect(() => {
+    console.log("Order Management API Data:", data);
+    const order: OrderManagementColumnData[] = data?.map(
+      (obj: OrderManagementDataDto) => ({
+        id: obj.id,
+        orderId:   obj.id,
+        date: textDate(obj.date),
+        totalProduct: obj.estimation.products.length,
+        status: obj.orderStatus,
+        deadlineStart: obj.deadlineStart || "-",
+        deadlineEnd: obj.deadlineEnd || "-",
+      })
+    );
+    setOrderData(order);
+  }, [data]);
+
+  const handleViewOrder = (orderId: string) => {
+    setSelectedOrderId(orderId);
+    setModalOpen(true);
   };
 
-  const handleEdit = (id: string) => {
-    console.log("Edit:", id);
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setSelectedOrderId(null);
   };
 
-  const handleDelete = (id: string) => {
-    console.log("Delete:", id);
-  };
-
-  const columns = [
+  const columns: GridColDef[] = [
     {
-      name: "ID",
-      selector: (row: any) => row.id,
-      sortable: true,
+      field: "orderId",
+      headerName: "Order ID",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
     },
     {
-      name: "Lead ID",
-      selector: (row: any) => row.leadId,
-      sortable: true,
+      field: "date",
+      headerName: "Date",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
     },
     {
-      name: "Est ID",
-      selector: (row: any) => row.estId,
-      sortable: true,
+      field: "totalProduct",
+      headerName: "Total Product",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
     },
     {
-      name: "Date",
-      selector: (row: any) => row.date,
-      sortable: true,
+      field: "status",
+      headerName: "Status",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
+      renderCell: (params: GridRenderCellParams) => (
+        <OrderStatusChip {...params} />
+      ),
     },
     {
-      name: "Order Status",
-      cell: (row: any) => <OrderStatusChip status={row.orderStatus} />,
+      field: "deadlineStart",
+      headerName: "Start Date",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
     },
     {
-      name: "Deadline Start",
-      selector: (row: any) => row.deadlineStart,
-      sortable: true,
+      field: "deadlineEnd",
+      headerName: "End Date",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
     },
     {
-      name: "Deadline End",
-      selector: (row: any) => row.deadlineEnd,
-      sortable: true,
-    },
-    {
-      name: "Actions",
-      cell: (row: any) => (
-        <div className="flex space-x-2">
-          <button
-            onClick={() => handleView(row.id)}
-            className="text-blue-500 hover:text-blue-700"
+      field: "actions",
+      headerName: "Actions",
+      sortable: false,
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
+      minWidth: 100,
+      renderCell: (params) => (
+        <Box sx={{ display: "block" }}>
+          <Button
+            color="primary"
+            sx={{ minWidth: 0, padding: 0 }}
+            onClick={() => handleViewOrder(params.row.id)} // Modified onClick
           >
-            View
-          </button>
-          <button
-            onClick={() => handleEdit(row.id)}
-            className="text-green-500 hover:green-700"
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => handleDelete(row.id)}
-            className="text-red-500 hover:text-red-700"
-          >
-            Delete
-          </button>
-        </div>
+            <VisibilityOutlinedIcon />
+          </Button>
+        </Box>
       ),
     },
   ];
 
-  if (isLoading) return <div>Loading...</div>;
-  if (isError) return <div>Error loading orders</div>;
-
   return (
-    <div className="p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Order Management</h1>
-      </div>
-      <DataTable
-        columns={columns}
-        data={data?.orders || []}
-        pagination
-        highlightOnHover
-        striped
+    <Container maxWidth="lg" sx={{ mt: 2 }}>
+      <Box sx={{ width: "100%", mt: 2 }}>
+        <Box sx={{ height: 600, width: "100%" }}>
+          <DataTable rows={orderData} columns={columns} disableColumnMenu />
+        </Box>
+      </Box>
+
+      {/* Order Details Modal */}
+      <OrderDetailsModal
+        open={modalOpen}
+        onClose={handleCloseModal}
+        orderId={selectedOrderId}
       />
-      {isModalOpen && selectedOrder && (
-        <OrderDetailsModal
-          order={selectedOrder}
-          onClose={() => setIsModalOpen(false)}
-        />
-      )}
-    </div>
+    </Container>
   );
 };
 

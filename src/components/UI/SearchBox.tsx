@@ -34,13 +34,13 @@ export const SearchBox: React.FC<SelectBoxProps> = ({
       value={options.find((option) => option.value === value) || null}
       options={options}
       autoHighlight
-      getOptionLabel={(option) => option.label}
+      getOptionLabel={(option: { label: any; }) => option.label}
       onChange={handleChange}
       onInputChange={(
         _event: React.SyntheticEvent<Element, Event>,
         newValue: string
       ) => onSearchValueChange?.(newValue)}
-      renderInput={(params) => {
+      renderInput={(params: { inputProps: any; InputProps: any; }) => {
         return (
           <TextField
             {...params}
@@ -48,19 +48,17 @@ export const SearchBox: React.FC<SelectBoxProps> = ({
             placeholder={placeholder}
             error={error ? true : false}
             helperText={error}
-            slotProps={{
-              htmlInput: {
-                ...params.inputProps,
-                autoComplete: "new-password",
-              },
-              input: {
-                ...params.InputProps,
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchOutlinedIcon sx={{ color: "#1976D2" }} />
-                  </InputAdornment>
-                ),
-              },
+            inputProps={{
+              ...params.inputProps,
+              autoComplete: "new-password",
+            }}
+            InputProps={{
+              ...params.InputProps,
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchOutlinedIcon sx={{ color: "#1976D2" }} />
+                </InputAdornment>
+              ),
             }}
           />
         );

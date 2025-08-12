@@ -4,7 +4,7 @@ export const stockAssignmentApi = createApi({
   reducerPath: "stockAssignmentApi",
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_LIVE_SERVER_BASE_URL,
-    prepareHeaders: (headers) => {
+    prepareHeaders: (headers: { set: (arg0: string, arg1: string) => void; }) => {
       const accessToken = import.meta.env.VITE_AUTHORIZATION_TOKEN;
       if (accessToken) {
         headers.set("authorization", `Bearer ${accessToken}`);
@@ -13,7 +13,7 @@ export const stockAssignmentApi = createApi({
     },
   }),
   tagTypes: ["StockAssignments"],
-  endpoints: (builder) => ({
+  endpoints: (builder: { query: (arg0: { query: ({ orderId, search }?: { orderId?: string; search?: string; }) => string; providesTags: string[]; }) => any; mutation: (arg0: { query: ((payload: any) => { url: string; method: string; body: any; }) | ((payload: any) => { url: string; method: string; body: any; }) | ((payload: any) => { url: string; method: string; body: any; }); invalidatesTags: string[]; }) => any; }) => ({
     getStockAssignments: builder.query({
       query: ({ orderId, search }: { orderId?: string; search?: string } = {}) => {
         const params = new URLSearchParams();
@@ -25,7 +25,7 @@ export const stockAssignmentApi = createApi({
     }),
     assignStock: builder.mutation({
       query: (payload) => ({
-        url: `${localStorage.getItem("api_endpoint")}/assignStock`,
+        url: `${localStorage.getItem("api_endpoint")}/addStockAssignments`,
         method: "POST",
         body: payload,
       }),

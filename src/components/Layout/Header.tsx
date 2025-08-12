@@ -62,7 +62,7 @@ const Header = () => {
               },
             }}
             aria-controls={
-              Boolean(anchorElUser) ? "user-menu-appbar" : undefined
+              anchorElUser ? "user-menu-appbar" : undefined
             }
             aria-haspopup="true"
           >

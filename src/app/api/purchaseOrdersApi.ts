@@ -20,13 +20,13 @@ export const purchaseOrdersApi = createApi({
         const params = new URLSearchParams();
         if (status) params.append('status', status);
         if (search) params.append('search', search);
-        return `${localStorage.getItem("api_endpoint")}/getPurchaseOrders?${params.toString()}`;
+        return `${localStorage.getItem("api_endpoint")}/getAllOrders}`;
       },
       providesTags: ["PurchaseOrders"],
     }),
     getPurchaseOrderById: builder.query({
       query: ({ id }: { id: string }) => {
-        return `${localStorage.getItem("api_endpoint")}/getPurchaseOrderById?id=${id}`;
+        return `${localStorage.getItem("api_endpoint")}/getOrderById?id=${id}`;
       },
       providesTags: ["PurchaseOrders"],
     }),
@@ -39,18 +39,9 @@ export const purchaseOrdersApi = createApi({
       invalidatesTags: ["PurchaseOrders"],
     }),
     updatePurchaseOrderStatus: builder.mutation({
-      query: (payload) => ({
-        url: `${localStorage.getItem("api_endpoint")}/updatePurchaseOrderStatus`,
+      query: ({ id, status }) => ({
+        url: `${localStorage.getItem("api_endpoint")}/updateOrderStatus?id=${id}&status=${status}`,
         method: "PUT",
-        body: payload,
-      }),
-      invalidatesTags: ["PurchaseOrders"],
-    }),
-    deletePurchaseOrder: builder.mutation({
-      query: (payload) => ({
-        url: `${localStorage.getItem("api_endpoint")}/deletePurchaseOrder`,
-        method: "PUT",
-        body: payload,
       }),
       invalidatesTags: ["PurchaseOrders"],
     }),
@@ -62,5 +53,4 @@ export const {
   useGetPurchaseOrderByIdQuery,
   useCreatePurchaseOrderMutation,
   useUpdatePurchaseOrderStatusMutation,
-  useDeletePurchaseOrderMutation,
 } = purchaseOrdersApi;
