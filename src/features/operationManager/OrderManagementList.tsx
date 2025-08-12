@@ -13,123 +13,108 @@ import { textDate } from "../../utils/dateConversion";
 import OrderDetailsModal from "../../components/UI/OrderDetailsModal"; // New import
 
 const OrderManagementList = () => {
-  const [orderData, setOrderData] = useState<OrderManagementColumnData[] | []>(
-    []
-  );
-  const [modalOpen, setModalOpen] = useState(false); // New state
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null); // New state
+  const { data, isLoading, isError } = useGetAllOrdersQuery({});
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
-  const { data } = useGetAllOrdersQuery("");
-
-  useEffect(() => {
-    console.log("Order Management API Data:", data);
-    const order: OrderManagementColumnData[] = data?.map(
-      (obj: OrderManagementDataDto) => ({
-        id: obj.id,
-        orderId: "xyghkl" + obj.id,
-        date: textDate(obj.date),
-        totalProduct: obj.estimation.products.length,
-        status: obj.orderStatus,
-        deadlineStart: obj.deadlineStart || "-",
-        deadlineEnd: obj.deadlineEnd || "-",
-      })
-    );
-    setOrderData(order);
-  }, [data]);
-
-  const handleViewOrder = (orderId: string) => {
-    setSelectedOrderId(orderId);
-    setModalOpen(true);
+  const handleView = (id: number) => {
+    const order = data?.orders.find((o: any) => o.id === id);
+    setSelectedOrder(order);
+    setIsModalOpen(true);
   };
 
-  const handleCloseModal = () => {
-    setModalOpen(false);
-    setSelectedOrderId(null);
+  const handleEdit = (id: string) => {
+    console.log("Edit:", id);
   };
 
-  const columns: GridColDef[] = [
+  const handleDelete = (id: string) => {
+    console.log("Delete:", id);
+  };
+
+  const columns = [
     {
-      field: "orderId",
-      headerName: "Order ID",
-      headerAlign: "center",
-      align: "center",
-      flex: 1,
+      name: "ID",
+      selector: (row: any) => row.id,
+      sortable: true,
     },
     {
-      field: "date",
-      headerName: "Date",
-      headerAlign: "center",
-      align: "center",
-      flex: 1,
+      name: "Lead ID",
+      selector: (row: any) => row.leadId,
+      sortable: true,
     },
     {
-      field: "totalProduct",
-      headerName: "Total Product",
-      headerAlign: "center",
-      align: "center",
-      flex: 1,
+      name: "Est ID",
+      selector: (row: any) => row.estId,
+      sortable: true,
     },
     {
-      field: "status",
-      headerName: "Status",
-      headerAlign: "center",
-      align: "center",
-      flex: 1,
-      renderCell: (params: GridRenderCellParams) => (
-        <OrderStatusChip {...params} />
-      ),
+      name: "Date",
+      selector: (row: any) => row.date,
+      sortable: true,
     },
     {
-      field: "deadlineStart",
-      headerName: "Start Date",
-      headerAlign: "center",
-      align: "center",
-      flex: 1,
+      name: "Order Status",
+      cell: (row: any) => <OrderStatusChip status={row.orderStatus} />,
     },
     {
-      field: "deadlineEnd",
-      headerName: "End Date",
-      headerAlign: "center",
-      align: "center",
-      flex: 1,
+      name: "Deadline Start",
+      selector: (row: any) => row.deadlineStart,
+      sortable: true,
     },
     {
-      field: "actions",
-      headerName: "Actions",
-      sortable: false,
-      headerAlign: "center",
-      align: "center",
-      flex: 1,
-      minWidth: 100,
-      renderCell: (params) => (
-        <Box sx={{ display: "block" }}>
-          <Button
-            color="primary"
-            sx={{ minWidth: 0, padding: 0 }}
-            onClick={() => handleViewOrder(params.row.id)} // Modified onClick
+      name: "Deadline End",
+      selector: (row: any) => row.deadlineEnd,
+      sortable: true,
+    },
+    {
+      name: "Actions",
+      cell: (row: any) => (
+        <div className="flex space-x-2">
+          <button
+            onClick={() => handleView(row.id)}
+            className="text-blue-500 hover:text-blue-700"
           >
-            <VisibilityOutlinedIcon />
-          </Button>
-        </Box>
+            View
+          </button>
+          <button
+            onClick={() => handleEdit(row.id)}
+            className="text-green-500 hover:green-700"
+          >
+            Edit
+          </button>
+          <button
+            onClick={() => handleDelete(row.id)}
+            className="text-red-500 hover:text-red-700"
+          >
+            Delete
+          </button>
+        </div>
       ),
     },
   ];
 
-  return (
-    <Container maxWidth="lg" sx={{ mt: 2 }}>
-      <Box sx={{ width: "100%", mt: 2 }}>
-        <Box sx={{ height: 600, width: "100%" }}>
-          <DataTable rows={orderData} columns={columns} disableColumnMenu />
-        </Box>
-      </Box>
+  if (isLoading) return <div>Loading...</div>;
+  if (isError) return <div>Error loading orders</div>;
 
-      {/* Order Details Modal */}
-      <OrderDetailsModal
-        open={modalOpen}
-        onClose={handleCloseModal}
-        orderId={selectedOrderId}
+  return (
+    <div className="p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Order Management</h1>
+      </div>
+      <DataTable
+        columns={columns}
+        data={data?.orders || []}
+        pagination
+        highlightOnHover
+        striped
       />
-    </Container>
+      {isModalOpen && selectedOrder && (
+        <OrderDetailsModal
+          order={selectedOrder}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
+    </div>
   );
 };
 

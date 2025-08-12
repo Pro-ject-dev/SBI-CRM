@@ -22,6 +22,7 @@ import { useUpdateOrderDeadlineMutation, useGetOrderByIdQuery } from '../../app/
 import { useDispatch } from 'react-redux';
 import { addToast } from '../../app/slices/toastSlice';
 import type { Product, Addon } from '../../types/orderManagement';
+import { toInputDate } from '../../utils/dateConversion';
 
 
 interface OrderDetailsModalProps {
@@ -33,7 +34,7 @@ interface OrderDetailsModalProps {
 interface RawMaterial {
   id: string;
   name: string;
-  size: string;
+  quantity: string;
   isExisting?: boolean;
   existingMaterialId?: string;
 }
@@ -52,10 +53,13 @@ interface OrderDetails {
   estimation: {
     products: Product[];
   };
-  rawMaterials?: RawMaterial[];
-  internalDeadlines?: InternalDeadline[];
-  mainDeadlineStartDate?: string;
-  mainDeadlineEndDate?: string;
+  leads: {
+    name: string;
+  };
+  rawMaterials?: any[];
+  deadline?: any[];
+  deadlineStart?: string;
+  deadlineEnd?: string;
 }
 
 const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, orderId }) => {
@@ -77,36 +81,47 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
 
   const statusOptions = [
     { value: 'pending', label: 'Pending' },
-    { value: 'in-progress', label: 'In Progress' },
+    { value: 'ongoing', label: 'Ongoing' },
     { value: 'completed', label: 'Completed' },
+    { value: 'delayed', label: 'Delayed' },
   ];
 
   useEffect(() => {
     if (open && orderId) {
       setError('');
+    }
+  }, [open, orderId]);
+
+    useEffect(() => {
+    if (orderDetailsData && !isOrderDetailsLoading) {
+      setOrderDetails(orderDetailsData);
+
+      const materials = orderDetailsData.rawMaterials?.map((mat: any) => ({
+        id: mat.id.toString(),
+        name: mat.rawMaterial,
+        quantity: mat.qty,
+        isExisting: true, // Assuming existing materials from the API
+        existingMaterialId: mat.id.toString(),
+      })) || [];
+      setRawMaterials(materials);
+
+      const deadlines = orderDetailsData.deadline?.map((dl: any) => ({
+        id: dl.id.toString(),
+        name: dl.name,
+        startDate: toInputDate(dl.startAt),
+        endDate: toInputDate(dl.endAt),
+        status: dl.status === '1' ? 'completed' : 'pending', // Example mapping
+      })) || [];
+      setInternalDeadlines(deadlines);
+
+      setMainDeadlineStartDate(toInputDate(orderDetailsData.deadlineStart));
+      setMainDeadlineEndDate(toInputDate(orderDetailsData.deadlineEnd));
+    } else if (!isOrderDetailsLoading) {
+      setOrderDetails(null);
       setRawMaterials([]);
       setInternalDeadlines([]);
       setMainDeadlineStartDate('');
       setMainDeadlineEndDate('');
-    }
-  }, [open, orderId]);
-
-  useEffect(() => {
-    if (orderDetailsData && !isOrderDetailsLoading) {
-      setOrderDetails(orderDetailsData);
-      // Assuming raw materials and deadlines are part of orderDetailsData
-      if (orderDetailsData.rawMaterials) {
-        setRawMaterials(orderDetailsData.rawMaterials);
-      }
-      if (orderDetailsData.internalDeadlines) {
-        setInternalDeadlines(orderDetailsData.internalDeadlines);
-      }
-      if (orderDetailsData.mainDeadlineStartDate) {
-        setMainDeadlineStartDate(orderDetailsData.mainDeadlineStartDate);
-      }
-      if (orderDetailsData.mainDeadlineEndDate) {
-        setMainDeadlineEndDate(orderDetailsData.mainDeadlineEndDate);
-      }
     }
   }, [orderDetailsData, isOrderDetailsLoading]);
 
@@ -150,8 +165,8 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
     setInternalDeadlines(prev => [...prev, {
       id: generateId(),
       name: '',
-      startDate: '',
-      endDate: '',
+      startAt: '',
+      endAt: '',
       status: ''
     }]);
   };
@@ -223,18 +238,18 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
     setError('');
 
     for (const deadline of internalDeadlines) {
-      if (!deadline.name.trim() || !deadline.startDate || !deadline.endDate || !deadline.status) {
+      if (!deadline.name.trim() || !deadline.startAt || !deadline.endAt || !deadline.status) {
         setError(`Please fill all fields for deadline: ${deadline.name ||[Unnamed]}`);
         return;
       }
 
       if (!validateDeadline(deadline.startDate, deadline.endDate)) {
-        setError('Deadline "${deadline.name}" must be within the main deadline period.');
+        setError(`Deadline "${deadline.name}" must be within the main deadline period.`);
         return;
       }
 
       if (new Date(deadline.startDate) > new Date(deadline.endDate)) {
-        setError('Deadline "${deadline.name}" start date must be before end date.');
+        setError(`Deadline "${deadline.name}" start date must be before end date.`);
         return;
       }
     }
@@ -254,16 +269,16 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
 
     const validRawMaterials = rawMaterials.filter(rm => rm.name.trim());
     const validDeadlines = internalDeadlines.filter(dl => 
-      dl.name.trim() && dl.startDate && dl.endDate && dl.status
+      dl.name.trim() && dl.startAt && dl.endAt && dl.status
     );
 
     for (const deadline of validDeadlines) {
-      if (!validateDeadline(deadline.startDate, deadline.endDate)) {
+      if (!validateDeadline(deadline.startAt, deadline.endAt)) {
         setError(`Deadline "${deadline.name}" must be within the main deadline period.`);
         return;
       }
 
-      if (new Date(deadline.startDate) > new Date(deadline.endDate)) {
+      if (new Date(deadline.startAt) > new Date(deadline.endAt)) {
         setError(`Deadline "${deadline.name}" start date must be before end date.`);
         return;
       }
@@ -282,7 +297,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
-      <DialogTitle>Order Details - {orderId}</DialogTitle>
+      <DialogTitle>Order Details - {orderDetails?.leadId}</DialogTitle>
       <DialogContent dividers>
         {orderDetails && !isOrderDetailsLoading ? (
           <Box sx={{ p: 2 }}>
@@ -293,7 +308,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
             )}
 
             <Typography variant="h6" gutterBottom>
-              Customer: {orderDetails.customerName}
+              Customer: {orderDetails.leads.name}
             </Typography>
 
             <Typography variant="h6" sx={{ mt: 3 }} gutterBottom>
@@ -337,7 +352,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                             </Grid>
                             <Grid item xs={12} sm={6} md={4}>
                               <Typography variant="body2">Size: {addon.size}</Typography>
-                            </Grid>make 
+                            </Grid>
                             <Grid item xs={12}>
                               <Typography variant="body2">Specification: {addon.specification}</Typography>
                             </Grid>
@@ -392,13 +407,14 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
               Raw Materials:
             </Typography>
             <Paper elevation={1} sx={{ p: 2, mb: 3 }}>
-              {rawMaterials.map((material) => (
+              {rawMaterials.length > 0 ? (
+                rawMaterials.map((material) => (
                 <Box key={material.id} sx={{ mb: 2, borderBottom: '1px solid #eee', pb: 2 }}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={4}>
                       <TextField
                         label="Material Name"
-                        value={material.name}
+                        value={material.rawMaterial}
                         onChange={(e) => updateRawMaterial(material.id, 'name', e.target.value)}
                         fullWidth
                         disabled={material.isExisting}
@@ -406,9 +422,9 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                     </Grid>
                     <Grid item xs={12} sm={3}>
                       <TextField
-                        label="Size"
-                        value={material.size}
-                        onChange={(e) => updateRawMaterial(material.id, 'size', e.target.value)}
+                        label="Quantity"
+                        value={material.quantity}
+                        onChange={(e) => updateRawMaterial(material.id, 'quantity', e.target.value)}
                         fullWidth
                       />
                     </Grid>
@@ -416,9 +432,9 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                       <FormControl fullWidth>
                         <InputLabel>Existing Material</InputLabel>
                         <Select
-                          value={material.existingMaterialId || ''}
+                          value={material.rawMaterial || ''}
                           label="Existing Material"
-                          onChange={(e) => handleExistingRawMaterialSelect(material.id, e.target.value)}
+                          onChange={(e) => handleExistingRawMaterialSelect(material.rawMaterial, e.target.value)}
                         >
                           <MenuItem value="">
                             <em>None</em>
@@ -438,7 +454,10 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                     </Grid>
                   </Grid>
                 </Box>
-              ))}
+              ))
+              ) : (
+                <Typography sx={{ mb: 2 }}>No raw materials to display.</Typography>
+              )}
               <Box display="flex" gap={2} mt={2}>
                 <Button variant="outlined" onClick={addRawMaterial} startIcon={<AddCircleOutline />}>
                   Add Raw Material
@@ -453,7 +472,8 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
               Internal Deadlines:
             </Typography>
             <Paper elevation={1} sx={{ p: 2, mb: 3 }}>
-              {internalDeadlines.map((deadline) => (
+              {internalDeadlines.length > 0 ? (
+                internalDeadlines.map((deadline) => (
                 <Box key={deadline.id} sx={{ mb: 2, borderBottom: '1px solid #eee', pb: 2 }}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3}>
@@ -468,7 +488,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                       <TextField
                         label="Start Date"
                         type="date"
-                        value={deadline.startDate}
+                        value={ toInputDate( deadline.startAt)}
                         onChange={(e) => updateInternalDeadline(deadline.id, 'startDate', e.target.value)}
                         InputLabelProps={{ shrink: true }}
                         fullWidth
@@ -478,7 +498,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                       <TextField
                         label="End Date"
                         type="date"
-                        value={deadline.endDate}
+                        value={toInputDate(deadline.endAt)}
                         onChange={(e) => updateInternalDeadline(deadline.id, 'endDate', e.target.value)}
                         InputLabelProps={{ shrink: true }}
                         fullWidth
@@ -510,7 +530,10 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                     </Grid>
                   </Grid>
                 </Box>
-              ))}
+              ))
+              ) : (
+                <Typography sx={{ mb: 2 }}>No internal deadlines to display.</Typography>
+              )}
               <Box display="flex" gap={2} mt={2}>
                 <Button variant="outlined" onClick={addInternalDeadline} startIcon={<AddCircleOutline />}>
                   Add Internal Deadline

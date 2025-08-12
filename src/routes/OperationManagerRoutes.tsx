@@ -14,8 +14,8 @@ const OperationManagerRoutes = () => (
         </ProtectedRoute>
       }
     >
-      <Route path="dashboard" element={<AdminDashboard />} />
-      <Route path="order-management" element={<OrderManagementList />} />
+      <Route key="dashboard" path="dashboard" element={<AdminDashboard />} />
+      <Route key="order-management" path="order-management" element={<OrderManagementList />} />
     </Route>
   </>
 );
