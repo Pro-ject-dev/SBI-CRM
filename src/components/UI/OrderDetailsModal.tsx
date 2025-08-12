@@ -25,7 +25,7 @@ import {
   DialogContentText
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import Gridd from '@mui/material/Grid';
+
 
 import { useEffect, useState } from 'react';
 import { AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
@@ -372,6 +372,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
         items
       }).unwrap();
       dispatch(addToast({ message: 'Raw materials updated successfully!', type: 'success' }));
+      
     } catch (err) {
       console.error('Failed to update raw materials:', err);
       dispatch(addToast({ message: 'Failed to update raw materials.', type: 'error' }));
@@ -720,7 +721,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                             <MenuItem value="">
                               <em>Select from existing or enter manually</em>
                             </MenuItem>
-                            {(rawMaterialsList?.data || []).map((rm: any) => (
+                            {((rawMaterialsList as { data?: any[] })?.data || []).map((rm: any) => (
                               <MenuItem key={rm.id} value={rm.name}>{rm.name}</MenuItem>
                             ))}
                           </Select>
@@ -815,6 +816,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                     onClick={handleSendToWarehouse}
                     disabled={isUpdatingOrderStatus || !(orderDetails?.rawMaterials && orderDetails.rawMaterials.length > 0)}
                     sx={{ 
+                      mt: 2, ml: 2 ,
                       backgroundColor: '#1976d2',
                       '&:hover': {
                         backgroundColor: '#1565c0'
@@ -823,11 +825,11 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                   >
                     {isUpdatingOrderStatus ? 'Sending...' : 'Send to Warehouse Team'}
                   </Button>
-                  {(!orderDetails?.rawMaterials || orderDetails.rawMaterials.length === 0) && (
+                  {/* {(!orderDetails?.rawMaterials || orderDetails.rawMaterials.length === 0) && (
                     <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
                       At least one raw material is required to send the request to the warehouse team.
                     </Typography>
-                  )}
+                  )} */}
             </Paper>
 
             <Typography variant="h6" sx={{ mt: 3 }} gutterBottom>
