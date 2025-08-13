@@ -1,131 +1,139 @@
-// WarehouseOrdersManagement.tsx
-// This screen is for the warehouse team to manage stock assignment for production orders only.
-// No purchase order or vendor logic should be present here.
+import { useState, useEffect } from "react";
+import { Box, Button, Container, Typography } from "@mui/material";
+import type { GridColDef } from "@mui/x-data-grid";
+import { useGetAllOrdersQuery } from "../../app/api/orderManagementApi";
+import { DataTable } from "../../components/UI/DataTable";
+import OrderStatusChip from "../operationManager/common/OrderStatusChip";
+import { textDate } from "../../utils/dateConversion";
+import StockAssignmentModal from "./StockAssignmentModal"; // The new modal component
+import type {
+  OrderManagementColumnData,
+  OrderManagementDataDto,
+} from "../../types/orderManagement";
 
-import  {SetStateAction, useState } from "react";
-import {
-  useGetAllOrdersQuery,
-} from "../../app/api/orderManagementApi";
-
-import StockAssignmentModal from "../../components/UI/StockAssignmentModal";
-import TableCell from "@mui/material/TableCell";
-import TableHead from "@mui/material/TableHead";
-import TableContainer from "@mui/material/TableContainer";
-import Typography from "@mui/material/Typography";
-import TableRow from "@mui/material/TableRow";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import Chip from "@mui/material/Chip";
-import Button from "@mui/material/Button";
-import Box from "@mui/material/Box";
-import Paper from "@mui/material/Paper";
-
+// Replace with actual user data from your application state or API
+const TEST_USERS = [
+  { id: 1, name: "Warehouse User 1", role: "Warehouse Manager" },
+  { id: 2, name: "Warehouse User 2", role: "Inventory Supervisor" },
+];
 
 const WarehouseOrdersManagement = () => {
-  // Add refetch to the destructured values
-  const { data: orders, isLoading, refetch } = useGetAllOrdersQuery("");
-  
-  type WarehouseOrder = {
-    id: string | number;
-    orderNumber?: string | number;
-    estimation?: { customerName?: string };
-    rawMaterials: { id: string | number; rawMaterial: string; qty: number }[];
-    orderStatus: string;
+  const [orderData, setOrderData] = useState<OrderManagementColumnData[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<{ id: string; number: string } | null>(null);
+  const [assignedBy, setAssignedBy] = useState("");
+
+  const { data: allOrders, isLoading } = useGetAllOrdersQuery("");
+
+  useEffect(() => {
+    if (allOrders) {
+      // Filter for orders that need warehouse attention (e.g., status '1' for "Sent to Warehouse" or '2' for "Issued")
+      const warehouseOrders = allOrders
+        .filter((order: OrderManagementDataDto) => String(order.orderStatus) === "1" || String(order.orderStatus) === "2")
+        .map((obj: OrderManagementDataDto) => ({
+          id: obj.id,
+          orderId: obj.id,
+          date: textDate(obj.date),
+          totalProduct: obj.estimation.products.length,
+          status: obj.orderStatus,
+          deadlineStart: obj.deadlineStart || "-",
+          deadlineEnd: obj.deadlineEnd || "-",
+        }));
+      setOrderData(warehouseOrders);
+    }
+  }, [allOrders]);
+
+  const handleOpenModal = (orderId: string, orderNumber: string) => {
+    setSelectedOrder({ id: orderId, number: orderNumber });
+    setIsModalOpen(true);
   };
 
-  const [selectedOrder, setSelectedOrder] = useState<WarehouseOrder | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
-
-  // Only show orders with orderStatus != 0
-  const warehouseOrders = orders?.filter((order: { orderStatus: string; }) => order.orderStatus !== "0");
-
-  const handleOpenModal = (order: SetStateAction<{ id: string | number; orderNumber?: string | number; estimation?: { customerName?: string; }; rawMaterials: { id: string | number; rawMaterial: string; qty: number; }[]; orderStatus: string; } | null>) => {
-    setSelectedOrder(order);
-    setModalOpen(true);
-  };
-
-  // Now refetch is available and will work
   const handleCloseModal = () => {
+    setIsModalOpen(false);
     setSelectedOrder(null);
-    setModalOpen(false);
-    refetch(); // This will now work correctly
+    setAssignedBy("");
   };
+
+  const columns: GridColDef[] = [
+    {
+      field: "orderId",
+      headerName: "Order ID",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
+    },
+    {
+      field: "date",
+      headerName: "Date",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
+    },
+    {
+      field: "totalProduct",
+      headerName: "Total Products",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
+    },
+    {
+      field: "status",
+      headerName: "Status",
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
+      renderCell: (params) => <OrderStatusChip {...params} />,
+    },
+    {
+      field: "actions",
+      headerName: "Actions",
+      sortable: false,
+      headerAlign: "center",
+      align: "center",
+      flex: 1,
+      minWidth: 150,
+      renderCell: (params) => (
+        <Button
+          variant="contained"
+          color="primary"
+          size="small"
+          onClick={() => handleOpenModal(params.row.id, params.row.orderId)}
+          disabled={String(params.row.status) === "2"} // Disable if already issued
+        >
+          {String(params.row.status) === "2" ? "Issued" : "Assign Stock"}
+        </Button>
+      ),
+    },
+  ];
+
   return (
-    <Box sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Warehouse Orders Management (Stock Assignment)
-      </Typography>
-      {isLoading ? (
-        <Typography>Loading...</Typography>
-      ) : (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Order ID</TableCell>
-                <TableCell>Customer</TableCell>
-                <TableCell>Raw Materials</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Action</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {warehouseOrders?.map((order: WarehouseOrder) => (
-                <TableRow key={String(order.id)}>
-                  <TableCell>{order.id}</TableCell>
-                  <TableCell>{order.estimation?.customerName}</TableCell>
-                  <TableCell>
-                    <ul style={{ margin: 0, paddingLeft: 16 }}>
-                      {order.rawMaterials?.map(mat => (
-                        <li key={mat.id}>
-                          {mat.rawMaterial} - {mat.qty}
-                        </li>
-                      ))}
-                    </ul>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={
-                        order.orderStatus === "1"
-                          ? "Pending"
-                          : order.orderStatus === "2"
-                          ? "Issued"
-                          : "Other"
-                      }
-                      color={
-                        order.orderStatus === "1"
-                          ? "warning"
-                          : order.orderStatus === "2"
-                          ? "success"
-                          : "default"
-                      }
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      size="small"
-                      disabled={order.orderStatus === "2"}
-                      onClick={() => handleOpenModal(order)}
-                    >
-                      {order.orderStatus === "2" ? "Issued" : "Issue Raw Materials"}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+    <>
+      <Container maxWidth="lg" sx={{ mt: 2 }}>
+        <Typography variant="h5" gutterBottom>
+          Warehouse Order Management
+        </Typography>
+        <Box sx={{ height: 600, width: "100%", mt: 2 }}>
+          <DataTable
+            rows={orderData}
+            columns={columns}
+            loading={isLoading}
+            disableColumnMenu
+          />
+        </Box>
+      </Container>
+
+      {selectedOrder && (
+        <StockAssignmentModal
+          open={isModalOpen}
+          onClose={handleCloseModal}
+          orderId={selectedOrder.id}
+          orderNumber={selectedOrder.number}
+          users={TEST_USERS}
+          assignedBy={assignedBy}
+          onAssignedByChange={setAssignedBy}
+        />
       )}
-      {/* Stock Assignment Modal */}
-      <StockAssignmentModal
-        open={modalOpen}
-        onClose={handleCloseModal}
-        orderId={selectedOrder?.id !== undefined ? String(selectedOrder.id) : undefined}
-        orderNumber={selectedOrder?.orderNumber !== undefined ? String(selectedOrder.orderNumber) : undefined}
-      />
-    </Box>
+    </>
   );
 };
 

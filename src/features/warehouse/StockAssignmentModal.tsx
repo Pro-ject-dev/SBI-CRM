@@ -56,22 +56,19 @@ interface StockAssignmentModalProps {
   onClose: () => void;
   orderId?: string;
   orderNumber?: string;
+  users: { id: number; name: string; role: string }[];
+  assignedBy: string;
+  onAssignedByChange: (value: string) => void;
 }
-
-// Test data for assigned by dropdown (replace with API call in future)
-const TEST_USERS = [
-  { id: 1, name: "John Doe", role: "Warehouse Manager" },
-  { id: 2, name: "Jane Smith", role: "Inventory Supervisor" },
-  { id: 3, name: "Mike Johnson", role: "Stock Controller" },
-  { id: 4, name: "Sarah Wilson", role: "Operations Manager" },
-  { id: 5, name: "David Brown", role: "Warehouse Assistant" },
-];
 
 const StockAssignmentModal = ({
   open,
   onClose,
   orderId,
   orderNumber,
+  users,
+  assignedBy,
+  onAssignedByChange,
 }: StockAssignmentModalProps) => {
   const dispatch: AppDispatch = useDispatch();
   const { data: orderDetailsData, isLoading: isOrderLoading } = useGetOrderByIdQuery({ id: orderId! }, { skip: !orderId || !open });
@@ -81,7 +78,6 @@ const StockAssignmentModal = ({
   const [stockData, setStockData] = useState<any[]>([]);
   const [stockLoading, setStockLoading] = useState(false);
   const [notes, setNotes] = useState("");
-  const [assignedBy, setAssignedBy] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Extract raw materials from order data
@@ -152,7 +148,6 @@ const StockAssignmentModal = ({
       setAssignments([]);
       setStockData([]);
       setNotes("");
-      setAssignedBy("");
       setErrors({});
     }
   }, [rawMaterials, open]);
@@ -300,7 +295,6 @@ const StockAssignmentModal = ({
     setAssignments([]);
     setStockData([]);
     setNotes("");
-    setAssignedBy("");
     setErrors({});
     onClose();
   }, [onClose]);
@@ -336,18 +330,10 @@ const StockAssignmentModal = ({
               <Select
                 labelId="assigned-by-label"
                 value={assignedBy}
-                onChange={(e) => {
-                  setAssignedBy(e.target.value);
-                  // Clear error when user selects
-                  if (errors['assignedBy']) {
-                    const newErrors = { ...errors };
-                    delete newErrors['assignedBy'];
-                    setErrors(newErrors);
-                  }
-                }}
+                onChange={(e) => onAssignedByChange(e.target.value)}
                 label="Assigned By *"
               >
-                {TEST_USERS.map((user) => (
+                {users.map((user) => (
                   <MenuItem key={user.id} value={user.name}>
                     <Box>
                       <Typography variant="body2">{user.name}</Typography>

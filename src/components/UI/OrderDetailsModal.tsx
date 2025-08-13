@@ -48,6 +48,7 @@ interface OrderDetailsModalProps {
 }
 
 interface RawMaterial {
+
   id: string;
   rawMaterial: string;
   qty: string;
@@ -354,12 +355,12 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
 
     const validRawMaterials = rawMaterials.filter(rm => rm.rawMaterial.trim() && rm.qty.trim());
     
-    if (validRawMaterials.length === 0) {
-      const errorMsg = 'Please add at least one raw material with name and quantity.';
-      setError(errorMsg);
-      dispatch(addToast({ message: errorMsg, type: 'warning' }));
-      return;
-    }
+    // if (validRawMaterials.length === 0) {
+    //  // const errorMsg = 'Please add at least one raw material with name and quantity.';
+    //  // setError(errorMsg);
+    //  // dispatch(addToast({ message: errorMsg, type: 'warning' }));
+    //   return;
+    // }
 
     const items = validRawMaterials.map(rm => ({
       rawMaterial: rm.rawMaterial,
@@ -372,6 +373,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
         items
       }).unwrap();
       dispatch(addToast({ message: 'Raw materials updated successfully!', type: 'success' }));
+      refetch();
       
     } catch (err) {
       console.error('Failed to update raw materials:', err);
@@ -468,9 +470,36 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
     }
   };
 
-  const handleSendToWarehouse = () => {
-    setShowWarehouseConfirmation(true);
-  };
+ const handleSendToWarehouse = async () => {
+  const savedMaterials = orderDetails?.rawMaterials || [];
+  const currentMaterials = rawMaterials || [];
+  let hasUnsavedChanges = false;
+  if (savedMaterials.length !== currentMaterials.length) {
+    hasUnsavedChanges = true;
+  } else {
+    const hasModifiedItem = currentMaterials.some(currentMaterial => {
+      const savedMaterial = savedMaterials.find(m => m.id === currentMaterial.id);
+
+      if (!savedMaterial || currentMaterial.qty !== savedMaterial.qty) {
+        return true;
+      }
+      return false;
+    });
+
+    if (hasModifiedItem) {
+      hasUnsavedChanges = true;
+    }
+  }
+
+  if (hasUnsavedChanges) {
+    dispatch(addToast({ 
+      message: "Please save changes to raw materials before sending to the warehouse.", 
+      type: "error" 
+    }));
+    return; 
+  }
+  setShowWarehouseConfirmation(true);
+};
 
   const handleConfirmSendToWarehouse = async () => {
     if (!orderId) {
@@ -481,7 +510,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
     try {
       await updateOrderStatus({
         id: orderId,
-        status: '1' // Status 1 for warehouse assignment
+        status: '1'
       }).unwrap();
       
       dispatch(addToast({ message: 'Request sent to warehouse team successfully!', type: 'success' }));
@@ -799,6 +828,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                 startIcon={<AddCircleOutline />}
                 onClick={addRawMaterial}
                 sx={{ mt: 2 }}
+                disabled={orderDetails?.orderStatus === '2'}
               >
                 Add Raw Material
               </Button>
@@ -806,7 +836,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                 variant="contained"
                 onClick={handleRawMaterialUpdate}
                 sx={{ mt: 2, ml: 2 }}
-                disabled={isUpdatingRawMaterials}
+                disabled={isUpdatingRawMaterials || orderDetails?.orderStatus === '2'}
               >
                 {isUpdatingRawMaterials ? 'Saving...' : 'Save Raw Materials'}
               </Button>
@@ -814,7 +844,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                     variant="contained" 
                     color="primary" 
                     onClick={handleSendToWarehouse}
-                    disabled={isUpdatingOrderStatus || !(orderDetails?.rawMaterials && orderDetails.rawMaterials.length > 0)}
+                    disabled={isUpdatingOrderStatus || !(orderDetails?.rawMaterials && orderDetails.rawMaterials.length > 0) || orderDetails?.orderStatus === '2'}
                     sx={{ 
                       mt: 2, ml: 2 ,
                       backgroundColor: '#1976d2',
@@ -922,20 +952,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                     Send this order to the warehouse team for raw material assignment and processing.
                   </Typography>
-                  <Button 
-                    variant="contained" 
-                    color="primary" 
-                    onClick={handleSendToWarehouse}
-                    disabled={isUpdatingOrderStatus || !(orderDetails?.rawMaterials && orderDetails.rawMaterials.length > 0)}
-                    sx={{ 
-                      backgroundColor: '#1976d2',
-                      '&:hover': {
-                        backgroundColor: '#1565c0'
-                      }
-                    }}
-                  >
-                    {isUpdatingOrderStatus ? 'Sending...' : 'Send to Warehouse Team'}
-                  </Button>
+                
                   {(!orderDetails?.rawMaterials || orderDetails.rawMaterials.length === 0) && (
                     <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
                       At least one raw material is required to send the request to the warehouse team.
@@ -961,6 +978,27 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                     />
                     <Typography variant="body2" color="text.secondary">
                       This order has been sent to the warehouse team for processing.
+                    </Typography>
+                  </Box>
+                </Paper>
+              </>
+            )}
+
+            {String(orderDetails?.orderStatus) === "2" && (
+              <>
+                <Typography variant="h6" sx={{ mt: 3 }} gutterBottom>
+                  Warehouse Status:
+                </Typography>
+                <Paper elevation={1} sx={{ p: 2, mb: 3 }}>
+                  <Box display="flex" alignItems="center" gap={2}>
+                    <Chip 
+                      label="All Materials are issued" 
+                      color="success" 
+                      variant="filled"
+                      sx={{ fontWeight: 'bold' }}
+                    />
+                    <Typography variant="body2" color="text.secondary">
+                      All materials for this order have been issued by the warehouse team.
                     </Typography>
                   </Box>
                 </Paper>
@@ -1018,4 +1056,6 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
 };
 
 export default OrderDetailsModal;
+
+
  

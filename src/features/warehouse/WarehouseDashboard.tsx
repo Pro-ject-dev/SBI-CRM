@@ -13,9 +13,9 @@ import Chip from "@mui/material/Chip";
 
 
 const WarehouseDashboard = () => {
-  const { data: alertsData } = useGetLowStockAlertsQuery({});
+  const { data: alertsData } = useGetLowStockAlertsQuery();
   const { data: ordersData } = useGetPurchaseOrdersQuery({ status: "pending" });
-  const { data: materialsData } = useGetRawMaterialsQuery({});
+  const { data: materialsData } = useGetRawMaterialsQuery();
 
   const alerts = alertsData?.data || [];
   const pendingOrders = ordersData?.data || [];
