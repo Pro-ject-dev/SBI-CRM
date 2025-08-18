@@ -14,25 +14,32 @@ export const purchaseOrdersApi = createApi({
   }),
   tagTypes: ["PurchaseOrders"],
   endpoints: (builder) => ({
-    getPurchaseOrders: builder.query({
+    getPurchaseOrders: builder.query<any, { status?: string; search?: string } | void>({
       query: (args?: { status?: string; search?: string }) => {
         const { status, search } = args || {};
         const params = new URLSearchParams();
-        if (status) params.append('status', status);
-        if (search) params.append('search', search);
-        return `${localStorage.getItem("api_endpoint")}/getAllOrders}`;
+        if (status) params.append("status", status);
+        if (search) params.append("search", search);
+        const qs = params.toString();
+        return `${localStorage.getItem("api_endpoint")}/getPurchaseOrders${qs ? `?${qs}` : ""}`;
+      },
+      transformResponse: (response: any) => {
+        console.log("API transformResponse received:", response);
+        // Return the response directly - don't wrap it in data property
+        return response;
       },
       providesTags: ["PurchaseOrders"],
     }),
     getPurchaseOrderById: builder.query({
       query: ({ id }: { id: string }) => {
-        return `${localStorage.getItem("api_endpoint")}/getOrderById?id=${id}`;
+        return `${localStorage.getItem("api_endpoint")}/getPurchaseOrderById?id=${id}`;
       },
       providesTags: ["PurchaseOrders"],
     }),
     createPurchaseOrder: builder.mutation({
       query: (payload) => ({
-        url: `${localStorage.getItem("api_endpoint")}/createPurchaseOrder`,
+        // Warehouse Manager creates POs
+        url: `${localStorage.getItem("api_endpoint")}/addPurchaseOrders`,
         method: "POST",
         body: payload,
       }),
@@ -40,7 +47,8 @@ export const purchaseOrdersApi = createApi({
     }),
     updatePurchaseOrderStatus: builder.mutation({
       query: ({ id, status }) => ({
-        url: `${localStorage.getItem("api_endpoint")}/updateOrderStatus?id=${id}&status=${status}`,
+        // Endpoint to be confirmed; wiring kept for UI. Adjust when backend provides.
+        url: `${localStorage.getItem("api_endpoint")}/updatePurchaseOrderStatus?id=${id}&status=${status}`,
         method: "PUT",
       }),
       invalidatesTags: ["PurchaseOrders"],

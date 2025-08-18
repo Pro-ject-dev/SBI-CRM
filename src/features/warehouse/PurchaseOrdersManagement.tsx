@@ -16,16 +16,22 @@ import {
 } from "../../app/api/purchaseOrdersApi";
 import type { PurchaseOrder } from "../../types/warehouse";
 import PurchaseOrderModal from "../../components/UI/PurchaseOrderModal";
+import PurchaseOrderDetailsModal from "../../components/UI/PurchaseOrderDetailsModal";
 
 const PurchaseOrdersManagement = () => {
   const dispatch: AppDispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [purchaseOrderModalOpen, setPurchaseOrderModalOpen] = useState(false);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedPurchaseOrder, setSelectedPurchaseOrder] = useState<any>(null);
 
   const {
     data,
     refetch,
+    isLoading,
+    isFetching,
+    error,
   } = useGetPurchaseOrdersQuery({
     search: searchTerm,
     status: statusFilter,
@@ -33,16 +39,111 @@ const PurchaseOrdersManagement = () => {
 
   const [updatePurchaseOrderStatus] = useUpdatePurchaseOrderStatusMutation();
 
-  const [orderData, setOrderData] = useState<PurchaseOrder[]>([]);
+  const [orderData, setOrderData] = useState<any[]>([]);
 
   useEffect(() => {
     refetch();
   }, [searchTerm, statusFilter]);
 
   useEffect(() => {
-    const orders = data?.data || [];
-    setOrderData(orders);
+    try {
+      console.log("Raw API response:", data);
+      console.log("Data type:", typeof data);
+      console.log("Is array:", Array.isArray(data));
+      
+      const raw: any = data as any;
+      // Handle both direct array and wrapped in data property
+      const baseArray: any[] = Array.isArray(raw) ? raw : (raw?.data ?? []);
+      
+      console.log("Base array:", baseArray);
+      console.log("Base array length:", baseArray.length);
+      
+      if (!Array.isArray(baseArray)) {
+        console.warn("API response is not an array:", baseArray);
+        setOrderData([]);
+        return;
+      }
+
+      const normalized = baseArray.map((row: any, index: number) => {
+        try {
+          console.log(`Processing row ${index}:`, row);
+          console.log(`Row requestedBy:`, row.requestedBy);
+          
+          const items = Array.isArray(row.items) ? row.items : [];
+          const computedTotal = items.reduce((s: number, it: any) => {
+            const qty = Number(it.quantity || 0);
+            const price = Number(it.unitPrice || it.unit_price || 0);
+            const itemTotal = Number(it.totalPrice || it.total_price || 0);
+            return s + (itemTotal || (qty * price));
+          }, 0);
+          
+          const totalAmountRaw = row.totalAmount ?? row.total_amount ?? computedTotal;
+          const totalAmount = Number(totalAmountRaw || 0);
+          const status = String(row.orderStatus ?? row.order_status ?? row.status ?? "pending");
+          const orderNumber = row.orderNumber ?? row.orderId ?? row.order_id ?? `Order-${index}`;
+          const vendor = row.vendor ?? (row.vendorId ? { name: `Vendor #${row.vendorId}` } : { name: "N/A" });
+          const requestedBy = row.requestedBy ?? row.requested_by ?? "N/A";
+          const requestedDate = row.requestedDate ?? row.requested_date ?? row.createdAt ?? row.created_at ?? new Date().toISOString();
+          const id = row.id ?? row.orderId ?? row.order_id ?? `row-${index}`;
+          
+          console.log(`Row ${index} requestedBy final:`, requestedBy);
+          
+          return {
+            id,
+            orderNumber,
+            totalAmount,
+            status,
+            vendor,
+            requestedDate,
+            requestedBy,
+            notes: row.notes ?? "",
+            // Add missing fields to match PurchaseOrder type
+            vendorId: row.vendorId,
+            items: items,
+            createdAt: row.createdAt,
+            updatedAt: row.updatedAt,
+          };
+        } catch (err) {
+          console.error("Error processing row:", row, err);
+          return {
+            id: `error-${index}`,
+            orderNumber: `Error-${index}`,
+            totalAmount: 0,
+            status: "error",
+            vendor: { name: "Error" },
+            requestedDate: new Date().toISOString(),
+            requestedBy: "Error",
+            notes: "",
+            vendorId: "",
+            items: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+        }
+      });
+
+      console.log("Normalized data:", normalized);
+      console.log("First row details:", normalized[0]);
+      console.log("First row orderNumber:", normalized[0]?.orderNumber);
+      console.log("First row requestedBy:", normalized[0]?.requestedBy);
+      setOrderData(normalized);
+    } catch (err) {
+      console.error("Error processing purchase orders:", err);
+      setOrderData([]);
+    }
   }, [data]);
+
+  useEffect(() => {
+    if (!purchaseOrderModalOpen) {
+      refetch();
+    }
+  }, [purchaseOrderModalOpen]);
+
+  useEffect(() => {
+    if (!detailsModalOpen) {
+      refetch();
+    }
+  }, [detailsModalOpen]);
 
   const handleEditRow = (id: string) => {
     dispatch(
@@ -51,9 +152,11 @@ const PurchaseOrdersManagement = () => {
   };
 
   const handleViewRow = (id: string) => {
-    dispatch(
-      addToast({ message: "View functionality coming soon", type: "warning" })
-    );
+    const purchaseOrder = orderData.find((order: any) => order.id === id);
+    if (purchaseOrder) {
+      setSelectedPurchaseOrder(purchaseOrder);
+      setDetailsModalOpen(true);
+    }
   };
 
   const handleAddNew = () => {
@@ -77,29 +180,45 @@ const PurchaseOrdersManagement = () => {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "warning";
-      case "approved":
-        return "success";
-      case "rejected":
-        return "error";
-      case "completed":
-        return "info";
-      default:
-        return "default";
+    try {
+      const s = String(status || "").toLowerCase();
+      switch (s) {
+        case "pending":
+          return "warning";
+        case "approved":
+          return "success";
+        case "rejected":
+          return "error";
+        case "completed":
+          return "info";
+        default:
+          return "default";
+      }
+    } catch {
+      return "default";
     }
   };
 
   const columns: GridColDef[] = [
-    {
-      field: "orderNumber",
-      headerName: "Order Number",
+   {
+      field: "requestedDate",
+      headerName: "Requested Date",
       flex: 1,
       minWidth: 150,
       headerAlign: "center",
       align: "center",
+      renderCell: (params: any) => {
+        try {
+          const dateStr = params?.row?.requestedDate;
+          if (!dateStr) return "-";
+          const d = new Date(dateStr);
+          return isNaN(d.getTime()) ? "-" : d.toLocaleDateString();
+        } catch {
+          return "-";
+        }
+      },
     },
+   
     {
       field: "vendor",
       headerName: "Vendor",
@@ -107,7 +226,16 @@ const PurchaseOrdersManagement = () => {
       minWidth: 150,
       headerAlign: "center",
       align: "center",
-      renderCell: (params: { row: { vendor: { name: any; }; }; }) => params.row.vendor?.name || "N/A",
+      renderCell: (params: any) => {
+        try {
+          const v = params?.row?.vendor;
+          if (!v) return "N/A";
+          if (typeof v === "string") return v || "N/A";
+          return v?.name || "N/A";
+        } catch {
+          return "N/A";
+        }
+      },
     },
     {
       field: "totalAmount",
@@ -116,7 +244,14 @@ const PurchaseOrdersManagement = () => {
       minWidth: 150,
       headerAlign: "center",
       align: "center",
-      renderCell: (params: { row: { totalAmount: number; }; }) => `₹${params.row.totalAmount?.toFixed(2)}`,
+      renderCell: (params: any) => {
+        try {
+          const amount = Number(params?.row?.totalAmount ?? 0);
+          return `₹${amount.toFixed(2)}`;
+        } catch {
+          return "₹0.00";
+        }
+      },
     },
     {
       field: "status",
@@ -125,13 +260,22 @@ const PurchaseOrdersManagement = () => {
       minWidth: 150,
       headerAlign: "center",
       align: "center",
-      renderCell: (params: { row: { status: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; }; }) => (
-        <Chip
-          label={params.row.status}
-          color={getStatusColor(String(params.row.status ?? ""))}
-          size="small"
-        />
-      ),
+      renderCell: (params: any) => {
+        try {
+          // Use the normalized status field that we set in the data processing
+          const status = String(params?.row?.status ?? "");
+          const color = getStatusColor(status);
+          return (
+            <Chip
+              label={status || "pending"}
+              color={color as any}
+              size="small"
+            />
+          );
+        } catch {
+          return <Chip label="N/A" color="default" size="small" />;
+        }
+      },
     },
     {
       field: "requestedBy",
@@ -140,16 +284,18 @@ const PurchaseOrdersManagement = () => {
       minWidth: 150,
       headerAlign: "center",
       align: "center",
+      renderCell: (params: any) => {
+        try {
+          console.log("RequestedBy renderCell params:", params);
+          const value = params?.row?.requestedBy || "N/A";
+          console.log("RequestedBy renderCell result:", value);
+          return value;
+        } catch {
+          return "N/A";
+        }
+      },
     },
-    {
-      field: "requestedDate",
-      headerName: "Requested Date",
-      flex: 1,
-      minWidth: 150,
-      headerAlign: "center",
-      align: "center",
-      renderCell: (params: { row: { requestedDate: string | number | Date; }; }) => new Date(params.row.requestedDate).toLocaleDateString(),
-    },
+   
     {
       field: "actions",
       headerName: "Actions",
@@ -158,30 +304,51 @@ const PurchaseOrdersManagement = () => {
       minWidth: 100,
       headerAlign: "center",
       align: "center",
-      renderCell: (params: any) => (
-        <Box sx={{ display: "flex", gap: 0.5 }}>
-          <Button
-            color="info"
-            sx={{ p: "4px", minWidth: "auto" }}
-            onClick={() => handleViewRow(params.row.id)}
-            title="View Details"
-          >
-            <Visibility fontSize="small" />
-          </Button>
-          {params.row.status === "pending" && (
-            <Button
-              color="primary"
-              sx={{ p: "4px", minWidth: "auto" }}
-              onClick={() => handleEditRow(params.row.id)}
-              title="Edit Order"
-            >
-              <Edit fontSize="small" />
-            </Button>
-          )}
-        </Box>
-      ),
+      renderCell: (params: any) => {
+        try {
+          const id = params?.row?.id;
+          if (!id) return null;
+          return (
+            <Box sx={{ display: "flex", gap: 0.5 }}>
+              <Button
+                color="info"
+                sx={{ p: "4px", minWidth: "auto" }}
+                onClick={() => handleViewRow(id)}
+                title="View Details"
+              >
+                <Visibility fontSize="small" />
+              </Button>
+              {params?.row?.status === "pending" && (
+                <Button
+                  color="primary"
+                  sx={{ p: "4px", minWidth: "auto" }}
+                  onClick={() => handleEditRow(id)}
+                  title="Edit Order"
+                >
+                  <Edit fontSize="small" />
+                </Button>
+              )}
+            </Box>
+          );
+        } catch {
+          return null;
+        }
+      },
     },
   ];
+
+  if (error) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Typography variant="h4" gutterBottom>
+          Purchase Orders Management (Procurement)
+        </Typography>
+        <Typography color="error" align="center">
+          Error loading purchase orders: {String(error)}
+        </Typography>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -231,7 +398,14 @@ const PurchaseOrdersManagement = () => {
 
       <Box sx={{ width: "100%", marginTop: "8px" }}>
         <Box sx={{ height: 600 }}>
-          <DataTable rows={orderData} columns={columns} disableColumnMenu />
+          <DataTable
+            rows={orderData}
+            columns={columns}
+            disableColumnMenu
+            disableRowSelectionOnClick
+            loading={isLoading || isFetching}
+            getRowId={(row: any) => row.id ?? row.orderId ?? row.orderNumber ?? `${row.vendorId}-${row.requestedDate}`}
+          />
         </Box>
       </Box>
 
@@ -239,6 +413,11 @@ const PurchaseOrdersManagement = () => {
       <PurchaseOrderModal
         open={purchaseOrderModalOpen}
         onClose={() => setPurchaseOrderModalOpen(false)}
+      />
+      <PurchaseOrderDetailsModal
+        open={detailsModalOpen}
+        onClose={() => setDetailsModalOpen(false)}
+        purchaseOrder={selectedPurchaseOrder}
       />
     </Container>
   );

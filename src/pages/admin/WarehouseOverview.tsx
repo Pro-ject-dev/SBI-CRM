@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Inventory, People, ShoppingCart, Assignment } from "@mui/icons-material";
+import { Inventory, People, ShoppingCart, Assignment, FactCheck } from "@mui/icons-material";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
@@ -32,6 +32,13 @@ const WarehouseOverview = () => {
       icon: ShoppingCart,
       path: "/warehouse/purchase-orders",
       color: "success",
+    },
+    {
+      title: "PO Approval",
+      description: "Review and approve purchase orders",
+      icon: FactCheck,
+      path: "/admin/purchase-orders",
+      color: "info",
     },
     {
       title: "Stock Assignment",

@@ -9,6 +9,7 @@ import {
   IconButton,
   Divider,
   Chip,
+  MenuItem,
 } from "@mui/material";
 import { Close, Add, Delete } from "@mui/icons-material";
 import { SelectBox } from "./SelectBox";
@@ -18,6 +19,7 @@ import { useCreatePurchaseOrderMutation } from "../../app/api/purchaseOrdersApi"
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../app/store";
 import { addToast } from "../../app/slices/toastSlice";
+import { DatePickerField } from "./DatePickerField";
 
 const modalStyle = {
   position: "absolute" as const,
@@ -39,6 +41,7 @@ interface PurchaseOrderItem {
   quantity: string;
   unitPrice: string;
   totalPrice: number;
+  status?: string;
 }
 
 interface PurchaseOrderModalProps {
@@ -63,9 +66,14 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
       quantity: "",
       unitPrice: "",
       totalPrice: 0,
+      status: "1",
     },
   ]);
   const [notes, setNotes] = useState("");
+  const [requestedBy, setRequestedBy] = useState("");
+  const [requestedDate, setRequestedDate] = useState<string>("");
+  const [orderStatus, setOrderStatus] = useState<string>("Pending");
+  const [status, setStatus] = useState<string>("1");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const vendorOptions = vendorsData?.data?.map((vendor: any) => ({
@@ -87,6 +95,7 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
         quantity: "",
         unitPrice: "",
         totalPrice: 0,
+        status: "1",
       },
     ]);
   };
@@ -145,6 +154,12 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
     if (!vendorId) {
       newErrors.vendorId = "Vendor is required";
     }
+    if (!requestedBy) {
+      newErrors.requestedBy = "Requested By is required";
+    }
+    if (!requestedDate) {
+      newErrors.requestedDate = "Requested Date is required";
+    }
 
     items.forEach((item, index) => {
       if (!item.rawMaterialId) {
@@ -166,17 +181,26 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
     if (!validateForm()) return;
 
     try {
-      const orderData = {
-        vendorId: Number(vendorId),
+      const payload = {
+        orderData: {
+          vendorId,
+          totalAmount: String(getTotalAmount()),
+          orderStatus,
+          requestedBy,
+          requestedDate,
+          status,
+          notes,
+        },
         items: items.map((item) => ({
-          rawMaterialId: Number(item.rawMaterialId),
-          quantity: Number(item.quantity),
-          unitPrice: Number(item.unitPrice),
+          rawMaterialId: item.rawMaterialId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          totalPrice: String(item.totalPrice),
+          status: item.status ?? "1",
         })),
-        notes,
       };
 
-      await createPurchaseOrder(orderData);
+      await createPurchaseOrder(payload).unwrap();
       dispatch(
         addToast({ message: "Purchase order created successfully", type: "success" })
       );
@@ -197,9 +221,14 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
         quantity: "",
         unitPrice: "",
         totalPrice: 0,
+        status: "1",
       },
     ]);
     setNotes("");
+    setRequestedBy("");
+    setRequestedDate("");
+    setOrderStatus("Pending");
+    setStatus("1");
     setErrors({});
     onClose();
   };
@@ -228,9 +257,9 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
         <Box sx={{ p: 3 }}>
           {/* Vendor Selection */}
           <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid item xs={12}>
+            <Grid item xs={12} md={6}>
               <Typography variant="subtitle1" gutterBottom>
-                Vendor Information
+                Vendor
               </Typography>
               <SelectBox
                 id="vendorId"
@@ -243,6 +272,61 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
                 error={errors.vendorId}
                 fullWidth
               />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Typography variant="subtitle1" gutterBottom>
+                Requested Date
+              </Typography>
+              <DatePickerField
+                label="requestedDate"
+                value={requestedDate}
+                onChange={(_, v) => setRequestedDate(v)}
+              />
+              {errors.requestedDate && (
+                <Typography variant="caption" color="error">{errors.requestedDate}</Typography>
+              )}
+            </Grid>
+          </Grid>
+
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="Requested By"
+                size="small"
+                fullWidth
+                value={requestedBy}
+                onChange={(e) => setRequestedBy(e.target.value)}
+                error={!!errors.requestedBy}
+                helperText={errors.requestedBy}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="Order Status"
+                size="small"
+                fullWidth
+                select
+                value={orderStatus}
+                onChange={(e) => setOrderStatus(e.target.value)}
+              >
+                <MenuItem value="Pending">Pending</MenuItem>
+                <MenuItem value="Approved" disabled>Approved</MenuItem>
+                <MenuItem value="Rejected" disabled>Rejected</MenuItem>
+                <MenuItem value="Completed" disabled>Completed</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                label="Active Status"
+                size="small"
+                fullWidth
+                select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <MenuItem value="1">Active</MenuItem>
+                <MenuItem value="0">Inactive</MenuItem>
+              </TextField>
             </Grid>
           </Grid>
 
