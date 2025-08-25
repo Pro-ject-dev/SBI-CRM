@@ -9,12 +9,18 @@ import {
   useGetPurchaseOrdersQuery,
   useUpdatePurchaseOrderStatusMutation,
 } from "../../app/api/purchaseOrdersApi";
+import PurchaseOrderDetailsModal from "../../components/UI/PurchaseOrderDetailsModal"; // Import the modal
+import { Visibility } from "@mui/icons-material"; // Import Visibility icon
 
 const PurchaseOrdersApproval = () => {
   const dispatch: AppDispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
-  const { data, refetch, isLoading, isFetching, error } = useGetPurchaseOrdersQuery({ search: searchTerm });
+  const { data, refetch, isLoading, isFetching, error } = useGetPurchaseOrdersQuery({ search: searchTerm, status: "pending" });
   const [updateStatus] = useUpdatePurchaseOrderStatusMutation();
+
+  // State for details modal
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedPurchaseOrder, setSelectedPurchaseOrder] = useState<any>(null);
 
   useEffect(() => {
     refetch();
@@ -69,21 +75,34 @@ const PurchaseOrdersApproval = () => {
     }
   };
 
+  // Handler to open details modal
+  const handleViewRow = (id: string) => {
+    const purchaseOrder = rows.find((order: any) => order.id === id);
+    if (purchaseOrder) {
+      setSelectedPurchaseOrder(purchaseOrder);
+      setDetailsModalOpen(true);
+    }
+  };
+
   const columns: GridColDef[] = [
-    { 
-      field: "orderNumber", 
-      headerName: "Order #", 
-      flex: 1, 
-      minWidth: 140, 
-      align: "center", 
+    
+    {
+      field: "requestedDate",
+      headerName: "Requested Date",
+      flex: 1,
+      minWidth: 150,
       headerAlign: "center",
-      valueGetter: (params: any) => {
+      align: "center",
+      renderCell: (params: any) => {
         try {
-          return params?.row?.orderNumber || "N/A";
+          const dateStr = params?.row?.requestedDate;
+          if (!dateStr) return "-";
+          const d = new Date(dateStr);
+          return isNaN(d.getTime()) ? "-" : d.toLocaleDateString();
         } catch {
-          return "N/A";
+          return "-";
         }
-      }
+      },
     },
     { 
       field: "vendor", 
@@ -156,12 +175,25 @@ const PurchaseOrdersApproval = () => {
           if (!id) return null;
           return (
             <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-              <Button size="small" variant="outlined" color="success" onClick={() => handleChange(id, "approved")}>
-                Approve
+              <Button
+                size="small"
+                variant="outlined"
+                color="info"
+                onClick={() => handleViewRow(id)}
+                title="View Details"
+              >
+                <Visibility fontSize="small" />
               </Button>
-              <Button size="small" variant="outlined" color="error" onClick={() => handleChange(id, "rejected")}>
-                Reject
-              </Button>
+              {p?.row?.status === "pending" && (
+                <>
+                  <Button size="small" variant="outlined" color="success" onClick={() => handleChange(id, "approved")}>
+                    Approve
+                  </Button>
+                  <Button size="small" variant="outlined" color="error" onClick={() => handleChange(id, "rejected")}>
+                    Reject
+                  </Button>
+                </>
+              )}
             </Box>
           );
         } catch {
@@ -173,19 +205,34 @@ const PurchaseOrdersApproval = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
+      <Typography
+        variant="h4"
+        gutterBottom
+        sx={{
+          fontSize: { xs: "1.5rem", md: "2rem" },
+        }}
+      >
         Purchase Orders Approval
       </Typography>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" },
+          justifyContent: "space-between",
+          alignItems: { xs: "stretch", md: "center" },
+          mb: 3,
+          gap: 2,
+        }}
+      >
         <TextField
           size="small"
           placeholder="Search orders..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{ width: 300 }}
+          sx={{ flexGrow: 1, maxWidth: { md: 400 } }}
         />
       </Box>
-      <Box sx={{ height: 600 }}>
+      <Box sx={{ height: 600, overflowX: "auto" }}>
         {error ? (
           <Typography color="error" align="center">
             Error loading purchase orders: {String(error)}
@@ -200,6 +247,13 @@ const PurchaseOrdersApproval = () => {
           />
         )}
       </Box>
+
+      {/* Purchase Order Details Modal */}
+      <PurchaseOrderDetailsModal
+        open={detailsModalOpen}
+        onClose={() => setDetailsModalOpen(false)}
+        purchaseOrder={selectedPurchaseOrder}
+      />
     </Container>
   );
 };

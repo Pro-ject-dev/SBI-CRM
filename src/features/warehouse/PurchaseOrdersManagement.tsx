@@ -14,6 +14,9 @@ import {
   useGetPurchaseOrdersQuery,
   useUpdatePurchaseOrderStatusMutation,
 } from "../../app/api/purchaseOrdersApi";
+
+import { useGetVendorsQuery } from "../../app/api/vendorsApi";
+import { useGetRawMaterialsQuery } from "../../app/api/rawMaterialsApi";
 import type { PurchaseOrder } from "../../types/warehouse";
 import PurchaseOrderModal from "../../components/UI/PurchaseOrderModal";
 import PurchaseOrderDetailsModal from "../../components/UI/PurchaseOrderDetailsModal";
@@ -39,6 +42,8 @@ const PurchaseOrdersManagement = () => {
 
   const [updatePurchaseOrderStatus] = useUpdatePurchaseOrderStatusMutation();
 
+  const { data: vendorsData } = useGetVendorsQuery({});
+  const { data: rawMaterialsData } = useGetRawMaterialsQuery({});
   const [orderData, setOrderData] = useState<any[]>([]);
 
   useEffect(() => {
@@ -47,91 +52,93 @@ const PurchaseOrdersManagement = () => {
 
   useEffect(() => {
     try {
-      console.log("Raw API response:", data);
-      console.log("Data type:", typeof data);
-      console.log("Is array:", Array.isArray(data));
-      
+
+      console.log("--- Debugging PurchaseOrdersManagement ---");
+      console.log("Purchase orders data:", data);
+      console.log("Vendors data:", vendorsData);
+      console.log("Raw materials data:", rawMaterialsData);
+
       const raw: any = data as any;
-      // Handle both direct array and wrapped in data property
-      const baseArray: any[] = Array.isArray(raw) ? raw : (raw?.data ?? []);
-      
-      console.log("Base array:", baseArray);
-      console.log("Base array length:", baseArray.length);
-      
-      if (!Array.isArray(baseArray)) {
-        console.warn("API response is not an array:", baseArray);
+      const baseArray: any[] = Array.isArray(raw) ? raw : raw?.data ?? [];
+
+      if (!Array.isArray(baseArray) || baseArray.length === 0) {
         setOrderData([]);
+        console.log("No purchase orders to process.");
         return;
       }
+
+      const vendorsMap = new Map(
+        vendorsData?.data?.map((v: any) => [v.id.toString(), v.name])
+      );
+      const rawMaterialsMap = new Map(
+        rawMaterialsData?.data?.map((m: any) => [m.id.toString(), m.name])
+      );
+
+      console.log("Vendors map:", vendorsMap);
+      console.log("Raw materials map:", rawMaterialsMap);
 
       const normalized = baseArray.map((row: any, index: number) => {
         try {
           console.log(`Processing row ${index}:`, row);
-          console.log(`Row requestedBy:`, row.requestedBy);
+
+          const items = (Array.isArray(row.items) ? row.items : []).map(
+            (item: any) => {
+              const rawMaterialName = rawMaterialsMap.get(item.rawMaterialId?.toString()) || "Unknown Material";
+              console.log(`  - Item ${item.rawMaterialId} -> ${rawMaterialName}`);
+              return {
+                ...item,
+                rawMaterial: rawMaterialName,
+              };
+            }
+          );
+
+          const vendorName =
+            row.vendor?.name ||
+            vendorsMap.get(row.vendorId?.toString()) ||
+            "Unknown Vendor";
+          console.log(`  - Vendor ${row.vendorId} -> ${vendorName}`);
           
-          const items = Array.isArray(row.items) ? row.items : [];
-          const computedTotal = items.reduce((s: number, it: any) => {
-            const qty = Number(it.quantity || 0);
-            const price = Number(it.unitPrice || it.unit_price || 0);
-            const itemTotal = Number(it.totalPrice || it.total_price || 0);
-            return s + (itemTotal || (qty * price));
-          }, 0);
-          
-          const totalAmountRaw = row.totalAmount ?? row.total_amount ?? computedTotal;
-          const totalAmount = Number(totalAmountRaw || 0);
-          const status = String(row.orderStatus ?? row.order_status ?? row.status ?? "pending");
-          const orderNumber = row.orderNumber ?? row.orderId ?? row.order_id ?? `Order-${index}`;
-          const vendor = row.vendor ?? (row.vendorId ? { name: `Vendor #${row.vendorId}` } : { name: "N/A" });
-          const requestedBy = row.requestedBy ?? row.requested_by ?? "N/A";
-          const requestedDate = row.requestedDate ?? row.requested_date ?? row.createdAt ?? row.created_at ?? new Date().toISOString();
-          const id = row.id ?? row.orderId ?? row.order_id ?? `row-${index}`;
-          
-          console.log(`Row ${index} requestedBy final:`, requestedBy);
-          
-          return {
-            id,
-            orderNumber,
-            totalAmount,
-            status,
-            vendor,
-            requestedDate,
-            requestedBy,
+          const result = {
+            id: row.id ?? row.orderId ?? row.order_id ?? `row-${index}`,
+            orderNumber:
+              row.orderNumber ?? row.orderId ?? row.order_id ?? `Order-${index}`,
+            totalAmount: row.totalAmount ?? row.total_amount ?? 0,
+            status: String(
+              row.orderStatus ?? row.order_status ?? row.status ?? "pending"
+            ),
+            vendor: {
+              id: row.vendorId,
+              name: vendorName,
+            },
+            requestedDate:
+              row.requestedDate ??
+              row.requested_date ??
+              row.createdAt ??
+              row.created_at ??
+              new Date().toISOString(),
+            requestedBy: row.requestedBy ?? row.requested_by ?? "N/A",
             notes: row.notes ?? "",
-            // Add missing fields to match PurchaseOrder type
             vendorId: row.vendorId,
             items: items,
             createdAt: row.createdAt,
             updatedAt: row.updatedAt,
           };
+          console.log(`  - Normalized row ${index}:`, result);
+          return result;
+
         } catch (err) {
           console.error("Error processing row:", row, err);
-          return {
-            id: `error-${index}`,
-            orderNumber: `Error-${index}`,
-            totalAmount: 0,
-            status: "error",
-            vendor: { name: "Error" },
-            requestedDate: new Date().toISOString(),
-            requestedBy: "Error",
-            notes: "",
-            vendorId: "",
-            items: [],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
+          return null;
         }
-      });
+      }).filter(Boolean);
 
-      console.log("Normalized data:", normalized);
-      console.log("First row details:", normalized[0]);
-      console.log("First row orderNumber:", normalized[0]?.orderNumber);
-      console.log("First row requestedBy:", normalized[0]?.requestedBy);
+      console.log("Final normalized data:", normalized);
       setOrderData(normalized);
     } catch (err) {
       console.error("Error processing purchase orders:", err);
       setOrderData([]);
     }
-  }, [data]);
+  }, [data, vendorsData, rawMaterialsData]);
 
   useEffect(() => {
     if (!purchaseOrderModalOpen) {
@@ -352,32 +359,40 @@ const PurchaseOrdersManagement = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
+      <Typography
+        variant="h4"
+        gutterBottom
+        sx={{
+          fontSize: { xs: "1.5rem", md: "2rem" },
+        }}
+      >
         Purchase Orders Management (Procurement)
       </Typography>
       <Box
         sx={{
           display: "flex",
+          flexDirection: { xs: "column", md: "row" },
           justifyContent: "space-between",
-          alignItems: "center",
+          alignItems: { xs: "stretch", md: "center" },
           mb: 3,
+          gap: 2,
         }}
       >
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <TextField
-            size="small"
-            placeholder="Search orders..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{ width: 250 }}
-          />
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            flexDirection: { xs: "column", sm: "row" },
+            alignItems: { xs: "stretch", sm: "center" },
+          }}
+        >
           <TextField
             size="small"
             select
             SelectProps={{ native: true }}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            sx={{ width: 150 }}
+            sx={{ minWidth: 150 }}
           >
             <option value="">All Status</option>
             <option value="pending">Pending</option>
@@ -397,7 +412,7 @@ const PurchaseOrdersManagement = () => {
       </Box>
 
       <Box sx={{ width: "100%", marginTop: "8px" }}>
-        <Box sx={{ height: 600 }}>
+        <Box sx={{ height: 600, overflowX: "auto" }}>
           <DataTable
             rows={orderData}
             columns={columns}

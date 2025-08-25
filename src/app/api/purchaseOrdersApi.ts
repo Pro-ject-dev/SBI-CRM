@@ -12,7 +12,8 @@ export const purchaseOrdersApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ["PurchaseOrders"],
+
+  tagTypes: ["PurchaseOrders", "Vendors", "RawMaterials"],
   endpoints: (builder) => ({
     getPurchaseOrders: builder.query<any, { status?: string; search?: string } | void>({
       query: (args?: { status?: string; search?: string }) => {
@@ -43,7 +44,7 @@ export const purchaseOrdersApi = createApi({
         method: "POST",
         body: payload,
       }),
-      invalidatesTags: ["PurchaseOrders"],
+      invalidatesTags: ["PurchaseOrders", "Vendors", "RawMaterials"],
     }),
     updatePurchaseOrderStatus: builder.mutation({
       query: ({ id, status }) => ({

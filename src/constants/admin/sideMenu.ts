@@ -28,6 +28,12 @@ export const adminMenuItems: SideBar[] = [
     path: "/admin/product-management",
   },
   {
+    id: "poapproval",
+    label: "PO Approval",
+    icon: InventoryIcon, // Using InventoryIcon for now, can be changed later
+    path: "/admin/purchase-orders-approval",
+  },
+  {
     id: "warehouse",
     label: "Warehouse",
     icon: WarehouseIcon,

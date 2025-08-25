@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Delete, Edit, Add } from "@mui/icons-material";
@@ -197,12 +198,23 @@ const VendorsManagement = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Typography
+        variant="h4"
+        gutterBottom
+        sx={{
+          fontSize: { xs: "1.5rem", md: "2rem" },
+        }}
+      >
+        Vendors Management
+      </Typography>
       <Box
         sx={{
           display: "flex",
+          flexDirection: { xs: "column", md: "row" },
           justifyContent: "space-between",
-          alignItems: "center",
+          alignItems: { xs: "stretch", md: "center" },
           mb: 3,
+          gap: 2,
         }}
       >
         <TextField
@@ -210,7 +222,7 @@ const VendorsManagement = () => {
           placeholder="Search vendors..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{ width: 300 }}
+          sx={{ flexGrow: 1, maxWidth: { md: 400 } }}
         />
         <Button
           variant="contained"
@@ -223,7 +235,7 @@ const VendorsManagement = () => {
       </Box>
 
       <Box sx={{ width: "100%", marginTop: "8px" }}>
-        <Box sx={{ height: 600 }}>
+        <Box sx={{ height: 600, overflowX: "auto" }}>
           <DataTable rows={vendorData} columns={columns} disableColumnMenu />
         </Box>
       </Box>

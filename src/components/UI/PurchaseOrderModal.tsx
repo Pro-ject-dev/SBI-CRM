@@ -181,9 +181,16 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
     if (!validateForm()) return;
 
     try {
+
+      const selectedVendor = vendorsData?.data?.find(
+        (v: any) => v.id.toString() === vendorId
+      );
+
       const payload = {
         orderData: {
+          orderId: "PO-STATIC", // As requested
           vendorId,
+          vendor: selectedVendor ? selectedVendor.name : "",
           totalAmount: String(getTotalAmount()),
           orderStatus,
           requestedBy,
@@ -193,6 +200,7 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
         },
         items: items.map((item) => ({
           rawMaterialId: item.rawMaterialId,
+          rawMaterial: item.rawMaterialName,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
           totalPrice: String(item.totalPrice),

@@ -9,6 +9,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Delete, Edit, Add, Warning } from "@mui/icons-material";
@@ -210,28 +211,46 @@ const RawMaterialsManagement = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Typography
+        variant="h4"
+        gutterBottom
+        sx={{
+          fontSize: { xs: "1.5rem", md: "2rem" },
+        }}
+      >
+        Raw Materials Management
+      </Typography>
       <Box
         sx={{
           display: "flex",
+          flexDirection: { xs: "column", md: "row" },
           justifyContent: "space-between",
-          alignItems: "center",
+          alignItems: { xs: "stretch", md: "center" },
           mb: 3,
+          gap: 2,
         }}
       >
-        <Box sx={{ display: "flex", gap: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            flexDirection: { xs: "column", sm: "row" },
+            alignItems: { xs: "stretch", sm: "center" },
+          }}
+        >
           <TextField
             size="small"
             placeholder="Search materials..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{ width: 250 }}
+            sx={{ flexGrow: 1 }}
           />
           <TextField
             size="small"
             placeholder="Filter by category..."
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            sx={{ width: 200 }}
+            sx={{ flexGrow: 1 }}
           />
         </Box>
         <Button
@@ -245,7 +264,7 @@ const RawMaterialsManagement = () => {
       </Box>
 
       <Box sx={{ width: "100%", marginTop: "8px" }}>
-        <Box sx={{ height: 600 }}>          
+        <Box sx={{ height: 600, overflowX: "auto" }}>          
           <DataTable rows={materialData} columns={columns} disableColumnMenu />
         </Box>
       </Box>

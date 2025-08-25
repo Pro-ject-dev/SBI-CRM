@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { Box, Button, Container, Typography } from "@mui/material";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useGetAllOrdersQuery } from "../../app/api/orderManagementApi";
-import { DataTable } from "../../components/UI/DataTable";
+import { DataTable } from "../../components/UI/DataTable"; // Fixed the import
 import OrderStatusChip from "../operationManager/common/OrderStatusChip";
 import { textDate } from "../../utils/dateConversion";
-import StockAssignmentModal from "./StockAssignmentModal"; // The new modal component
+import StockAssignmentModal from "./StockAssignmentModal";
 import type {
   OrderManagementColumnData,
   OrderManagementDataDto,
@@ -27,9 +27,13 @@ const WarehouseOrdersManagement = () => {
 
   useEffect(() => {
     if (allOrders) {
+      console.log("All Orders Data:", allOrders);
       // Filter for orders that need warehouse attention (e.g., status '1' for "Sent to Warehouse" or '2' for "Issued")
       const warehouseOrders = allOrders
-        .filter((order: OrderManagementDataDto) => String(order.orderStatus) === "1" || String(order.orderStatus) === "2")
+        .filter((order: OrderManagementDataDto) => {
+          console.log("Order Status:", order.orderStatus);
+          return String(order.orderStatus) === "1" || String(order.orderStatus) === "2";
+        })
         .map((obj: OrderManagementDataDto) => ({
           id: obj.id,
           orderId: obj.id,
@@ -108,16 +112,28 @@ const WarehouseOrdersManagement = () => {
 
   return (
     <>
-      <Container maxWidth="lg" sx={{ mt: 2 }}>
-        <Typography variant="h5" gutterBottom>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Typography
+          variant="h4"
+          gutterBottom
+          sx={{
+            fontSize: { xs: "1.5rem", md: "2rem" },
+          }}
+        >
           Warehouse Order Management
         </Typography>
-        <Box sx={{ height: 600, width: "100%", mt: 2 }}>
+        <Box sx={{ height: 600, width: "100%", mt: 3, overflowX: "auto" }}>
           <DataTable
             rows={orderData}
             columns={columns}
             loading={isLoading}
             disableColumnMenu
+            pageSizeOptions={[5, 10, 25]}
+            initialState={{
+              pagination: {
+                paginationModel: { page: 0, pageSize: 10 },
+              },
+            }}
           />
         </Box>
       </Container>
@@ -138,3 +154,4 @@ const WarehouseOrdersManagement = () => {
 };
 
 export default WarehouseOrdersManagement;
+

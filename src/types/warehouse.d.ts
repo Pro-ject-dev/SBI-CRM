@@ -57,6 +57,7 @@ export interface PurchaseOrderItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  status: string;
 }
 
 export interface PurchaseOrder {

@@ -25,7 +25,7 @@ const AdminRoutes = () => (
       <Route path="view-products" element={<ProductManagement />} />
       {/* <Route path="pdf-generation" element={<EstimationPdfGeneration />} /> */}
       <Route path="warehouse" element={<WarehouseOverview />} />
-      <Route path="purchase-orders" element={<PurchaseOrdersApproval />} />
+      <Route path="purchase-orders-approval" element={<PurchaseOrdersApproval />} />
 
     </Route>
   </>
