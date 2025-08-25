@@ -1,5 +1,5 @@
-import { Box, Button, Chip, Container, TextField, Typography } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import { Box, Button, Chip, Container, TextField, Typography, Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText } from "@mui/material";
+import { useEffect, useState, useMemo } from "react";
 import { DataTable } from "../../components/UI/DataTable";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useDispatch } from "react-redux";
@@ -9,41 +9,132 @@ import {
   useGetPurchaseOrdersQuery,
   useUpdatePurchaseOrderStatusMutation,
 } from "../../app/api/purchaseOrdersApi";
-import PurchaseOrderDetailsModal from "../../components/UI/PurchaseOrderDetailsModal"; // Import the modal
-import { Visibility } from "@mui/icons-material"; // Import Visibility icon
+import { useGetVendorsQuery } from "../../app/api/vendorsApi";
+import { useGetRawMaterialsQuery } from "../../app/api/rawMaterialsApi";
+import PurchaseOrderDetailsModal from "../../components/UI/PurchaseOrderDetailsModal";
+import { Visibility, CheckCircle, Cancel } from "@mui/icons-material";
 
 const PurchaseOrdersApproval = () => {
   const dispatch: AppDispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
-  const { data, refetch, isLoading, isFetching, error } = useGetPurchaseOrdersQuery({ search: searchTerm, status: "pending" });
-  const [updateStatus] = useUpdatePurchaseOrderStatusMutation();
-
-  // State for details modal
+  const [statusFilter, setStatusFilter] = useState("pending");
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedPurchaseOrder, setSelectedPurchaseOrder] = useState<any>(null);
+  const [confirmationDialog, setConfirmationDialog] = useState({
+    open: false,
+    title: "",
+    message: "",
+    action: "",
+    orderId: "",
+  });
+
+  const {
+    data,
+    refetch,
+    isLoading,
+    isFetching,
+    error,
+  } = useGetPurchaseOrdersQuery({
+    search: searchTerm,
+    status: statusFilter,
+  });
+
+  const [updatePurchaseOrderStatus] = useUpdatePurchaseOrderStatusMutation();
+  const { data: vendorsData } = useGetVendorsQuery({});
+  const { data: rawMaterialsData } = useGetRawMaterialsQuery({});
+  const [orderData, setOrderData] = useState<any[]>([]);
 
   useEffect(() => {
     refetch();
-  }, [searchTerm]);
+  }, [searchTerm, statusFilter]);
 
-  const rows = useMemo(() => {
+  useEffect(() => {
     try {
-      const raw = data?.data ?? [];
-      if (!Array.isArray(raw)) return [];
-      return raw.map((row: any, index: number) => ({
-        id: row.id ?? row.orderId ?? row.order_id ?? `row-${index}`,
-        orderNumber: row.orderNumber ?? row.orderId ?? row.order_id ?? `Order-${index}`,
-        vendor: row.vendor ?? { name: "N/A" },
-        totalAmount: Number(row.totalAmount ?? row.total_amount ?? 0),
-        status: String(row.orderStatus ?? row.order_status ?? row.status ?? "pending"),
-        requestedBy: row.requestedBy ?? row.requested_by ?? "N/A",
-        requestedDate: row.requestedDate ?? row.requested_date ?? row.createdAt ?? row.created_at ?? new Date().toISOString(),
-      }));
-    } catch (error) {
-      console.error("Error processing purchase orders data:", error);
-      return [];
+      console.log("--- Debugging PurchaseOrdersApproval ---");
+      console.log("Purchase orders data:", data);
+      console.log("Vendors data:", vendorsData);
+      console.log("Raw materials data:", rawMaterialsData);
+
+      const raw: any = data as any;
+      const baseArray: any[] = Array.isArray(raw) ? raw : raw?.data ?? [];
+
+      if (!Array.isArray(baseArray) || baseArray.length === 0) {
+        setOrderData([]);
+        console.log("No purchase orders to process.");
+        return;
+      }
+
+      const vendorsMap = new Map(
+        vendorsData?.data?.map((v: any) => [v.id.toString(), v.name])
+      );
+      const rawMaterialsMap = new Map(
+        rawMaterialsData?.data?.map((m: any) => [m.id.toString(), m.name])
+      );
+
+      console.log("Vendors map:", vendorsMap);
+      console.log("Raw materials map:", rawMaterialsMap);
+
+      const normalized = baseArray.map((row: any, index: number) => {
+        try {
+          console.log(`Processing row ${index}:`, row);
+
+          const items = (Array.isArray(row.items) ? row.items : []).map(
+            (item: any) => {
+              const rawMaterialName = rawMaterialsMap.get(item.rawMaterialId?.toString()) || "Unknown Material";
+              console.log(`  - Item ${item.rawMaterialId} -> ${rawMaterialName}`);
+              return {
+                ...item,
+                rawMaterial: rawMaterialName,
+              };
+            }
+          );
+
+          const vendorName =
+            row?.vendor ||
+            "Unknown Vendor";
+          console.log(`  - Vendor ${row.vendorId} -> ${vendorName}`);
+          
+          const result = {
+            id: row.id ?? row.orderId ?? row.order_id ?? `row-${index}`,
+            orderNumber:
+              row.orderNumber ?? row.orderId ?? row.order_id ?? `Order-${index}`,
+            totalAmount: row.totalAmount ?? row.total_amount ?? 0,
+            status: String(
+              row.orderStatus ?? row.order_status ?? row.status ?? "pending"
+            ),
+            vendor: {
+              id: row.vendorId,
+              name: vendorName,
+            },
+            requestedDate:
+              row.requestedDate ??
+              row.requested_date ??
+              row.createdAt ??
+              row.created_at ??
+              new Date().toISOString(),
+            requestedBy: row.requestedBy ?? "N/A",
+            notes: row.notes ?? "",
+            vendorId: row.vendorId,
+            items: items,
+            createdAt: row.createdAt,
+            updatedAt: row.updatedAt,
+          };
+          console.log(`  - Normalized row ${index}:`, result);
+          return result;
+
+        } catch (err) {
+          console.error("Error processing row:", row, err);
+          return null;
+        }
+      }).filter(Boolean);
+
+      console.log("Final normalized data:", normalized);
+      setOrderData(normalized);
+    } catch (err) {
+      console.error("Error processing purchase orders:", err);
+      setOrderData([]);
     }
-  }, [data]);
+  }, [data, vendorsData, rawMaterialsData]);
 
   const getStatusColor = (status: string) => {
     try {
@@ -65,27 +156,62 @@ const PurchaseOrdersApproval = () => {
     }
   };
 
-  const handleChange = async (id: string, status: string) => {
+  const handleStatusChange = async (id: string, status: string) => {
     try {
-      await updateStatus({ id, status });
-      dispatch(addToast({ message: `Order ${status}`, type: "success" }));
+      await updatePurchaseOrderStatus({ id, status });
+      dispatch(addToast({ message: `Order ${status} successfully`, type: "success" }));
       refetch();
     } catch (e) {
       dispatch(addToast({ message: "Failed to update status", type: "error" }));
     }
   };
 
+  const handleApproveReject = (id: string, action: string) => {
+    const order = orderData.find((order: any) => order.id === id);
+    const orderNumber = order?.orderNumber || id;
+    
+    setConfirmationDialog({
+      open: true,
+      title: `${action === 'approve' ? 'Approve' : 'Reject'} Purchase Order`,
+      message: `Are you sure you want to ${action} purchase order "${orderNumber}"?`,
+      action: action,
+      orderId: id,
+    });
+  };
+
+  const handleConfirmAction = async () => {
+    const { action, orderId } = confirmationDialog;
+    const status = action === 'approve' ? 'approved' : 'rejected';
+    
+    try {
+      await updatePurchaseOrderStatus({ id: orderId, status });
+      dispatch(addToast({ 
+        message: `Purchase order ${status} successfully`, 
+        type: "success" 
+      }));
+      setConfirmationDialog({ open: false, title: "", message: "", action: "", orderId: "" });
+      refetch();
+    } catch (e) {
+      dispatch(addToast({ message: "Failed to update status", type: "error" }));
+    }
+  };
+
+  const handleCloseConfirmation = () => {
+    setConfirmationDialog({ open: false, title: "", message: "", action: "", orderId: "" });
+  };
+
   // Handler to open details modal
   const handleViewRow = (id: string) => {
-    const purchaseOrder = rows.find((order: any) => order.id === id);
+    const purchaseOrder = orderData.find((order: any) => order.id === id);
     if (purchaseOrder) {
+      console.log("Selected purchase order for modal:", purchaseOrder);
       setSelectedPurchaseOrder(purchaseOrder);
       setDetailsModalOpen(true);
     }
   };
 
   const columns: GridColDef[] = [
-    
+  
     {
       field: "requestedDate",
       headerName: "Requested Date",
@@ -104,14 +230,14 @@ const PurchaseOrdersApproval = () => {
         }
       },
     },
-    { 
-      field: "vendor", 
-      headerName: "Vendor", 
-      flex: 1, 
-      minWidth: 140, 
-      align: "center", 
-      headerAlign: "center", 
-      valueGetter: (params: any) => {
+    {
+      field: "vendor",
+      headerName: "Vendor",
+      flex: 1,
+      minWidth: 150,
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params: any) => {
         try {
           const v = params?.row?.vendor;
           if (!v) return "N/A";
@@ -120,58 +246,74 @@ const PurchaseOrdersApproval = () => {
         } catch {
           return "N/A";
         }
-      }
+      },
     },
     {
       field: "totalAmount",
-      headerName: "Total",
+      headerName: "Total Amount",
       flex: 1,
-      minWidth: 120,
-      align: "center",
+      minWidth: 150,
       headerAlign: "center",
-      valueGetter: (p: any) => {
+      align: "center",
+      renderCell: (params: any) => {
         try {
-          const amount = Number(p?.row?.totalAmount ?? 0);
+          const amount = Number(params?.row?.totalAmount ?? 0);
           return `₹${amount.toFixed(2)}`;
         } catch {
           return "₹0.00";
         }
-      }
+      },
     },
     {
       field: "status",
       headerName: "Status",
       flex: 1,
-      minWidth: 140,
-      align: "center",
+      minWidth: 150,
       headerAlign: "center",
-      renderCell: (p: any) => {
+      align: "center",
+      renderCell: (params: any) => {
         try {
-          const status = String(p?.row?.status ?? "");
+          const status = String(params?.row?.status ?? "");
           const color = getStatusColor(status);
           return (
-            <Chip 
-              size="small" 
-              color={color} 
-              label={status || "pending"} 
+            <Chip
+              label={status || "pending"}
+              color={color as any}
+              size="small"
             />
           );
         } catch {
-          return <Chip size="small" color="default" label="N/A" />;
+          return <Chip label="N/A" color="default" size="small" />;
         }
-      }
+      },
+    },
+    {
+      field: "requestedBy",
+      headerName: "Requested By",
+      flex: 1,
+      minWidth: 150,
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params: any) => {
+        try {
+          const value = params?.row?.requestedBy || "N/A";
+          return value;
+        } catch {
+          return "N/A";
+        }
+      },
     },
     {
       field: "actions",
       headerName: "Actions",
-      flex: 1.2,
-      minWidth: 220,
       sortable: false,
-      align: "center",
+      flex: 1.5,
+      minWidth: 200,
       headerAlign: "center",
-      renderCell: (p: any) => {
+      align: "center",
+      renderCell: (params: any) => {
         try {
-          const id = p?.row?.id;
+          const id = params?.row?.id;
           if (!id) return null;
           return (
             <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
@@ -184,12 +326,26 @@ const PurchaseOrdersApproval = () => {
               >
                 <Visibility fontSize="small" />
               </Button>
-              {p?.row?.status === "pending" && (
+              {params?.row?.status === "pending" && (
                 <>
-                  <Button size="small" variant="outlined" color="success" onClick={() => handleChange(id, "approved")}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="success"
+                    startIcon={<CheckCircle />}
+                    onClick={() => handleApproveReject(id, "approve")}
+                    title="Approve Order"
+                  >
                     Approve
                   </Button>
-                  <Button size="small" variant="outlined" color="error" onClick={() => handleChange(id, "rejected")}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="error"
+                    startIcon={<Cancel />}
+                    onClick={() => handleApproveReject(id, "reject")}
+                    title="Reject Order"
+                  >
                     Reject
                   </Button>
                 </>
@@ -199,7 +355,7 @@ const PurchaseOrdersApproval = () => {
         } catch {
           return null;
         }
-      }
+      },
     },
   ];
 
@@ -224,26 +380,47 @@ const PurchaseOrdersApproval = () => {
           gap: 2,
         }}
       >
-        <TextField
-          size="small"
-          placeholder="Search orders..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{ flexGrow: 1, maxWidth: { md: 400 } }}
-        />
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            flexDirection: { xs: "column", sm: "row" },
+            alignItems: { xs: "stretch", sm: "center" },
+          }}
+        >
+        
+          <TextField
+            size="small"
+            select
+            SelectProps={{ native: true }}
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            sx={{ minWidth: 150 }}
+          >
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="completed">Completed</option>
+          </TextField>
+        </Box>
       </Box>
       <Box sx={{ height: 600, overflowX: "auto" }}>
         {error ? (
           <Typography color="error" align="center">
             Error loading purchase orders: {String(error)}
           </Typography>
+        ) : orderData.length === 0 && !isLoading && !isFetching ? (
+          <Typography align="center" sx={{ mt: 4, color: 'text.secondary' }}>
+            No purchase orders found. {data ? 'The API returned empty data.' : 'No data received from API.'}
+          </Typography>
         ) : (
           <DataTable 
-            rows={rows} 
+            rows={orderData} 
             columns={columns} 
             disableColumnMenu 
             disableRowSelectionOnClick
             loading={isLoading || isFetching}
+            getRowId={(row: any) => row.id ?? row.orderId ?? row.orderNumber ?? `${row.vendorId}-${row.requestedDate}`}
           />
         )}
       </Box>
@@ -253,7 +430,39 @@ const PurchaseOrdersApproval = () => {
         open={detailsModalOpen}
         onClose={() => setDetailsModalOpen(false)}
         purchaseOrder={selectedPurchaseOrder}
+        onApprove={(id) => handleApproveReject(id, "approve")}
+        onReject={(id) => handleApproveReject(id, "reject")}
       />
+
+      {/* Confirmation Dialog */}
+      <Dialog
+        open={confirmationDialog.open}
+        onClose={handleCloseConfirmation}
+        aria-labelledby="confirmation-dialog-title"
+        aria-describedby="confirmation-dialog-description"
+      >
+        <DialogTitle id="confirmation-dialog-title">
+          {confirmationDialog.title}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="confirmation-dialog-description">
+            {confirmationDialog.message}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseConfirmation} color="primary">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleConfirmAction} 
+            color={confirmationDialog.action === 'approve' ? 'success' : 'error'}
+            variant="contained"
+            autoFocus
+          >
+            {confirmationDialog.action === 'approve' ? 'Approve' : 'Reject'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
