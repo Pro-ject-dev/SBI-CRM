@@ -1,17 +1,17 @@
-import { 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogActions, 
-  Button, 
-  Typography, 
-  Box, 
-  TextField, 
-  IconButton, 
-  MenuItem, 
-  Select, 
-  InputLabel, 
-  FormControl, 
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Typography,
+  Box,
+  TextField,
+  IconButton,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
   Paper,
   Alert,
   Table,
@@ -25,12 +25,10 @@ import {
   DialogContentText
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
-
-
 import { useEffect, useState } from 'react';
 import { AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
-import { 
-  useUpdateOrderDeadlineMutation, 
+import {
+  useUpdateOrderDeadlineMutation,
   useGetOrderByIdQuery,
   useCreateRawMaterialsByOrderMutation,
   useCreateDeadlineByOrderMutation,
@@ -48,7 +46,6 @@ interface OrderDetailsModalProps {
 }
 
 interface RawMaterial {
-
   id: string;
   rawMaterial: string;
   qty: string;
@@ -111,20 +108,21 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
   const [error, setError] = useState<string>('');
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showWarehouseConfirmation, setShowWarehouseConfirmation] = useState<boolean>(false);
-  
+
   const [updateOrderDeadline, { isLoading: isUpdatingDeadline }] = useUpdateOrderDeadlineMutation();
   const [createRawMaterials, { isLoading: isUpdatingRawMaterials }] = useCreateRawMaterialsByOrderMutation();
   const [createDeadlines, { isLoading: isUpdatingDeadlines }] = useCreateDeadlineByOrderMutation();
   const [updateOrderStatus, { isLoading: isUpdatingOrderStatus }] = useUpdateOrderStatusMutation();
-  
-  const { data: orderDetailsData, isLoading: isOrderDetailsLoading, refetch } = useGetOrderByIdQuery({ id: orderId! }, { 
+
+  const { data: orderDetailsData, isLoading: isOrderDetailsLoading, refetch } = useGetOrderByIdQuery({ id: orderId! }, {
     skip: !orderId || !open,
     refetchOnMountOrArgChange: true,
     refetchOnFocus: false
   });
-  
+
   const { data: rawMaterialsList } = useGetRawMaterialsQuery({});
-  
+  const isAdmin = localStorage.getItem('role') === 'admin';
+
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -135,7 +133,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
       setMainDeadlineStartDate('');
       setMainDeadlineEndDate('');
       setExpandedRows(new Set());
-      
+
       setTimeout(() => {
         refetch();
       }, 100);
@@ -147,7 +145,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
     if (orderDetailsData && !isOrderDetailsLoading) {
       console.log('Setting order details:', orderDetailsData);
       setOrderDetails(orderDetailsData);
-      
+
       // Map main deadline dates
       if (orderDetailsData.deadlineStart) {
         console.log('Setting main deadline start:', orderDetailsData.deadlineStart);
@@ -157,16 +155,16 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
         console.log('Setting main deadline end:', orderDetailsData.deadlineEnd);
         setMainDeadlineEndDate(orderDetailsData.deadlineEnd);
       }
-      
+
       // Map raw materials with proper dropdown selection
       if (orderDetailsData.rawMaterials && Array.isArray(orderDetailsData.rawMaterials)) {
         setRawMaterials(
           orderDetailsData.rawMaterials.map((rm: RawMaterial) => {
             // Check if this material exists in dropdown options
-            const existsInDropdown = rawMaterialsList?.data?.some((dropdownRm: any) => 
+            const existsInDropdown = rawMaterialsList?.data?.some((dropdownRm: any) =>
               dropdownRm.name === rm.rawMaterial
             );
-            
+
             return {
               ...rm,
               inputMode: existsInDropdown ? 'select' : 'manual',
@@ -177,7 +175,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
       } else {
         setRawMaterials([]);
       }
-      
+
       // Map internal deadlines
       if (orderDetailsData.deadline && Array.isArray(orderDetailsData.deadline)) {
         console.log('Setting internal deadlines:', orderDetailsData.deadline);
@@ -194,32 +192,32 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
     }
   }, [orderDetailsData, isOrderDetailsLoading, open, refetch, rawMaterialsList?.data]);
 
-  // Updated useEffect that syncs with raw materials list
+  // Updated useEffect that syncs with raw materials list - only for non-admin
   useEffect(() => {
-    if (!rawMaterialsList?.data) return;
-    
+    if (!rawMaterialsList?.data || isAdmin) return;
+
     setRawMaterials(prev => prev.map(material => {
       // Check if manual entry matches a dropdown value
       const existsInDropdown = rawMaterialsList.data.some((rm: any) => rm.name === material.rawMaterial);
-      
+
       if (existsInDropdown && material.rawMaterial) {
         // If it exists in dropdown and we have a material name, switch to select mode
-        return { 
-          ...material, 
+        return {
+          ...material,
           selectedRawMaterial: material.rawMaterial,
           inputMode: 'select'
         };
       } else if (!existsInDropdown && material.rawMaterial) {
         // If it doesn't exist in dropdown but we have a material name, use manual mode
-        return { 
-          ...material, 
+        return {
+          ...material,
           selectedRawMaterial: '',
           inputMode: 'manual'
         };
       }
       return material;
     }));
-  }, [rawMaterialsList?.data]);
+  }, [rawMaterialsList?.data, isAdmin]);
 
   const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -235,8 +233,10 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
     });
   };
 
-  // Updated addRawMaterial function
+  // Functions - only work for non-admin users
   const addRawMaterial = () => {
+    if (isAdmin) return; // Block admin from adding
+
     setRawMaterials(prev => [
       ...prev,
       {
@@ -246,23 +246,29 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
         status: '1',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        inputMode: 'manual', 
+        inputMode: 'manual',
         selectedRawMaterial: '',
       },
     ]);
   };
 
   const updateRawMaterial = (id: string, field: keyof RawMaterial, value: string) => {
-    setRawMaterials(prev => prev.map(rm => 
+    if (isAdmin) return; // Block admin from updating
+
+    setRawMaterials(prev => prev.map(rm =>
       rm.id === id ? { ...rm, [field]: value } : rm
     ));
   };
 
   const removeRawMaterial = (id: string) => {
+    if (isAdmin) return; // Block admin from removing
+
     setRawMaterials(prev => prev.filter(rm => rm.id !== id));
   };
 
   const addInternalDeadline = () => {
+    if (isAdmin) return; // Block admin from adding
+
     const newDeadline = {
       id: generateId(),
       orderId: orderId || '',
@@ -283,9 +289,11 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
   };
 
   const updateInternalDeadline = (id: string, field: keyof Deadline, value: string) => {
+    if (isAdmin) return; // Block admin from updating
+
     console.log(`Updating deadline ${id}, field: ${field}, value: ${value}`);
     setInternalDeadlines(prev => {
-      const updated = prev.map(deadline => 
+      const updated = prev.map(deadline =>
         deadline.id === id ? { ...deadline, [field]: value } : deadline
       );
       console.log('Updated deadlines after field change:', updated);
@@ -294,21 +302,25 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
   };
 
   const removeInternalDeadline = (id: string) => {
+    if (isAdmin) return; // Block admin from removing
+
     setInternalDeadlines(prev => prev.filter(deadline => deadline.id !== id));
   };
 
   const validateDeadline = (startDate: string, endDate: string): boolean => {
     if (!mainDeadlineStartDate || !mainDeadlineEndDate) return true;
-    
+
     const mainStart = new Date(mainDeadlineStartDate);
     const mainEnd = new Date(mainDeadlineEndDate);
     const internalStart = new Date(startDate);
     const internalEnd = new Date(endDate);
-    
+
     return internalStart >= mainStart && internalEnd <= mainEnd;
   };
 
   const handleMainDeadlineUpdate = async () => {
+    if (isAdmin) return; // Block admin from updating
+
     setError('');
 
     if (!orderId) {
@@ -346,6 +358,8 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
   };
 
   const handleRawMaterialUpdate = async () => {
+    if (isAdmin) return; // Block admin from updating
+
     setError('');
 
     if (!orderId) {
@@ -354,13 +368,6 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
     }
 
     const validRawMaterials = rawMaterials.filter(rm => rm.rawMaterial.trim() && rm.qty.trim());
-    
-    // if (validRawMaterials.length === 0) {
-    //  // const errorMsg = 'Please add at least one raw material with name and quantity.';
-    //  // setError(errorMsg);
-    //  // dispatch(addToast({ message: errorMsg, type: 'warning' }));
-    //   return;
-    // }
 
     const items = validRawMaterials.map(rm => ({
       rawMaterial: rm.rawMaterial,
@@ -374,7 +381,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
       }).unwrap();
       dispatch(addToast({ message: 'Raw materials updated successfully!', type: 'success' }));
       refetch();
-      
+
     } catch (err) {
       console.error('Failed to update raw materials:', err);
       dispatch(addToast({ message: 'Failed to update raw materials.', type: 'error' }));
@@ -383,6 +390,8 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
   };
 
   const handleInternalDeadlineUpdate = async () => {
+    if (isAdmin) return; // Block admin from updating
+
     console.log('=== handleInternalDeadlineUpdate called ===');
     setError('');
 
@@ -398,7 +407,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
     console.log('Starting validation checks...');
     for (const deadline of internalDeadlines) {
       console.log('Validating deadline:', deadline);
-      
+
       if (!deadline.name.trim() || !deadline.startAt || !deadline.endAt) {
         console.log('Validation failed: Missing required fields');
         console.log('name:', deadline.name, 'startAt:', deadline.startAt, 'endAt:', deadline.endAt);
@@ -434,7 +443,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
     }
     console.log('All validation checks passed');
 
-    const validDeadlines = internalDeadlines.filter(dl => 
+    const validDeadlines = internalDeadlines.filter(dl =>
       dl.name.trim() && dl.startAt && dl.endAt && dl.status
     );
 
@@ -453,9 +462,6 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
       delayReason: dl.status === "4" ? dl.delayReason : undefined
     }));
 
-    console.log('API endpoint being used:', `${localStorage.getItem("api_endpoint")}/operation_manager/createDeadlineByOrder`);
-    console.log('Sending deadline update payload:', { orderId, items });
-
     try {
       await createDeadlines({
         orderId,
@@ -470,38 +476,43 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
     }
   };
 
- const handleSendToWarehouse = async () => {
-  const savedMaterials = orderDetails?.rawMaterials || [];
-  const currentMaterials = rawMaterials || [];
-  let hasUnsavedChanges = false;
-  if (savedMaterials.length !== currentMaterials.length) {
-    hasUnsavedChanges = true;
-  } else {
-    const hasModifiedItem = currentMaterials.some(currentMaterial => {
-      const savedMaterial = savedMaterials.find(m => m.id === currentMaterial.id);
+  const handleSendToWarehouse = async () => {
+    if (isAdmin) return; // Block admin from sending
 
-      if (!savedMaterial || currentMaterial.qty !== savedMaterial.qty) {
-        return true;
-      }
-      return false;
-    });
+    const savedMaterials = orderDetails?.rawMaterials || [];
+    const currentMaterials = rawMaterials || [];
+    let hasUnsavedChanges = false;
 
-    if (hasModifiedItem) {
+    if (savedMaterials.length !== currentMaterials.length) {
       hasUnsavedChanges = true;
-    }
-  }
+    } else {
+      const hasModifiedItem = currentMaterials.some(currentMaterial => {
+        const savedMaterial = savedMaterials.find(m => m.id === currentMaterial.id);
 
-  if (hasUnsavedChanges) {
-    dispatch(addToast({ 
-      message: "Please save changes to raw materials before sending to the warehouse.", 
-      type: "error" 
-    }));
-    return; 
-  }
-  setShowWarehouseConfirmation(true);
-};
+        if (!savedMaterial || currentMaterial.qty !== savedMaterial.qty) {
+          return true;
+        }
+        return false;
+      });
+
+      if (hasModifiedItem) {
+        hasUnsavedChanges = true;
+      }
+    }
+
+    if (hasUnsavedChanges) {
+      dispatch(addToast({
+        message: "Please save changes to raw materials before sending to the warehouse.",
+        type: "error"
+      }));
+      return;
+    }
+    setShowWarehouseConfirmation(true);
+  };
 
   const handleConfirmSendToWarehouse = async () => {
+    if (isAdmin) return; // Block admin from confirming
+
     if (!orderId) {
       dispatch(addToast({ message: 'Order ID is missing.', type: 'error' }));
       return;
@@ -512,7 +523,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
         id: orderId,
         status: '1'
       }).unwrap();
-      
+
       dispatch(addToast({ message: 'Request sent to warehouse team successfully!', type: 'success' }));
       setShowWarehouseConfirmation(false);
       onClose(); // Close the modal after successful request
@@ -524,13 +535,34 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
-      <DialogTitle>Order Details - {orderId}</DialogTitle>
+      <DialogTitle>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h5">Order Details - {orderId}</Typography>
+          {isAdmin && (
+            <Chip 
+              label="Read-Only Mode" 
+              color="warning" 
+              size="small" 
+              sx={{ fontWeight: 'bold' }}
+            />
+          )}
+        </Box>
+      </DialogTitle>
       <DialogContent dividers>
         {orderDetails && !isOrderDetailsLoading ? (
           <Box sx={{ p: 2 }}>
             {error && (
               <Alert severity="error" sx={{ mb: 2 }}>
                 {error}
+              </Alert>
+            )}
+
+            {isAdmin && (
+              <Alert severity="info" sx={{ mb: 3 }}>
+                <Typography variant="body2">
+                  <strong>Admin View:</strong> You are viewing this order in read-only mode. 
+                  Only non-admin users can make modifications to order details.
+                </Typography>
               </Alert>
             )}
 
@@ -561,6 +593,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
               </Grid>
             </Paper>
 
+            {/* Products section remains the same */}
             <Typography variant="h6" sx={{ mt: 3 }} gutterBottom>
               Products:
             </Typography>
@@ -595,9 +628,9 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                           <TableCell>{product.size || 'N/A'}</TableCell>
                           <TableCell>
                             {product.addons?.length > 0 ? (
-                              <Chip 
-                                label={`${product.addons.length} addon${product.addons.length > 1 ? 's' : ''}`} 
-                                color="secondary" 
+                              <Chip
+                                label={`${product.addons.length} addon${product.addons.length > 1 ? 's' : ''}`}
+                                color="secondary"
                                 size="small"
                                 onClick={() => toggleExpandedRow(String(product.id))}
                                 sx={{ cursor: 'pointer' }}
@@ -617,7 +650,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                             </Button>
                           </TableCell>
                         </TableRow>
-                        
+
                         {/* Expanded row for product details and addons */}
                         <TableRow>
                           <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={7}>
@@ -701,9 +734,11 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                     label="Main Deadline Start Date"
                     type="date"
                     value={mainDeadlineStartDate}
-                    onChange={(e) => setMainDeadlineStartDate(e.target.value)}
+                    onChange={(e) => !isAdmin && setMainDeadlineStartDate(e.target.value)}
                     InputLabelProps={{ shrink: true }}
                     fullWidth
+                    inputProps={{ readOnly: isAdmin }}
+                    disabled={isAdmin}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -711,16 +746,22 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                     label="Main Deadline End Date"
                     type="date"
                     value={mainDeadlineEndDate}
-                    onChange={(e) => setMainDeadlineEndDate(e.target.value)}
+                    onChange={(e) => !isAdmin && setMainDeadlineEndDate(e.target.value)}
                     InputLabelProps={{ shrink: true }}
                     fullWidth
+                    inputProps={{ readOnly: isAdmin }}
+                    disabled={isAdmin}
                   />
                 </Grid>
-                <Grid item xs={12}>
-                  <Button variant="contained" onClick={handleMainDeadlineUpdate} disabled={isUpdatingDeadline}>
-                    {isUpdatingDeadline ? 'Updating...' : 'Update Deadline'}
-                  </Button>
-                </Grid>
+
+                {/* Show update button only for non-admin */}
+                {!isAdmin && (
+                  <Grid item xs={12}>
+                    <Button variant="contained" onClick={handleMainDeadlineUpdate} disabled={isUpdatingDeadline}>
+                      {isUpdatingDeadline ? 'Updating...' : 'Update Deadline'}
+                    </Button>
+                  </Grid>
+                )}
               </Grid>
             </Paper>
 
@@ -732,8 +773,8 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
               {rawMaterials.map((material) => (
                 <Box key={material.id} sx={{ mb: 2, borderBottom: '1px solid #eee', pb: 2 }}>
                   <Grid container spacing={2} alignItems="center">
-                    {/* Show dropdown only if material exists in dropdown or no material is set */}
-                    {(material.inputMode === 'select' || !material.rawMaterial) && (
+                    {/* Show dropdown only for non-admin and if material exists in dropdown or no material is set */}
+                    {!isAdmin && (material.inputMode === 'select' || !material.rawMaterial) && (
                       <Grid item xs={12} sm={4}>
                         <FormControl fullWidth sx={{ minWidth: 200, maxWidth: 200 }}>
                           <InputLabel id={`raw-material-dropdown-label-${material.id}`}>Select Existing</InputLabel>
@@ -746,6 +787,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                               updateRawMaterial(material.id, 'rawMaterial', e.target.value);
                               updateRawMaterial(material.id, 'inputMode', e.target.value ? 'select' : 'manual');
                             }}
+                            disabled={isAdmin}
                           >
                             <MenuItem value="">
                               <em>Select from existing or enter manually</em>
@@ -757,18 +799,33 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                         </FormControl>
                       </Grid>
                     )}
-                    
+
+                    {/* Show material name as readonly for admin */}
+                    {isAdmin && material.rawMaterial && (
+                      <Grid item xs={12} sm={4}>
+                        <TextField
+                          label="Raw Material"
+                          value={material.rawMaterial}
+                          fullWidth
+                          inputProps={{ readOnly: true }}
+                          disabled
+                        />
+                      </Grid>
+                    )}
+
                     <Grid item xs={12} sm={3}>
                       <TextField
                         label="Quantity"
                         value={material.qty}
                         onChange={e => updateRawMaterial(material.id, 'qty', e.target.value)}
                         fullWidth
+                        inputProps={{ readOnly: isAdmin }}
+                        disabled={isAdmin}
                       />
                     </Grid>
-                    
-                    {/* Show manual input only if in manual mode or no dropdown selection */}
-                    {(material.inputMode === 'manual' || !material.selectedRawMaterial) && (
+
+                    {/* Show manual input only for non-admin and if in manual mode or no dropdown selection */}
+                    {!isAdmin && (material.inputMode === 'manual' || !material.selectedRawMaterial) && (
                       <Grid item xs={12} sm={4}>
                         <TextField
                           label="Manual Entry"
@@ -776,7 +833,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                           onChange={e => {
                             updateRawMaterial(material.id, 'rawMaterial', e.target.value);
                             // Check if the entered value exists in dropdown
-                            const existsInDropdown = rawMaterialsList?.data?.some((rm: any) => 
+                            const existsInDropdown = rawMaterialsList?.data?.some((rm: any) =>
                               rm.name === e.target.value
                             );
                             if (existsInDropdown) {
@@ -792,20 +849,20 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                         />
                       </Grid>
                     )}
-                    
+
                     {/* Show selected material name if in select mode */}
                     {material.inputMode === 'select' && material.selectedRawMaterial && (
                       <Grid item xs={12} sm={4}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Chip 
-                            label={material.selectedRawMaterial} 
-                            color="primary" 
+                          <Chip
+                            label={material.selectedRawMaterial}
+                            color="primary"
                             variant="outlined"
-                            onDelete={() => {
+                            onDelete={!isAdmin ? () => {
                               updateRawMaterial(material.id, 'selectedRawMaterial', '');
                               updateRawMaterial(material.id, 'rawMaterial', '');
                               updateRawMaterial(material.id, 'inputMode', 'manual');
-                            }}
+                            } : undefined}
                           />
                           <Typography variant="caption" color="text.secondary">
                             From existing
@@ -813,40 +870,46 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                         </Box>
                       </Grid>
                     )}
-                    
-                    <Grid item xs={12} sm={1}>
-                      <IconButton color="error" onClick={() => removeRawMaterial(material.id)}>
-                        <RemoveCircleOutline />
-                      </IconButton>
-                    </Grid>
+
+                    {/* Show remove button only for non-admin */}
+                    {!isAdmin && (
+                      <Grid item xs={12} sm={1}>
+                        <IconButton color="error" onClick={() => removeRawMaterial(material.id)}>
+                          <RemoveCircleOutline />
+                        </IconButton>
+                      </Grid>
+                    )}
                   </Grid>
                 </Box>
               ))}
-              
-              <Button
-                variant="outlined"
-                startIcon={<AddCircleOutline />}
-                onClick={addRawMaterial}
-                sx={{ mt: 2 }}
-                disabled={orderDetails?.orderStatus === '2'}
-              >
-                Add Raw Material
-              </Button>
-              <Button
-                variant="contained"
-                onClick={handleRawMaterialUpdate}
-                sx={{ mt: 2, ml: 2 }}
-                disabled={isUpdatingRawMaterials || orderDetails?.orderStatus === '2'}
-              >
-                {isUpdatingRawMaterials ? 'Saving...' : 'Save Raw Materials'}
-              </Button>
-              <Button 
-                    variant="contained" 
-                    color="primary" 
+
+              {/* Show action buttons only for non-admin */}
+              {!isAdmin && (
+                <>
+                  <Button
+                    variant="outlined"
+                    startIcon={<AddCircleOutline />}
+                    onClick={addRawMaterial}
+                    sx={{ mt: 2 }}
+                    disabled={orderDetails?.orderStatus === '2'}
+                  >
+                    Add Raw Material
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={handleRawMaterialUpdate}
+                    sx={{ mt: 2, ml: 2 }}
+                    disabled={isUpdatingRawMaterials || orderDetails?.orderStatus === '2'}
+                  >
+                    {isUpdatingRawMaterials ? 'Saving...' : 'Save Raw Materials'}
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="primary"
                     onClick={handleSendToWarehouse}
                     disabled={isUpdatingOrderStatus || !(orderDetails?.rawMaterials && orderDetails.rawMaterials.length > 0) || orderDetails?.orderStatus === '2'}
-                    sx={{ 
-                      mt: 2, ml: 2 ,
+                    sx={{
+                      mt: 2, ml: 2,
                       backgroundColor: '#1976d2',
                       '&:hover': {
                         backgroundColor: '#1565c0'
@@ -855,11 +918,8 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                   >
                     {isUpdatingOrderStatus ? 'Sending...' : 'Send to Warehouse Team'}
                   </Button>
-                  {/* {(!orderDetails?.rawMaterials || orderDetails.rawMaterials.length === 0) && (
-                    <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
-                      At least one raw material is required to send the request to the warehouse team.
-                    </Typography>
-                  )} */}
+                </>
+              )}
             </Paper>
 
             <Typography variant="h6" sx={{ mt: 3 }} gutterBottom>
@@ -875,6 +935,8 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                         value={deadline.name}
                         onChange={(e) => updateInternalDeadline(deadline.id, 'name', e.target.value)}
                         fullWidth
+                        inputProps={{ readOnly: isAdmin }}
+                        disabled={isAdmin}
                       />
                     </Grid>
                     <Grid item xs={12} sm={2}>
@@ -885,6 +947,8 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                         onChange={(e) => updateInternalDeadline(deadline.id, 'startAt', e.target.value)}
                         InputLabelProps={{ shrink: true }}
                         fullWidth
+                        inputProps={{ readOnly: isAdmin }}
+                        disabled={isAdmin}
                       />
                     </Grid>
                     <Grid item xs={12} sm={2}>
@@ -895,6 +959,8 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                         onChange={(e) => updateInternalDeadline(deadline.id, 'endAt', e.target.value)}
                         InputLabelProps={{ shrink: true }}
                         fullWidth
+                        inputProps={{ readOnly: isAdmin }}
+                        disabled={isAdmin}
                       />
                     </Grid>
                     <Grid item xs={12} sm={3}>
@@ -904,6 +970,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                           value={String(deadline.status)}
                           label="Status"
                           onChange={(e) => updateInternalDeadline(deadline.id, 'status', e.target.value)}
+                          disabled={isAdmin}
                         >
                           <MenuItem value="1">Pending</MenuItem>
                           <MenuItem value="2">Ongoing</MenuItem>
@@ -921,29 +988,39 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                           fullWidth
                           required
                           placeholder="Enter reason for delay..."
+                          inputProps={{ readOnly: isAdmin }}
+                          disabled={isAdmin}
                         />
                       </Grid>
                     )}
-                    <Grid item xs={12} sm={2}>
-                      <IconButton onClick={() => removeInternalDeadline(deadline.id)} color="error">
-                        <RemoveCircleOutline />
-                      </IconButton>
-                    </Grid>
+
+                    {/* Show remove button only for non-admin */}
+                    {!isAdmin && (
+                      <Grid item xs={12} sm={2}>
+                        <IconButton onClick={() => removeInternalDeadline(deadline.id)} color="error">
+                          <RemoveCircleOutline />
+                        </IconButton>
+                      </Grid>
+                    )}
                   </Grid>
                 </Box>
               ))}
-              <Box display="flex" gap={2} mt={2}>
-                <Button variant="outlined" onClick={addInternalDeadline} startIcon={<AddCircleOutline />}>
-                  Add Internal Deadline
-                </Button>
-                <Button variant="contained" onClick={handleInternalDeadlineUpdate} disabled={isUpdatingDeadlines}>
-                  {isUpdatingDeadlines ? 'Updating...' : 'Update Internal Deadlines'}
-                </Button>
-              </Box>
+
+              {/* Show action buttons only for non-admin */}
+              {!isAdmin && (
+                <Box display="flex" gap={2} mt={2}>
+                  <Button variant="outlined" onClick={addInternalDeadline} startIcon={<AddCircleOutline />}>
+                    Add Internal Deadline
+                  </Button>
+                  <Button variant="contained" onClick={handleInternalDeadlineUpdate} disabled={isUpdatingDeadlines}>
+                    {isUpdatingDeadlines ? 'Updating...' : 'Update Internal Deadlines'}
+                  </Button>
+                </Box>
+              )}
             </Paper>
 
-            {/* Warehouse Request Section */}
-            {orderDetails?.orderStatus !== "1" && (
+            {/* Warehouse Request Section - only show for non-admin */}
+            {!isAdmin && orderDetails?.orderStatus !== "1" && (
               <>
                 <Typography variant="h6" sx={{ mt: 3 }} gutterBottom>
                   Warehouse Assignment:
@@ -952,7 +1029,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                     Send this order to the warehouse team for raw material assignment and processing.
                   </Typography>
-                
+
                   {(!orderDetails?.rawMaterials || orderDetails.rawMaterials.length === 0) && (
                     <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
                       At least one raw material is required to send the request to the warehouse team.
@@ -970,9 +1047,9 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                 </Typography>
                 <Paper elevation={1} sx={{ p: 2, mb: 3 }}>
                   <Box display="flex" alignItems="center" gap={2}>
-                    <Chip 
-                      label="Sent to Warehouse" 
-                      color="success" 
+                    <Chip
+                      label="Sent to Warehouse"
+                      color="success"
                       variant="filled"
                       sx={{ fontWeight: 'bold' }}
                     />
@@ -991,9 +1068,9 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
                 </Typography>
                 <Paper elevation={1} sx={{ p: 2, mb: 3 }}>
                   <Box display="flex" alignItems="center" gap={2}>
-                    <Chip 
-                      label="All Materials are issued" 
-                      color="success" 
+                    <Chip
+                      label="All Materials are issued"
+                      color="success"
                       variant="filled"
                       sx={{ fontWeight: 'bold' }}
                     />
@@ -1017,45 +1094,44 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ open, onClose, or
         </Button>
       </DialogActions>
 
-      {/* Warehouse Confirmation Dialog */}
-      <Dialog
-        open={showWarehouseConfirmation}
-        onClose={() => setShowWarehouseConfirmation(false)}
-        aria-labelledby="warehouse-confirmation-dialog-title"
-        aria-describedby="warehouse-confirmation-dialog-description"
-      >
-        <DialogTitle id="warehouse-confirmation-dialog-title">
-          Confirm Warehouse Assignment
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="warehouse-confirmation-dialog-description">
-            Are you sure you want to send this order to the warehouse team for raw material assignment? 
-            This action will update the order status and notify the warehouse team.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button 
-            onClick={() => setShowWarehouseConfirmation(false)} 
-            color="primary"
-            disabled={isUpdatingOrderStatus}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleConfirmSendToWarehouse} 
-            color="primary" 
-            variant="contained"
-            disabled={isUpdatingOrderStatus}
-          >
-            {isUpdatingOrderStatus ? 'Sending...' : 'Confirm & Send'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Warehouse Confirmation Dialog - Only show for non-admin */}
+      {!isAdmin && (
+        <Dialog
+          open={showWarehouseConfirmation}
+          onClose={() => setShowWarehouseConfirmation(false)}
+          aria-labelledby="warehouse-confirmation-dialog-title"
+          aria-describedby="warehouse-confirmation-dialog-description"
+        >
+          <DialogTitle id="warehouse-confirmation-dialog-title">
+            Confirm Warehouse Assignment
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="warehouse-confirmation-dialog-description">
+              Are you sure you want to send this order to the warehouse team for raw material assignment?
+              This action will update the order status and notify the warehouse team.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => setShowWarehouseConfirmation(false)}
+              color="primary"
+              disabled={isUpdatingOrderStatus}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmSendToWarehouse}
+              color="primary"
+              variant="contained"
+              disabled={isUpdatingOrderStatus}
+            >
+              {isUpdatingOrderStatus ? 'Sending...' : 'Confirm & Send'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
     </Dialog>
   );
 };
 
 export default OrderDetailsModal;
-
-
- 
