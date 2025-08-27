@@ -9,36 +9,84 @@ import type {
 } from "../../types/orderManagement";
 import OrderStatusChip from "../operationManager/common/OrderStatusChip";
 import { textDate } from "../../utils/dateConversion";
-import OrderDetailsModal from "../../components/UI/OrderDetailsModal"; 
+import OrderDetailsModal from "../../components/UI/OrderDetailsModal";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
+import {
+  Stack,
+  Typography,
+} from "@mui/material";
+import { DatePickerField } from "../../components/UI/DatePickerField";
+import { SelectBox } from "../../components/UI/SelectBox";
+import RestartAltOutlinedIcon from "@mui/icons-material/RestartAltOutlined";
+
+const statusOptions = [
+  { value: "0", label: "New" },
+  { value: "1", label: "Waiting for Raw Material" },
+  { value: "2", label: "Material Issued & Work Ongoing" },
+  { value: "3", label: "Completed" },
+  { value: "4", label: "Delayed" },
+];
 
 const OrderManagement = () => {
   const [orderData, setOrderData] = useState<OrderManagementColumnData[] | []>(
     []
   );
-  const [modalOpen, setModalOpen] = useState(false); // New state
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null); // New state
+  const [filteredOrderData, setFilteredOrderData] = useState<
+    OrderManagementColumnData[] | []
+  >([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+
+  const [filters, setFilters] = useState({
+    startDate: "",
+    endDate: "",
+    status: "",
+  });
 
   const { data } = useGetAllOrdersQuery("");
 
   useEffect(() => {
-    console.log("Order Management API Data:", data);
-    const order: OrderManagementColumnData[] = data?.map(
-      (obj: OrderManagementDataDto) => ({
-        id: obj.id,
-        orderId:   obj.id,
-        date: textDate(obj.date),
-        customerName: obj.estimation.customerName, // Added customerName
-        totalProduct: obj.estimation.products.length,
-        status: obj.orderStatus,
-        deadlineStart: obj.deadlineStart || "-",
-        deadlineEnd: obj.deadlineEnd || "-",
-      })
-    );
-    setOrderData(order);
+    if (data) {
+      const orders: OrderManagementColumnData[] = data.map(
+        (obj: OrderManagementDataDto) => ({
+          id: obj.id,
+          orderId: obj.id,
+          date: textDate(obj.date),
+          customerName: obj.estimation.customerName,
+          totalProduct: obj.estimation.products.length,
+          status: obj.orderStatus,
+          deadlineStart: obj.deadlineStart || "-",
+          deadlineEnd: obj.deadlineEnd || "-",
+        })
+      );
+      setOrderData(orders);
+      setFilteredOrderData(orders);
+    }
   }, [data]);
+
+  useEffect(() => {
+    let filteredData = [...orderData];
+
+    if (filters.startDate) {
+      filteredData = filteredData.filter(
+        (order) => new Date(order.date) >= new Date(filters.startDate)
+      );
+    }
+    if (filters.endDate) {
+      filteredData = filteredData.filter(
+        (order) => new Date(order.date) <= new Date(filters.endDate)
+      );
+    }
+    if (filters.status) {
+      filteredData = filteredData.filter(
+        (order) => order.status === filters.status
+      );
+    }
+
+    setFilteredOrderData(filteredData);
+  }, [filters, orderData]);
 
   const handleViewOrder = (orderId: string) => {
     setSelectedOrderId(orderId);
@@ -50,6 +98,19 @@ const OrderManagement = () => {
     setSelectedOrderId(null);
   };
 
+  const handleFilterChange = (key: string, value: string | null) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleFilterReset = () => {
+    setFilters({
+      startDate: "",
+      endDate: "",
+      status: "",
+    });
+    setFilteredOrderData(orderData);
+  };
+
   const columns: GridColDef[] = [
     {
       field: "orderId",
@@ -59,7 +120,7 @@ const OrderManagement = () => {
       flex: 1,
     },
     {
-      field: "customerName", // New column
+      field: "customerName",
       headerName: "Customer Name",
       headerAlign: "center",
       align: "center",
@@ -116,7 +177,7 @@ const OrderManagement = () => {
           <Button
             color="primary"
             sx={{ minWidth: 0, padding: 0 }}
-            onClick={() => handleViewOrder(params.row.id)} // Modified onClick
+            onClick={() => handleViewOrder(params.row.id)}
           >
             <VisibilityOutlinedIcon />
           </Button>
@@ -128,12 +189,77 @@ const OrderManagement = () => {
   return (
     <Container maxWidth="lg" sx={{ mt: 2 }}>
       <Box sx={{ width: "100%", mt: 2 }}>
+        <Box sx={{ p: 2, border: '1px solid #ccc', borderRadius: '8px', mb: 2 }}>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Box sx={{ display: "block" }}>
+              <Typography
+                variant="caption"
+                display="block"
+                gutterBottom
+                sx={{ fontWeight: 500, color: "text.secondary" }}
+              >
+                From Date
+              </Typography>
+              <DatePickerField
+                label="From Date"
+                value={filters.startDate}
+                onChange={(_label, value) =>
+                  handleFilterChange("startDate", value)
+                }
+              />
+            </Box>
+            <Box sx={{ display: "block" }}>
+              <Typography
+                variant="caption"
+                display="block"
+                gutterBottom
+                sx={{ fontWeight: 500, color: "text.secondary" }}
+              >
+                To Date
+              </Typography>
+              <DatePickerField
+                label="To Date"
+                value={filters.endDate}
+                onChange={(_label, value) => handleFilterChange("endDate", value)}
+              />
+            </Box>
+            <Box sx={{ display: "block" }}>
+              <Typography
+                variant="caption"
+                display="block"
+                gutterBottom
+                sx={{ fontWeight: 500, color: "text.secondary" }}
+              >
+                Status
+              </Typography>
+              <SelectBox
+                id="status"
+                name="status"
+                value={filters.status || ""}
+                onChange={(key, value) => handleFilterChange(key, value)}
+                options={statusOptions}
+              />
+            </Box>
+            <Button
+              onClick={handleFilterReset}
+              sx={{ color: "#666666", borderRadius: "8px" }}
+              size="small"
+            >
+              <RestartAltOutlinedIcon />
+              RESET
+            </Button>
+          </Stack>
+        </Box>
+
         <Box sx={{ height: 600, width: "100%" }}>
-          <DataTable rows={orderData} columns={columns} disableColumnMenu />
+          <DataTable
+            rows={filteredOrderData}
+            columns={columns}
+            disableColumnMenu
+          />
         </Box>
       </Box>
 
-      {/* Order Details Modal */}
       <OrderDetailsModal
         open={modalOpen}
         onClose={handleCloseModal}

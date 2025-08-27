@@ -124,7 +124,7 @@ const LeadManagement = () => {
     },
     {
       field: "actions",
-      headerName: "Actions",
+      headerName: "Status",
       sortable: false,
       flex: 1.2,
       minWidth: 180,
@@ -132,9 +132,9 @@ const LeadManagement = () => {
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
           {params.row.isOrder === "0" || params.row.isOrder === 0 ? (
             <Chip
-              label="Convert to Order"
+              label="Not Converted"
               onClick={() => handleConvertToOrder(params.row.id)}
-              color="primary"
+              color="error"
               size="small"
               sx={{ 
                 cursor: 'pointer',
@@ -159,7 +159,6 @@ const LeadManagement = () => {
     },
   ];
 
-  // Enhanced safety check for filtering with null checks
   const filteredLeads = Array.isArray(leads) ? leads.filter(lead => {
     if (!lead) return false;
     

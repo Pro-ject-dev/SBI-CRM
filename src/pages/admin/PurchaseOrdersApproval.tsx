@@ -12,7 +12,7 @@ import {
 import { useGetVendorsQuery } from "../../app/api/vendorsApi";
 import { useGetRawMaterialsQuery } from "../../app/api/rawMaterialsApi";
 import PurchaseOrderDetailsModal from "../../components/UI/PurchaseOrderDetailsModal";
-import { Visibility, CheckCircle, Cancel } from "@mui/icons-material";
+import { Visibility } from "@mui/icons-material";
 
 const PurchaseOrdersApproval = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -46,7 +46,7 @@ const PurchaseOrdersApproval = () => {
 
   useEffect(() => {
     refetch();
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, refetch]);
 
   useEffect(() => {
     try {
@@ -64,12 +64,24 @@ const PurchaseOrdersApproval = () => {
         return;
       }
 
-      const vendorsMap = new Map(
-        vendorsData?.data?.map((v: any) => [v.id.toString(), v.name])
-      );
-      const rawMaterialsMap = new Map(
-        rawMaterialsData?.data?.map((m: any) => [m.id.toString(), m.name])
-      );
+      // Create maps for vendors and raw materials with proper fallbacks
+      const vendorsMap = new Map();
+      if (vendorsData?.data && Array.isArray(vendorsData.data)) {
+        vendorsData.data.forEach((vendor: any) => {
+          if (vendor && vendor.id) {
+            vendorsMap.set(vendor.id.toString(), vendor.name || "Unknown Vendor");
+          }
+        });
+      }
+
+      const rawMaterialsMap = new Map();
+      if (rawMaterialsData?.data && Array.isArray(rawMaterialsData.data)) {
+        rawMaterialsData.data.forEach((material: any) => {
+          if (material && material.id) {
+            rawMaterialsMap.set(material.id.toString(), material.name || "Unknown Material");
+          }
+        });
+      }
 
       console.log("Vendors map:", vendorsMap);
       console.log("Raw materials map:", rawMaterialsMap);
@@ -78,6 +90,7 @@ const PurchaseOrdersApproval = () => {
         try {
           console.log(`Processing row ${index}:`, row);
 
+          // Process items with proper fallbacks
           const items = (Array.isArray(row.items) ? row.items : []).map(
             (item: any) => {
               const rawMaterialName = rawMaterialsMap.get(item.rawMaterialId?.toString()) || "Unknown Material";
@@ -85,39 +98,30 @@ const PurchaseOrdersApproval = () => {
               return {
                 ...item,
                 rawMaterial: rawMaterialName,
+                rawMaterialName: rawMaterialName, // Add this for compatibility
               };
             }
           );
 
-          const vendorName =
-            row?.vendor ||
-            "Unknown Vendor";
+          // Get vendor name with proper fallback
+          const vendorName = vendorsMap.get(row.vendorId?.toString()) || row.vendor?.name || row.vendor || "Unknown Vendor";
           console.log(`  - Vendor ${row.vendorId} -> ${vendorName}`);
           
           const result = {
             id: row.id ?? row.orderId ?? row.order_id ?? `row-${index}`,
-            orderNumber:
-              row.orderNumber ?? row.orderId ?? row.order_id ?? `Order-${index}`,
-            totalAmount: row.totalAmount ?? row.total_amount ?? 0,
-            status: String(
-              row.orderStatus ?? row.order_status ?? row.status ?? "pending"
-            ),
-            vendor: {
-              id: row.vendorId,
-              name: vendorName,
-            },
-            requestedDate:
-              row.requestedDate ??
-              row.requested_date ??
-              row.createdAt ??
-              row.created_at ??
-              new Date().toISOString(),
-            requestedBy: row.requestedBy ?? "N/A",
-            notes: row.notes ?? "",
+            orderNumber: row.orderNumber ?? row.orderId ?? row.order_id ?? `Order-${index}`,
+            totalAmount: Number(row.totalAmount ?? row.total_amount ?? 0),
+            status: String(row.orderStatus ?? row.order_status ?? row.status ?? "pending").toLowerCase(),
+            // Store vendor information as both string and object for compatibility
+            vendor: vendorName,
+            vendorName: vendorName, // String version for display
             vendorId: row.vendorId,
+            requestedDate: row.requestedDate ?? row.requested_date ?? row.createdAt ?? row.created_at ?? new Date().toISOString(),
+            requestedBy: row.requestedBy ?? row.requested_by ?? "N/A",
+            notes: row.notes ?? "",
             items: items,
-            createdAt: row.createdAt,
-            updatedAt: row.updatedAt,
+            createdAt: row.createdAt ?? new Date().toISOString(),
+            updatedAt: row.updatedAt ?? new Date().toISOString(),
           };
           console.log(`  - Normalized row ${index}:`, result);
           return result;
@@ -156,16 +160,6 @@ const PurchaseOrdersApproval = () => {
     }
   };
 
-  const handleStatusChange = async (id: string, status: string) => {
-    try {
-      await updatePurchaseOrderStatus({ id, status });
-      dispatch(addToast({ message: `Order ${status} successfully`, type: "success" }));
-      refetch();
-    } catch (e) {
-      dispatch(addToast({ message: "Failed to update status", type: "error" }));
-    }
-  };
-
   const handleApproveReject = (id: string, action: string) => {
     const order = orderData.find((order: any) => order.id === id);
     const orderNumber = order?.orderNumber || id;
@@ -184,14 +178,16 @@ const PurchaseOrdersApproval = () => {
     const status = action === 'approve' ? 'approved' : 'rejected';
     
     try {
-      await updatePurchaseOrderStatus({ id: orderId, status });
+      await updatePurchaseOrderStatus({ id: orderId, status }).unwrap();
       dispatch(addToast({ 
         message: `Purchase order ${status} successfully`, 
         type: "success" 
       }));
       setConfirmationDialog({ open: false, title: "", message: "", action: "", orderId: "" });
+      setDetailsModalOpen(false); // Close the details modal after action
       refetch();
     } catch (e) {
+      console.error("Error in confirm action:", e);
       dispatch(addToast({ message: "Failed to update status", type: "error" }));
     }
   };
@@ -211,7 +207,21 @@ const PurchaseOrdersApproval = () => {
   };
 
   const columns: GridColDef[] = [
-  
+    {
+      field: "orderNumber",
+      headerName: "Order Number",
+      flex: 1,
+      minWidth: 150,
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params: any) => {
+        try {
+          return params?.row?.orderNumber || "N/A";
+        } catch {
+          return "N/A";
+        }
+      },
+    },
     {
       field: "requestedDate",
       headerName: "Requested Date",
@@ -239,10 +249,15 @@ const PurchaseOrdersApproval = () => {
       align: "center",
       renderCell: (params: any) => {
         try {
-          const v = params?.row?.vendor;
-          if (!v) return "N/A";
-          if (typeof v === "string") return v || "N/A";
-          return v?.name || "N/A";
+          // Always return string, never object
+          const vendor = params?.row?.vendor;
+          const vendorName = params?.row?.vendorName;
+          
+          if (typeof vendor === "string") return vendor || "N/A";
+          if (typeof vendorName === "string") return vendorName || "N/A";
+          if (vendor && typeof vendor === "object" && vendor.name) return vendor.name;
+          
+          return "N/A";
         } catch {
           return "N/A";
         }
@@ -307,8 +322,8 @@ const PurchaseOrdersApproval = () => {
       field: "actions",
       headerName: "Actions",
       sortable: false,
-      flex: 1.5,
-      minWidth: 200,
+      flex: 0.8,
+      minWidth: 120,
       headerAlign: "center",
       align: "center",
       renderCell: (params: any) => {
@@ -326,30 +341,6 @@ const PurchaseOrdersApproval = () => {
               >
                 <Visibility fontSize="small" />
               </Button>
-              {params?.row?.status === "pending" && (
-                <>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    color="success"
-                    startIcon={<CheckCircle />}
-                    onClick={() => handleApproveReject(id, "approve")}
-                    title="Approve Order"
-                  >
-                    Approve
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    color="error"
-                    startIcon={<Cancel />}
-                    onClick={() => handleApproveReject(id, "reject")}
-                    title="Reject Order"
-                  >
-                    Reject
-                  </Button>
-                </>
-              )}
             </Box>
           );
         } catch {
@@ -388,7 +379,6 @@ const PurchaseOrdersApproval = () => {
             alignItems: { xs: "stretch", sm: "center" },
           }}
         >
-        
           <TextField
             size="small"
             select
@@ -396,6 +386,7 @@ const PurchaseOrdersApproval = () => {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             sx={{ minWidth: 150 }}
+            label="Filter by Status"
           >
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>
@@ -425,7 +416,7 @@ const PurchaseOrdersApproval = () => {
         )}
       </Box>
 
-      {/* Purchase Order Details Modal */}
+      {/* Purchase Order Details Modal - Pass handleApproveReject function */}
       <PurchaseOrderDetailsModal
         open={detailsModalOpen}
         onClose={() => setDetailsModalOpen(false)}
@@ -468,5 +459,3 @@ const PurchaseOrdersApproval = () => {
 };
 
 export default PurchaseOrdersApproval;
-
-

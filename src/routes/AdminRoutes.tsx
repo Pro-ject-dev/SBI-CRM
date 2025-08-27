@@ -4,8 +4,6 @@ import AdminDashboard from "../pages/admin/AdminDashboard";
 import AdminLayout from "../layouts/AdminLayout";
 import MasterForm from "../pages/admin/MasterForm";
 import ProductManagement from "../pages/admin/ProductManagement";
-// import EstimationPdfGeneration from "../pages/admin/EstimationPdfGeneration";
-import WarehouseOverview from "../pages/admin/WarehouseOverview";
 import PurchaseOrdersApproval from "../pages/admin/PurchaseOrdersApproval";
 import RawMaterialsManagement from "../features/admin/RawMaterialsManagement";
 import LeadManagement from "../features/admin/LeadManagement";
@@ -30,8 +28,6 @@ const AdminRoutes = () => (
       <Route path="master-form" element={<MasterForm />} />
       <Route path="product-management" element={<ProductManagement />} />
       <Route path="view-products" element={<ProductManagement />} />
-      {/* <Route path="pdf-generation" element={<EstimationPdfGeneration />} /> */}
-      <Route path="warehouse" element={<WarehouseOverview />} />
       <Route path="purchase-orders-approval" element={<PurchaseOrdersApproval />} />
       <Route path="raw-materials" element={<RawMaterialsManagement />} />
 

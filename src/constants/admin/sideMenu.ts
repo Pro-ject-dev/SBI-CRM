@@ -22,7 +22,7 @@ export const adminMenuItems: SideBar[] = [
   {
     id: "leads",
     label: "Leads",
-    icon: AssignmentIcon, // Using AssignmentIcon, can be changed
+    icon: AssignmentIcon,
     path: "/admin/leads",
   },
   {
@@ -30,6 +30,18 @@ export const adminMenuItems: SideBar[] = [
     label: "Orders",
     icon: ShoppingCartIcon,
     path: "/admin/orders",
+  },
+  {
+    id: "poapproval",
+    label: "PO Approval",
+    icon: InventoryIcon,
+    path: "/admin/purchase-orders-approval",
+  },
+  {
+    id: "productmanagement",
+    label: "Product Management",
+    icon: InventoryIcon,
+    path: "/admin/product-management",
   },
   {
     id: "rawmaterials",
@@ -48,23 +60,5 @@ export const adminMenuItems: SideBar[] = [
     label: "Master Forms",
     icon: PeopleIcon,
     path: "/admin/master-form",
-  },
-  {
-    id: "productmanagement",
-    label: "Product Management",
-    icon: InventoryIcon,
-    path: "/admin/product-management",
-  },
-  {
-    id: "poapproval",
-    label: "PO Approval",
-    icon: InventoryIcon, // Using InventoryIcon for now, can be changed later
-    path: "/admin/purchase-orders-approval",
-  },
-  {
-    id: "warehouse",
-    label: "Warehouse",
-    icon: WarehouseIcon,
-    path: "/admin/warehouse",
   },
 ];

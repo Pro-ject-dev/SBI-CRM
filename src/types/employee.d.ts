@@ -1,7 +1,12 @@
 export interface Employee {
   id: string;
   name: string;
-  email: string;
+  mail: string;
+  password: string;
+  date:String;
   role: string;
-  phone: string;
+  mobile: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
 }

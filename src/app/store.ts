@@ -17,6 +17,7 @@ import { vendorsApi } from "./api/vendorsApi";
 import { purchaseOrdersApi } from "./api/purchaseOrdersApi";
 import { stockAssignmentApi } from "./api/stockAssignmentApi";
 import { leadsApi } from "./api/leadsApi";
+import { employeeApi } from "./api/employeeApi";
 
 
 export const store = configureStore({
@@ -39,6 +40,7 @@ export const store = configureStore({
     [purchaseOrdersApi.reducerPath]: purchaseOrdersApi.reducer,
     [stockAssignmentApi.reducerPath]: stockAssignmentApi.reducer,
     [leadsApi.reducerPath]: leadsApi.reducer,
+    [employeeApi.reducerPath]: employeeApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -53,7 +55,8 @@ export const store = configureStore({
       vendorsApi.middleware,
       purchaseOrdersApi.middleware,
       stockAssignmentApi.middleware,
-      leadsApi.middleware
+      leadsApi.middleware,
+      employeeApi.middleware
     ),
 });
 
