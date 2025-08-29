@@ -5,6 +5,7 @@ import standardReducer from "./slices/standardProductManagementSlice";
 import customizedReducer from "./slices/customizedProductManagementSlice";
 import addonsReducer from "./slices/addonsProductManagementSlice";
 import comboReducer from "./slices/comboProductManagementSlice";
+import { authApi } from "./api/authApi";
 import { standardProductApi } from "./api/standardProductApi";
 import { customizedProductApi } from "./api/customizedProductApi";
 import { addonsProductApi } from "./api/addonsProductApi";
@@ -28,6 +29,7 @@ export const store = configureStore({
     customized: customizedReducer,
     addons: addonsReducer,
     combo: comboReducer,
+    [authApi.reducerPath]: authApi.reducer,
     [standardProductApi.reducerPath]: standardProductApi.reducer,
     [customizedProductApi.reducerPath]: customizedProductApi.reducer,
     [addonsProductApi.reducerPath]: addonsProductApi.reducer,
@@ -44,6 +46,7 @@ export const store = configureStore({
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
+      authApi.middleware,
       standardProductApi.middleware,
       customizedProductApi.middleware,
       addonsProductApi.middleware,

@@ -1,4 +1,4 @@
-import { Box, Button, Chip, Container, TextField, Typography, Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText } from "@mui/material";
+import { Box, Button, Chip, Container, TextField, Typography, Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { useEffect, useState, useMemo } from "react";
 import { DataTable } from "../../components/UI/DataTable";
 import type { GridColDef } from "@mui/x-data-grid";
@@ -17,7 +17,9 @@ import { Visibility } from "@mui/icons-material";
 const PurchaseOrdersApproval = () => {
   const dispatch: AppDispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("pending");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedPurchaseOrder, setSelectedPurchaseOrder] = useState<any>(null);
   const [confirmationDialog, setConfirmationDialog] = useState({
@@ -34,19 +36,60 @@ const PurchaseOrdersApproval = () => {
     isLoading,
     isFetching,
     error,
-  } = useGetPurchaseOrdersQuery({
-    search: searchTerm,
-    status: statusFilter,
-  });
+  } = useGetPurchaseOrdersQuery({});
 
   const [updatePurchaseOrderStatus] = useUpdatePurchaseOrderStatusMutation();
   const { data: vendorsData } = useGetVendorsQuery({});
   const { data: rawMaterialsData } = useGetRawMaterialsQuery({});
   const [orderData, setOrderData] = useState<any[]>([]);
 
-  useEffect(() => {
-    refetch();
-  }, [searchTerm, statusFilter, refetch]);
+  // Client-side filtering logic
+  const filteredData = useMemo(() => {
+    if (!orderData || orderData.length === 0) return [];
+
+    let filtered = [...orderData];
+
+    // Search filter
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter((order) => {
+        const vendorName = (order.vendorName || order.vendor || '').toLowerCase();
+        const requestedBy = (order.requestedBy || '').toLowerCase();
+        
+        return vendorName.includes(searchLower) || 
+               requestedBy.includes(searchLower);
+      });
+    }
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter((order) => {
+        const orderStatus = (order.status || '').toLowerCase();
+        return orderStatus === statusFilter.toLowerCase();
+      });
+    }
+
+    // Date range filter
+    if (startDate) {
+      const startDateObj = new Date(startDate);
+      startDateObj.setHours(0, 0, 0, 0);
+      filtered = filtered.filter((order) => {
+        const orderDate = new Date(order.requestedDate || order.createdAt);
+        return orderDate >= startDateObj;
+      });
+    }
+
+    if (endDate) {
+      const endDateObj = new Date(endDate);
+      endDateObj.setHours(23, 59, 59, 999);
+      filtered = filtered.filter((order) => {
+        const orderDate = new Date(order.requestedDate || order.createdAt);
+        return orderDate <= endDateObj;
+      });
+    }
+
+    return filtered;
+  }, [orderData, searchTerm, statusFilter, startDate, endDate]);
 
   useEffect(() => {
     try {
@@ -161,7 +204,7 @@ const PurchaseOrdersApproval = () => {
   };
 
   const handleApproveReject = (id: string, action: string) => {
-    const order = orderData.find((order: any) => order.id === id);
+    const order = filteredData.find((order: any) => order.id === id);
     const orderNumber = order?.orderNumber || id;
     
     setConfirmationDialog({
@@ -196,9 +239,16 @@ const PurchaseOrdersApproval = () => {
     setConfirmationDialog({ open: false, title: "", message: "", action: "", orderId: "" });
   };
 
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setStartDate("");
+    setEndDate("");
+  };
+
   // Handler to open details modal
   const handleViewRow = (id: string) => {
-    const purchaseOrder = orderData.find((order: any) => order.id === id);
+    const purchaseOrder = filteredData.find((order: any) => order.id === id);
     if (purchaseOrder) {
       console.log("Selected purchase order for modal:", purchaseOrder);
       setSelectedPurchaseOrder(purchaseOrder);
@@ -207,21 +257,6 @@ const PurchaseOrdersApproval = () => {
   };
 
   const columns: GridColDef[] = [
-    {
-      field: "orderNumber",
-      headerName: "Order Number",
-      flex: 1,
-      minWidth: 150,
-      headerAlign: "center",
-      align: "center",
-      renderCell: (params: any) => {
-        try {
-          return params?.row?.orderNumber || "N/A";
-        } catch {
-          return "N/A";
-        }
-      },
-    },
     {
       field: "requestedDate",
       headerName: "Requested Date",
@@ -377,36 +412,84 @@ const PurchaseOrdersApproval = () => {
             gap: 2,
             flexDirection: { xs: "column", sm: "row" },
             alignItems: { xs: "stretch", sm: "center" },
+            flexWrap: "wrap",
           }}
         >
+          
+          
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={statusFilter}
+              label="Status"
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <MenuItem value="all">All Status</MenuItem>
+              <MenuItem value="pending">Pending</MenuItem>
+              <MenuItem value="approved">Approved</MenuItem>
+              <MenuItem value="rejected">Rejected</MenuItem>
+              <MenuItem value="completed">Completed</MenuItem>
+            </Select>
+          </FormControl>
+
           <TextField
             size="small"
-            select
-            SelectProps={{ native: true }}
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            label="Start Date"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
             sx={{ minWidth: 150 }}
-            label="Filter by Status"
-          >
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="completed">Completed</option>
-          </TextField>
-        </Box>
-      </Box>
+          />
+
+          <TextField
+            size="small"
+            label="End Date"
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            sx={{ minWidth: 150 }}
+          />
+
+                     <Button
+             variant="outlined"
+             onClick={handleClearFilters}
+             sx={{ minWidth: 100 }}
+           >
+             Clear Filters
+           </Button>
+         </Box>
+       </Box>
+       
+       {/* Filter Summary */}
+       {(searchTerm || statusFilter !== 'all' || startDate || endDate) && (
+         <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+           <Typography variant="body2" color="text.secondary">
+             <strong>Active Filters:</strong>
+             {searchTerm && ` Search: "${searchTerm}"`}
+             {statusFilter !== 'all' && ` Status: ${statusFilter}`}
+             {startDate && ` From: ${new Date(startDate).toLocaleDateString()}`}
+             {endDate && ` To: ${new Date(endDate).toLocaleDateString()}`}
+             {` (${filteredData.length} of ${orderData.length} orders)`}
+           </Typography>
+         </Box>
+       )}
       <Box sx={{ height: 600, overflowX: "auto" }}>
         {error ? (
           <Typography color="error" align="center">
             Error loading purchase orders: {String(error)}
           </Typography>
-        ) : orderData.length === 0 && !isLoading && !isFetching ? (
+        ) : filteredData.length === 0 && !isLoading && !isFetching ? (
           <Typography align="center" sx={{ mt: 4, color: 'text.secondary' }}>
-            No purchase orders found. {data ? 'The API returned empty data.' : 'No data received from API.'}
+            {orderData.length === 0 
+              ? `No purchase orders found. ${data ? 'The API returned empty data.' : 'No data received from API.'}`
+              : 'No purchase orders match the current filters.'
+            }
           </Typography>
         ) : (
           <DataTable 
-            rows={orderData} 
+            rows={filteredData} 
             columns={columns} 
             disableColumnMenu 
             disableRowSelectionOnClick

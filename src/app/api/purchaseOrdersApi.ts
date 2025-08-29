@@ -6,7 +6,7 @@ export const purchaseOrdersApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_LIVE_SERVER_BASE_URL,
     prepareHeaders: (headers) => {
-      const accessToken = import.meta.env.VITE_AUTHORIZATION_TOKEN;
+      const accessToken = localStorage.getItem("authToken");
       if (accessToken) {
         headers.set("authorization", `Bearer ${accessToken}`);
       }
@@ -16,12 +16,24 @@ export const purchaseOrdersApi = createApi({
 
   tagTypes: ["PurchaseOrders", "Vendors", "RawMaterials"],
   endpoints: (builder) => ({
-    getPurchaseOrders: builder.query<PurchaseOrder[], { status?: string; search?: string } | void>({
-      query: (args?: { status?: string; search?: string }) => {
-        const { status, search } = args || {};
+    getPurchaseOrders: builder.query<PurchaseOrder[], { 
+      status?: string; 
+      search?: string; 
+      startDate?: string; 
+      endDate?: string; 
+    } | void>({
+      query: (args?: { 
+        status?: string; 
+        search?: string; 
+        startDate?: string; 
+        endDate?: string; 
+      }) => {
+        const { status, search, startDate, endDate } = args || {};
         const params = new URLSearchParams();
         if (status) params.append("status", status);
         if (search) params.append("search", search);
+        if (startDate) params.append("startDate", startDate);
+        if (endDate) params.append("endDate", endDate);
         const qs = params.toString();
         return `${localStorage.getItem("api_endpoint")}/getPurchaseOrders${qs ? `?${qs}` : ""}`;
       },

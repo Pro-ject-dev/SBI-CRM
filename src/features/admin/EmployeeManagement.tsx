@@ -50,6 +50,7 @@ import {
   useUpdateEmployeeMutation,
   useDeleteEmployeeMutation,
 } from "../../app/api/employeeApi";
+import { hashPassword } from "../../utils/passwordUtils";
 
 interface EmployeeFormData {
   id?: string;
@@ -330,6 +331,11 @@ const EmployeeManagement: React.FC = () => {
         ...formData,
         confirmPassword: undefined, // Remove confirm password
       };
+
+      // Hash password if provided
+      if (payload.password?.trim()) {
+        payload.password = await hashPassword(payload.password);
+      }
 
       // For editing, only include password if it's provided
       if (editingEmployee && !payload.password?.trim()) {

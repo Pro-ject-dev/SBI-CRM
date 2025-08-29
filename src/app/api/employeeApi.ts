@@ -6,7 +6,7 @@ export const employeeApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_LIVE_SERVER_BASE_URL,
     prepareHeaders: (headers) => {
-      const accessToken = import.meta.env.VITE_AUTHORIZATION_TOKEN;
+      const accessToken = localStorage.getItem("authToken");
       if (accessToken) {
         headers.set("authorization", `Bearer ${accessToken}`);
       }
@@ -29,7 +29,7 @@ export const employeeApi = createApi({
     }),
     updateEmployee: builder.mutation<Employee, Partial<Employee>>({
       query: (data) => ({
-        url: `${localStorage.getItem("api_endpoint")}/updateEmployee/${data.id}`,
+        url: `${localStorage.getItem("api_endpoint")}/updateEmployee?id=${data.id}`,
         method: "PUT",
         body: data,
       }),
@@ -37,7 +37,7 @@ export const employeeApi = createApi({
     }),
     deleteEmployee: builder.mutation<{ success: boolean; id: string }, string>({
       query: (id) => ({
-        url: `${localStorage.getItem("api_endpoint")}/deleteEmployee/${id}`,
+        url: `${localStorage.getItem("api_endpoint")}/deleteEmployee?id=${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Employee"],

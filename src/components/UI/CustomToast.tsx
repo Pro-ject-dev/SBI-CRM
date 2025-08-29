@@ -1,6 +1,3 @@
-import WarningIcon from "@mui/icons-material/Error";
-import ErrorIcon from "@mui/icons-material/Cancel";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../app/store";
 import { useEffect } from "react";
@@ -11,82 +8,55 @@ const CustomToast = () => {
   const dispatch: AppDispatch = useDispatch();
 
   useEffect(() => {
+    console.log("CustomToast - Current toasts:", toasts);
+    
+    // Auto-remove toasts after 3 seconds, but handle them one by one
     if (toasts.length > 0) {
       const timer = setTimeout(() => {
-        dispatch(removeToast(toasts[0].id));
+        // Remove the oldest toast
+        if (toasts.length > 0) {
+          dispatch(removeToast(toasts[0].id));
+        }
       }, 3000);
       return () => clearTimeout(timer);
     }
   }, [toasts, dispatch]);
 
   return (
-    <div className="fixed top-4 right-4 space-y-2 z-[9999]">
-      {toasts.map((toast) => (
+    <div className="fixed top-4 right-4 space-y-2 z-[9999] max-w-sm">
+      {toasts.slice(0, 3).map((toast, index) => (
         <div
           key={toast.id}
-          style={{
-            ...(toast.type === "warning"
-              ? { ...styles.warn }
+          className={`px-4 py-3 rounded-lg border-2 shadow-lg transform transition-all duration-300 ${
+            toast.type === "warning"
+              ? "bg-yellow-50 border-yellow-400 text-yellow-800"
               : toast.type === "success"
-              ? { ...styles.success }
-              : { ...styles.error }),
-            borderRadius: "10px",
-            padding: "10px 20px",
-            color: "black",
-            fontSize: "16px",
-            display: "flex",
-            alignItems: "center",
+              ? "bg-green-50 border-green-400 text-green-800"
+              : "bg-red-50 border-red-400 text-red-800"
+          }`}
+          style={{
+            transform: `translateY(${index * 10}px)`,
+            zIndex: 9999 - index
           }}
         >
-          {toast.type === "warning" ? (
-            <WarningIcon
-              style={{
-                ...styles.warn,
-                marginRight: "8px",
-                color: "#f1c40f",
-                fontSize: "20px",
-              }}
-            />
-          ) : toast.type === "success" ? (
-            <CheckCircleIcon
-              style={{
-                ...styles.success,
-                marginRight: "8px",
-                color: "#27ae60",
-                fontSize: "20px",
-              }}
-            />
-          ) : (
-            <ErrorIcon
-              style={{
-                ...styles.error,
-                marginRight: "8px",
-                color: "#e74c3c",
-                fontSize: "20px",
-              }}
-            />
-          )}
-
-          {toast.message}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <span className="mr-2">
+                {toast.type === "warning" ? "⚠️" : toast.type === "success" ? "✅" : "❌"}
+              </span>
+              <span className="font-medium text-sm">{toast.message}</span>
+            </div>
+            <button
+              onClick={() => dispatch(removeToast(toast.id))}
+              className="ml-2 text-gray-500 hover:text-gray-700 text-lg"
+            >
+              ×
+            </button>
+          </div>
         </div>
       ))}
     </div>
   );
-};
-
-const styles = {
-  warn: {
-    backgroundColor: "#fef9e7",
-    border: "1px solid #f1c40f",
-  },
-  error: {
-    backgroundColor: "#fdedec",
-    border: "1px solid #e74c3c",
-  },
-  success: {
-    backgroundColor: "#e9f7ef",
-    border: "1px solid #27ae60",
-  },
 };
 
 export default CustomToast;

@@ -2,7 +2,7 @@
 // This screen is for procurement team to manage purchase orders to vendors only.
 // No warehouse or stock assignment logic should be present here.
 
-import { Box, Button, Container, TextField, Chip, Typography } from "@mui/material";
+import { Box, Button, Container, TextField, Chip, Typography, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useEffect, useState } from "react";
 import { Edit, Add, Visibility } from "@mui/icons-material";
 import { DataTable } from "../../components/UI/DataTable";
@@ -24,7 +24,9 @@ import PurchaseOrderDetailsModal from "../../components/UI/PurchaseOrderDetailsM
 const PurchaseOrdersManagement = () => {
   const dispatch: AppDispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [purchaseOrderModalOpen, setPurchaseOrderModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedPurchaseOrder, setSelectedPurchaseOrder] = useState<any>(null);
@@ -35,10 +37,7 @@ const PurchaseOrdersManagement = () => {
     isLoading,
     isFetching,
     error,
-  } = useGetPurchaseOrdersQuery({
-    search: searchTerm,
-    status: statusFilter,
-  });
+  } = useGetPurchaseOrdersQuery({});
 
   const [updatePurchaseOrderStatus] = useUpdatePurchaseOrderStatusMutation();
 
@@ -46,9 +45,55 @@ const PurchaseOrdersManagement = () => {
   const { data: rawMaterialsData } = useGetRawMaterialsQuery({});
   const [orderData, setOrderData] = useState<any[]>([]);
 
-  useEffect(() => {
-    refetch();
-  }, [searchTerm, statusFilter]);
+  // Client-side filtering logic
+  const filteredData = useMemo(() => {
+    if (!orderData || orderData.length === 0) return [];
+
+    let filtered = [...orderData];
+
+    // Search filter
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter((order) => {
+        const orderNumber = (order.orderNumber || '').toLowerCase();
+        const vendorName = (order.vendorName || order.vendor || '').toLowerCase();
+        const requestedBy = (order.requestedBy || '').toLowerCase();
+        
+        return orderNumber.includes(searchLower) || 
+               vendorName.includes(searchLower) || 
+               requestedBy.includes(searchLower);
+      });
+    }
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter((order) => {
+        const orderStatus = (order.status || '').toLowerCase();
+        return orderStatus === statusFilter.toLowerCase();
+      });
+    }
+
+    // Date range filter
+    if (startDate) {
+      const startDateObj = new Date(startDate);
+      startDateObj.setHours(0, 0, 0, 0);
+      filtered = filtered.filter((order) => {
+        const orderDate = new Date(order.requestedDate || order.createdAt);
+        return orderDate >= startDateObj;
+      });
+    }
+
+    if (endDate) {
+      const endDateObj = new Date(endDate);
+      endDateObj.setHours(23, 59, 59, 999);
+      filtered = filtered.filter((order) => {
+        const orderDate = new Date(order.requestedDate || order.createdAt);
+        return orderDate <= endDateObj;
+      });
+    }
+
+    return filtered;
+  }, [orderData, searchTerm, statusFilter, startDate, endDate]);
 
   useEffect(() => {
     try {
@@ -159,7 +204,7 @@ const PurchaseOrdersManagement = () => {
   };
 
   const handleViewRow = (id: string) => {
-    const purchaseOrder = orderData.find((order: any) => order.id === id);
+    const purchaseOrder = filteredData.find((order: any) => order.id === id);
     if (purchaseOrder) {
       setSelectedPurchaseOrder(purchaseOrder);
       setDetailsModalOpen(true);
@@ -384,22 +429,65 @@ const PurchaseOrdersManagement = () => {
             gap: 2,
             flexDirection: { xs: "column", sm: "row" },
             alignItems: { xs: "stretch", sm: "center" },
+            flexWrap: "wrap",
           }}
         >
           <TextField
             size="small"
-            select
-            SelectProps={{ native: true }}
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            label="Search Orders"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by order number, vendor..."
+            sx={{ minWidth: 200 }}
+          />
+          
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={statusFilter}
+              label="Status"
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <MenuItem value="all">All Status</MenuItem>
+              <MenuItem value="pending">Pending</MenuItem>
+              <MenuItem value="approved">Approved</MenuItem>
+              <MenuItem value="rejected">Rejected</MenuItem>
+              <MenuItem value="completed">Completed</MenuItem>
+            </Select>
+          </FormControl>
+
+          <TextField
+            size="small"
+            label="Start Date"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
             sx={{ minWidth: 150 }}
+          />
+
+          <TextField
+            size="small"
+            label="End Date"
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            sx={{ minWidth: 150 }}
+          />
+
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setSearchTerm("");
+              setStatusFilter("all");
+              setStartDate("");
+              setEndDate("");
+            }}
+            sx={{ minWidth: 100 }}
           >
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="completed">Completed</option>
-          </TextField>
+            Clear Filters
+          </Button>
         </Box>
         <Button
           variant="contained"
@@ -410,17 +498,31 @@ const PurchaseOrdersManagement = () => {
           Create Purchase Order
         </Button>
       </Box>
+      
+      {/* Filter Summary */}
+      {(searchTerm || statusFilter !== 'all' || startDate || endDate) && (
+        <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+          <Typography variant="body2" color="text.secondary">
+            <strong>Active Filters:</strong>
+            {searchTerm && ` Search: "${searchTerm}"`}
+            {statusFilter !== 'all' && ` Status: ${statusFilter}`}
+            {startDate && ` From: ${new Date(startDate).toLocaleDateString()}`}
+            {endDate && ` To: ${new Date(endDate).toLocaleDateString()}`}
+            {` (${filteredData.length} of ${orderData.length} orders)`}
+          </Typography>
+        </Box>
+      )}
 
       <Box sx={{ width: "100%", marginTop: "8px" }}>
         <Box sx={{ height: 600, overflowX: "auto" }}>
-          <DataTable
-            rows={orderData}
-            columns={columns}
-            disableColumnMenu
-            disableRowSelectionOnClick
-            loading={isLoading || isFetching}
-            getRowId={(row: any) => row.id ?? row.orderId ?? row.orderNumber ?? `${row.vendorId}-${row.requestedDate}`}
-          />
+                     <DataTable
+             rows={filteredData}
+             columns={columns}
+             disableColumnMenu
+             disableRowSelectionOnClick
+             loading={isLoading || isFetching}
+             getRowId={(row: any) => row.id ?? row.orderId ?? row.orderNumber ?? `${row.vendorId}-${row.requestedDate}`}
+           />
         </Box>
       </Box>
 

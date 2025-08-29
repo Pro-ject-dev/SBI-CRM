@@ -42,6 +42,7 @@ const Header = () => {
     dispatch(logout());
     
     // Clear localStorage
+    localStorage.removeItem("authToken");
     localStorage.removeItem("role");
     localStorage.removeItem("api_endpoint");
     
