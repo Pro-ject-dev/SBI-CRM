@@ -12,7 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
-import { Delete, Edit, Add, Warning } from "@mui/icons-material";
+import { Delete, Edit, Add, Warning, QrCode2 } from "@mui/icons-material";
 import { DataTable } from "../../components/UI/DataTable";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useDispatch } from "react-redux";
@@ -21,41 +21,54 @@ import { addToast } from "../../app/slices/toastSlice";
 import {
   useGetRawMaterialsQuery,
   useDeleteRawMaterialMutation,
+  useLazyGetRawMaterialByBarcodeQuery,
 } from "../../app/api/rawMaterialsApi";
 import type { RawMaterial } from "../../types/warehouse";
 import RawMaterialModal from "../../components/UI/RawMaterialModal";
+import BarcodeModal from "../../components/UI/BarcodeModal";
 
 const RawMaterialsManagement = () => {
   const dispatch: AppDispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [barcodeSearchTerm, setBarcodeSearchTerm] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingMaterial, setEditingMaterial] = useState<RawMaterial | null>(
-    null
-  );
+  const [editingMaterial, setEditingMaterial] = useState<RawMaterial | null>(null);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [materialToDelete, setMaterialToDelete] = useState<string | null>(null);
+  const [barcodeModalOpen, setBarcodeModalOpen] = useState(false);
+  const [selectedMaterial, setSelectedMaterial] = useState<RawMaterial | null>(null);
 
-  const {
-    data,
-    refetch,
-  } = useGetRawMaterialsQuery({
+  const { data, refetch } = useGetRawMaterialsQuery({
     search: searchTerm,
     category: categoryFilter,
   });
 
+  const [trigger, { data: materialByBarcode, isFetching: isFetchingByBarcode }] = useLazyGetRawMaterialByBarcodeQuery();
   const [deleteRawMaterial] = useDeleteRawMaterialMutation();
-
   const [materialData, setMaterialData] = useState<RawMaterial[]>([]);
 
   useEffect(() => {
+    if (barcodeSearchTerm) return;
     refetch();
-  }, [searchTerm, categoryFilter]);
+  }, [searchTerm, categoryFilter, barcodeSearchTerm, refetch]);
 
   useEffect(() => {
-    const materials = data?.data || [];
-    setMaterialData(materials);
-  }, [data]);
+    if (barcodeSearchTerm) {
+      trigger({ barcode: barcodeSearchTerm });
+    } else {
+      const materials = data?.data || [];
+      setMaterialData(materials);
+    }
+  }, [barcodeSearchTerm, data, trigger]);
+
+  useEffect(() => {
+    if (materialByBarcode && materialByBarcode.data) {
+      setMaterialData([materialByBarcode.data]);
+    } else if (barcodeSearchTerm) {
+      setMaterialData([]);
+    }
+  }, [materialByBarcode, barcodeSearchTerm]);
 
   const handleDeleteRow = (id: string) => {
     setMaterialToDelete(id);
@@ -66,16 +79,9 @@ const RawMaterialsManagement = () => {
     if (materialToDelete) {
       try {
         await deleteRawMaterial({ id: materialToDelete });
-        dispatch(
-          addToast({ message: "Raw Material Deleted Successfully", type: "success" })
-        );
+        dispatch(addToast({ message: "Raw Material Deleted Successfully", type: "success" }));
       } catch (error) {
-        dispatch(
-          addToast({
-            message: "Failed to Delete Raw Material!",
-            type: "error",
-          })
-        );
+        dispatch(addToast({ message: "Failed to Delete Raw Material!", type: "error" }));
       }
       setDeleteConfirmationOpen(false);
       setMaterialToDelete(null);
@@ -98,6 +104,11 @@ const RawMaterialsManagement = () => {
   const handleCloseModal = () => {
     setModalOpen(false);
     setEditingMaterial(null);
+  };
+
+  const handleOpenBarcodeModal = (material: RawMaterial) => {
+    setSelectedMaterial(material);
+    setBarcodeModalOpen(true);
   };
 
   const getStockStatus = (current: number, minimum: number) => {
@@ -181,15 +192,42 @@ const RawMaterialsManagement = () => {
       renderCell: (params) => params.row.vendor?.name || "N/A",
     },
     {
-      field: "actions",
-      headerName: "Actions",
+      field: "barcode",
+      headerName: "Barcode",
       sortable: false,
       flex: 1,
-      minWidth: 170,
+      minWidth: 100,
       headerAlign: "center",
       align: "center",
       renderCell: (params: any) => (
         <Box sx={{ display: "block" }}>
+           <Button
+            color="inherit"
+            sx={{ p: "0px", m: "0px" }}
+            onClick={() => handleOpenBarcodeModal(params.row)}
+          >
+            <QrCode2 />
+          </Button>
+        </Box>
+      ),
+    },
+    {
+      field: "actions",
+      headerName: "Actions",
+      sortable: false,
+      flex: 1,
+      minWidth: 190,
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params: any) => (
+        <Box sx={{ display: "block" }}>
+              <Button
+            color="primary"
+            sx={{ p: "0px", m: "0px" }}
+            onClick={() => handleEditRow(params.row.id)}
+          >
+            <Edit />
+          </Button>
           <Button
             color="error"
             sx={{ p: "0px", m: "0px" }}
@@ -197,13 +235,8 @@ const RawMaterialsManagement = () => {
           >
             <Delete />
           </Button>
-          <Button
-            color="primary"
-            sx={{ p: "0px", m: "0px" }}
-            onClick={() => handleEditRow(params.row.id)}
-          >
-            <Edit />
-          </Button>
+      
+         
         </Box>
       ),
     },
@@ -252,6 +285,13 @@ const RawMaterialsManagement = () => {
             onChange={(e) => setCategoryFilter(e.target.value)}
             sx={{ flexGrow: 1 }}
           />
+          <TextField
+            size="small"
+            placeholder="Scan barcode..."
+            value={barcodeSearchTerm}
+            onChange={(e) => setBarcodeSearchTerm(e.target.value)}
+            sx={{ flexGrow: 1 }}
+          />
         </Box>
         <Button
           variant="contained"
@@ -265,15 +305,25 @@ const RawMaterialsManagement = () => {
 
       <Box sx={{ width: "100%", marginTop: "8px" }}>
         <Box sx={{ height: 600, overflowX: "auto" }}>          
-          <DataTable rows={materialData} columns={columns} disableColumnMenu />
+          <DataTable 
+            rows={materialData || []} 
+            columns={columns} 
+            disableColumnMenu 
+            getRowId={(row) => row.id}
+          />
         </Box>
       </Box>
 
-      {/* Modal */}
       <RawMaterialModal
         open={modalOpen}
         onClose={handleCloseModal}
         material={editingMaterial}
+      />
+
+      <BarcodeModal
+        open={barcodeModalOpen}
+        onClose={() => setBarcodeModalOpen(false)}
+        material={selectedMaterial}
       />
 
       <Dialog

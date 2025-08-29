@@ -30,6 +30,12 @@ export const rawMaterialsApi = createApi({
       },
       providesTags: ["RawMaterials"],
     }),
+    getRawMaterialByBarcode: builder.query<{ data: RawMaterial }, { barcode: string }>({
+      query: ({ barcode }) => {
+        return `${localStorage.getItem("api_endpoint")}/getRawMaterialByBarcode?barcode=${barcode}`;
+      },
+      providesTags: ["RawMaterials"],
+    }),
     getRawMaterialByName: builder.query<{ data: RawMaterial }, { name: string }>({
       query: ({ name }) => {
         return `${localStorage.getItem("api_endpoint")}/getRawMaterialByName?name=${name}`;
@@ -94,6 +100,8 @@ export const rawMaterialsApi = createApi({
 export const {
   useGetRawMaterialsQuery,
   useGetRawMaterialByIdQuery,
+  useLazyGetRawMaterialByIdQuery,
+  useLazyGetRawMaterialByBarcodeQuery,
   useGetRawMaterialByNameQuery,
   useGetRawMaterialsByNamesQuery, 
   useAddRawMaterialMutation,

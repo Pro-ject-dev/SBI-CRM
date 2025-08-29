@@ -14,8 +14,10 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Paper,
+  Stack,
 } from "@mui/material";
-import { Close, Warning, ShoppingCart } from "@mui/icons-material";
+import { Close, Warning, ShoppingCart, Assignment } from "@mui/icons-material";
 import { useAssignStockMutation } from "../../app/api/stockAssignmentApi";
 import { rawMaterialsApi } from "../../app/api/rawMaterialsApi"; 
 import { useDispatch } from "react-redux";
@@ -43,11 +45,10 @@ const modalStyle = {
   bgcolor: "background.paper",
   boxShadow: 24,
   borderRadius: 2,
-  minWidth: 400,
-  maxWidth: 600,
-  width: "90vw",
-  maxHeight: "90vh",
-  overflowY: "auto",
+  width: "95%",
+  maxWidth: 800,
+  maxHeight: "95vh",
+  overflow: "hidden",
   p: 0,
 };
 
@@ -218,6 +219,33 @@ const StockAssignmentModal = ({
     });
   }, []);
 
+  const handleQuantityChange = useCallback((index: number, value: string) => {
+    setAssignments(prevAssignments => {
+      const newAssignments = [...prevAssignments];
+      newAssignments[index] = {
+        ...newAssignments[index],
+        quantityAssigned: value,
+      };
+      
+      // Check if quantity exceeds available stock
+      const assignment = newAssignments[index];
+      assignment.needsPurchase = !assignment.stockExists || Number(value) > assignment.availableStock;
+      
+      return newAssignments;
+    });
+    
+    // Clear errors for this field
+    const errorKey = `${index}-quantity`;
+    setErrors(prevErrors => {
+      if (prevErrors[errorKey]) {
+        const newErrors = { ...prevErrors };
+        delete newErrors[errorKey];
+        return newErrors;
+      }
+      return prevErrors;
+    });
+  }, []);
+
   const validateForm = useCallback(() => {
     const newErrors: Record<string, string> = {};
     
@@ -228,11 +256,11 @@ const StockAssignmentModal = ({
     
     assignments.forEach((assignment, index) => {
       if (!assignment.quantityAssigned || Number(assignment.quantityAssigned) <= 0) {
-        newErrors[`${index}-quantityAssigned`] = "Valid quantity is required";
+        newErrors[`${index}-quantity`] = "Valid quantity is required";
       }
       
       if (assignment.stockExists && Number(assignment.quantityAssigned) > assignment.availableStock) {
-        newErrors[`${index}-quantityAssigned`] = "Quantity exceeds available stock";
+        newErrors[`${index}-quantity`] = "Quantity exceeds available stock";
       }
     });
 
@@ -308,65 +336,100 @@ const StockAssignmentModal = ({
   return (
     <Modal open={open} onClose={handleClose}>
       <Box sx={modalStyle}>
-        {/* Header */}
+        {/* Enhanced Header */}
         <Box
           sx={{
+            background: (theme) => theme.palette.primary.main,
+            color: "primary.contrastText",
             p: 3,
-            borderBottom: 1,
-            borderColor: "divider",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
           }}
         >
-          <Typography variant="h6">
-            Assign Stock {orderNumber && `to Order ${orderNumber}`}
-          </Typography>
-          <IconButton onClick={handleClose}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Assignment sx={{ fontSize: 28 }} />
+            <Box>
+              <Typography variant="h5" fontWeight="600">
+                Assign Stock {orderNumber && `to Order ${orderNumber}`}
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
+                Manage stock assignments for raw materials
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton 
+            onClick={handleClose}
+            sx={{ 
+              color: "inherit",
+              "&:hover": { 
+                backgroundColor: "rgba(255, 255, 255, 0.1)" 
+              } 
+            }}
+          >
             <Close />
           </IconButton>
         </Box>
 
         {/* Content */}
-        <Box sx={{ p: 3 }}>
-          {/* Assigned By Dropdown */}
-          <Box sx={{ mb: 3 }}>
-            <FormControl fullWidth error={!!errors['assignedBy']}>
-              <InputLabel id="assigned-by-label">Assigned By *</InputLabel>
-              <Select
-                labelId="assigned-by-label"
-                value={assignedBy}
-                onChange={(e) => {
-                  setAssignedBy(e.target.value);
-                  // Clear error when user selects
-                  if (errors['assignedBy']) {
-                    const newErrors = { ...errors };
-                    delete newErrors['assignedBy'];
-                    setErrors(newErrors);
-                  }
-                }}
-                label="Assigned By *"
-              >
-                {TEST_USERS.map((user) => (
-                  <MenuItem key={user.id} value={user.name}>
-                    <Box>
-                      <Typography variant="body2">{user.name}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {user.role}
-                      </Typography>
-                    </Box>
-                  </MenuItem>
-                ))}
-              </Select>
-              {errors['assignedBy'] && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 2 }}>
-                  {errors['assignedBy']}
-                </Typography>
-              )}
-            </FormControl>
+        <Box sx={{ p: 4, maxHeight: "calc(95vh - 200px)", overflow: "auto" }}>
+          {/* Assignment Details Section */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" sx={{ mb: 3, fontWeight: "600" }}>
+              Assignment Details
+            </Typography>
+            <Paper 
+              elevation={0} 
+              sx={{ 
+                p: 3, 
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 2,
+                bgcolor: "background.default"
+              }}
+            >
+              <FormControl fullWidth error={!!errors['assignedBy']}>
+                <InputLabel id="assigned-by-label">Assigned By *</InputLabel>
+                <Select
+                  labelId="assigned-by-label"
+                  value={assignedBy}
+                  onChange={(e) => {
+                    setAssignedBy(e.target.value);
+                    // Clear error when user selects
+                    if (errors['assignedBy']) {
+                      const newErrors = { ...errors };
+                      delete newErrors['assignedBy'];
+                      setErrors(newErrors);
+                    }
+                  }}
+                  label="Assigned By *"
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 2,
+                    }
+                  }}
+                >
+                  {TEST_USERS.map((user) => (
+                    <MenuItem key={user.id} value={user.name}>
+                      <Box>
+                        <Typography variant="body2">{user.name}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {user.role}
+                        </Typography>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+                {errors['assignedBy'] && (
+                  <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 2 }}>
+                    {errors['assignedBy']}
+                  </Typography>
+                )}
+              </FormControl>
+            </Paper>
           </Box>
 
-          <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: 4 }} />
 
           {isOrderLoading || stockLoading ? (
             <Box sx={{ textAlign: 'center', py: 3 }}>
@@ -378,142 +441,203 @@ const StockAssignmentModal = ({
             </Alert>
           ) : (
             <>
-              <Typography variant="subtitle1" gutterBottom>
-                Requested Raw Materials ({assignments.length} items)
-              </Typography>
-              {assignments.map((assignment, index) => (
-                <Box key={`${assignment.rawMaterialId}-${index}`} sx={{ mb: 3, p: 2, border: 1, borderColor: "divider", borderRadius: 1 }}>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                    <Box>
-                      <Typography variant="subtitle2" fontWeight="bold">
-                        {assignment.rawMaterialName}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Product ID: {assignment.productId}
-                      </Typography>
+              {/* Stock Assignment Section */}
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="h6" sx={{ mb: 3, fontWeight: "600" }}>
+                  Requested Raw Materials ({assignments.length} items)
+                </Typography>
+                {assignments.map((assignment, index) => (
+                  <Paper 
+                    key={`${assignment.rawMaterialId}-${index}`} 
+                    elevation={0}
+                    sx={{ 
+                      mb: 3, 
+                      p: 3, 
+                      border: 1, 
+                      borderColor: "divider", 
+                      borderRadius: 2,
+                      bgcolor: "background.default"
+                    }}
+                  >
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                      <Box>
+                        <Typography variant="subtitle2" fontWeight="600">
+                          {assignment.rawMaterialName}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Product ID: {assignment.productId}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", gap: 1 }}>
+                        {assignment.needsPurchase && (
+                          <Chip
+                            icon={<ShoppingCart />}
+                            label="Purchase Required"
+                            color="warning"
+                            variant="outlined"
+                            size="small"
+                          />
+                        )}
+                        {!assignment.stockExists && (
+                          <Chip
+                            icon={<Warning />}
+                            label="No Stock"
+                            color="error"
+                            variant="outlined"
+                            size="small"
+                          />
+                        )}
+                      </Box>
                     </Box>
-                    <Box sx={{ display: "flex", gap: 1 }}>
-                      {assignment.needsPurchase && (
-                        <Chip
-                          icon={<ShoppingCart />}
-                          label="Purchase Required"
-                          color="warning"
-                          size="small"
+
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} md={3}>
+                        <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                          Requested Quantity
+                        </Typography>
+                        <Typography variant="body2">
+                          {assignment.requestedQuantity} {assignment.unit}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                          Available Stock
+                        </Typography>
+                        <Typography variant="body2">
+                          {assignment.availableStock} {assignment.unit}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                          Quantity to Assign *
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          size="medium"
+                          type="number"
+                          value={assignment.quantityAssigned}
+                          onChange={(e) => handleQuantityChange(index, e.target.value)}
+                          error={!!errors[`${index}-quantity`]}
+                          helperText={errors[`${index}-quantity`]}
+                          placeholder="0"
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: 2,
+                            }
+                          }}
                         />
-                      )}
-                      {!assignment.stockExists && (
-                        <Chip
-                          icon={<Warning />}
-                          label="Not in Stock"
-                          color="error"
-                          size="small"
-                        />
-                      )}
-                    </Box>
-                  </Box>
-                  
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="caption" display="block" gutterBottom>
-                        Requested Quantity
-                      </Typography>
-                      <Chip 
-                        label={`${assignment.requestedQuantity} ${assignment.unit || 'units'}`} 
-                        color="info" 
-                        sx={{ minWidth: 100 }}
-                      />
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                          Status
+                        </Typography>
+                        <Box sx={{ mt: 1 }}>
+                          {assignment.needsPurchase ? (
+                            <Chip
+                              label="Purchase Required"
+                              color="warning"
+                              size="small"
+                            />
+                          ) : assignment.stockExists ? (
+                            <Chip
+                              label="In Stock"
+                              color="success"
+                              size="small"
+                            />
+                          ) : (
+                            <Chip
+                              label="Out of Stock"
+                              color="error"
+                              size="small"
+                            />
+                          )}
+                        </Box>
+                      </Grid>
                     </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="caption" display="block" gutterBottom>
-                        Quantity to Issue
-                      </Typography>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        type="number"
-                        value={assignment.quantityAssigned}
-                        onChange={(e) => handleAssignmentChange(index, "quantityAssigned", e.target.value)}
-                        error={!!errors[`${index}-quantityAssigned`]}
-                        helperText={errors[`${index}-quantityAssigned`]}
-                        disabled={!assignment.stockExists}
-                        InputProps={{
-                          readOnly: true,
-                          endAdornment: assignment.unit && (
-                            <Typography variant="body2" color="text.secondary">
-                              {assignment.unit}
-                            </Typography>
-                          ),
-                        }}
-                      />
-                    </Grid>
-                  </Grid>
-                  
-                  <Box sx={{ mt: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
-                    {assignment.stockExists ? (
-                      <Chip
-                        label={`Available: ${assignment.availableStock} ${assignment.unit || 'units'}`}
-                        color={assignment.availableStock >= Number(assignment.requestedQuantity) ? "success" : "warning"}
-                        size="small"
-                      />
-                    ) : (
-                      <Chip
-                        label="Not in Stock"
-                        color="error"
-                        size="small"
-                      />
-                    )}
-                  </Box>
-                  
-                  {assignment.needsPurchase && (
-                    <Alert severity="warning" sx={{ mt: 2 }}>
-                      {!assignment.stockExists 
-                        ? "This material is not available in stock and needs to be purchased."
-                        : `Insufficient stock available. Only ${assignment.availableStock} ${assignment.unit || 'units'} available, but ${assignment.requestedQuantity} ${assignment.unit || 'units'} requested. Purchase required for remaining quantity.`
+                  </Paper>
+                ))}
+              </Box>
+
+              <Divider sx={{ my: 4 }} />
+
+              {/* Notes Section */}
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="h6" sx={{ mb: 3, fontWeight: "600" }}>
+                  Additional Notes
+                </Typography>
+                <Paper 
+                  elevation={0} 
+                  sx={{ 
+                    p: 3, 
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 2,
+                    bgcolor: "background.default"
+                  }}
+                >
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Add any notes about this stock assignment..."
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: 2,
                       }
-                    </Alert>
-                  )}
-                </Box>
-              ))}
+                    }}
+                  />
+                </Paper>
+              </Box>
             </>
           )}
-
-          <Divider sx={{ my: 3 }} />
-
-          {/* Notes */}
-          <Typography variant="subtitle1" gutterBottom>
-            Notes (Optional)
-          </Typography>
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Add any notes about this stock assignment..."
-          />
         </Box>
 
-        {/* Footer */}
+        {/* Enhanced Footer */}
         <Box
           sx={{
             p: 3,
             borderTop: 1,
             borderColor: "divider",
+            bgcolor: "background.default",
             display: "flex",
-            justifyContent: "flex-end",
-            gap: 2,
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
         >
-          <Button onClick={handleClose} disabled={stockLoading}>
-            Cancel
-          </Button>
-          <Button 
-            variant="contained" 
-            onClick={handleSubmit} 
-            disabled={assignments.length === 0 || stockLoading || !assignedBy}
-          >
-            {stockLoading ? "Loading..." : "Assign Available Stock"}
-          </Button>
+          <Typography variant="body2" color="text.secondary">
+            * Required fields
+          </Typography>
+          <Stack direction="row" spacing={2}>
+            <Button 
+              onClick={handleClose}
+              variant="outlined"
+              sx={{ 
+                borderRadius: 2,
+                px: 3,
+                py: 1.5,
+                textTransform: "none",
+                fontWeight: "600"
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="contained" 
+              onClick={handleSubmit}
+              startIcon={<Assignment />}
+              sx={{ 
+                borderRadius: 2,
+                px: 3,
+                py: 1.5,
+                textTransform: "none",
+                fontWeight: "600"
+              }}
+            >
+              Assign Stock
+            </Button>
+          </Stack>
         </Box>
       </Box>
     </Modal>

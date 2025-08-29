@@ -17,7 +17,9 @@ import { PurchaseOrder } from "../../types/warehouse";
 import { format } from "date-fns";
 import { useUpdatePurchaseOrderStatusMutation } from '../../app/api/purchaseOrdersApi';
 import { useAppDispatch } from '../../app/hooks';
+import { useSelector } from 'react-redux';
 import { addToast } from '../../app/slices/toastSlice';
+import type { RootState } from '../../app/store';
 
 const modalStyle = {
   position: "absolute" as const,
@@ -66,7 +68,8 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
     orderId: "",
   });
 
-  const isAdmin = localStorage.getItem("role") === "admin";
+  const { role } = useSelector((state: RootState) => state.auth);
+  const isAdmin = role === "admin";
   
   // Debug log to check the purchase order data
   React.useEffect(() => {

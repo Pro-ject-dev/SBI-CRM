@@ -26,13 +26,13 @@ const modalStyle = {
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  width: "90%",
-  maxWidth: 900,
-  maxHeight: "90vh",
+  width: "95%",
+  maxWidth: 1000,
+  maxHeight: "95vh",
   bgcolor: "background.paper",
   boxShadow: 24,
   borderRadius: 2,
-  overflow: "auto",
+  overflow: "hidden",
 };
 
 interface PurchaseOrderItem {
@@ -244,242 +244,386 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
   return (
     <Modal open={open} onClose={handleClose}>
       <Box sx={modalStyle}>
-        {/* Header */}
+        {/* Enhanced Header */}
         <Box
           sx={{
+            background: (theme) => theme.palette.primary.main,
+            color: "primary.contrastText",
             p: 3,
-            borderBottom: 1,
-            borderColor: "divider",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
           }}
         >
-          <Typography variant="h6">Create Purchase Order</Typography>
-          <IconButton onClick={handleClose}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Add sx={{ fontSize: 28 }} />
+            <Box>
+              <Typography variant="h5" fontWeight="600">
+                Create Purchase Order
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
+                Create a new purchase order for raw materials
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton 
+            onClick={handleClose}
+            sx={{ 
+              color: "inherit",
+              "&:hover": { 
+                backgroundColor: "rgba(255, 255, 255, 0.1)" 
+              } 
+            }}
+          >
             <Close />
           </IconButton>
         </Box>
 
         {/* Content */}
-        <Box sx={{ p: 3 }}>
-          {/* Vendor Selection */}
-          <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle1" gutterBottom>
-                Vendor
-              </Typography>
-              <SelectBox
-                id="vendorId"
-                value={vendorId}
-                options={vendorOptions}
-                onChange={(_, value) => {
-                  if (typeof value === "string") setVendorId(value);
-                  else setVendorId("");
-                }}
-                error={errors.vendorId}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle1" gutterBottom>
-                Requested Date
-              </Typography>
-              <DatePickerField
-                label="requestedDate"
-                value={requestedDate}
-                onChange={(_, v) => setRequestedDate(v)}
-              />
-              {errors.requestedDate && (
-                <Typography variant="caption" color="error">{errors.requestedDate}</Typography>
-              )}
-            </Grid>
-          </Grid>
-
-          <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={4}>
-              <TextField
-                label="Requested By"
-                size="small"
-                fullWidth
-                value={requestedBy}
-                onChange={(e) => setRequestedBy(e.target.value)}
-                error={!!errors.requestedBy}
-                helperText={errors.requestedBy}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                label="Order Status"
-                size="small"
-                fullWidth
-                select
-                value={orderStatus}
-                onChange={(e) => setOrderStatus(e.target.value)}
-              >
-                <MenuItem value="Pending">Pending</MenuItem>
-                <MenuItem value="Approved" disabled>Approved</MenuItem>
-                <MenuItem value="Rejected" disabled>Rejected</MenuItem>
-                <MenuItem value="Completed" disabled>Completed</MenuItem>
-              </TextField>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                label="Active Status"
-                size="small"
-                fullWidth
-                select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-              >
-                <MenuItem value="1">Active</MenuItem>
-                <MenuItem value="0">Inactive</MenuItem>
-              </TextField>
-            </Grid>
-          </Grid>
-
-          <Divider sx={{ my: 3 }} />
-
-          {/* Items */}
-          <Typography variant="subtitle1" gutterBottom>
-            Order Items
-          </Typography>
-          
-          {items.map((item, index) => (
-            <Box key={index} sx={{ mb: 3, p: 2, border: 1, borderColor: "divider", borderRadius: 1 }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                <Typography variant="subtitle2">Item {index + 1}</Typography>
-                {items.length > 1 && (
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => handleRemoveItem(index)}
-                  >
-                    <Delete />
-                  </IconButton>
-                )}
-              </Box>
-              
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="caption" display="block" gutterBottom>
-                    Raw Material
-                  </Typography>
-                  <SelectBox
-                    id={`material-${index}`}
-                    value={item.rawMaterialId}
-                    options={rawMaterialOptions}
-                    onChange={(_, value) => {
-                      if (typeof value === "string") {
-                        handleItemChange(index, "rawMaterialId", value);
-                      }
-                    }}
-                    error={errors[`${index}-rawMaterialId`]}
-                    fullWidth
-                  />
-                </Grid>
-                
-                <Grid item xs={12} md={2}>
-                  <Typography variant="caption" display="block" gutterBottom>
-                    Quantity
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    type="number"
-                    value={item.quantity}
-                    onChange={(e) => handleItemChange(index, "quantity", e.target.value)}
-                    error={!!errors[`${index}-quantity`]}
-                    helperText={errors[`${index}-quantity`]}
-                  />
-                </Grid>
-
-                <Grid item xs={12} md={2}>
-                  <Typography variant="caption" display="block" gutterBottom>
-                    Unit Price
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    type="number"
-                    value={item.unitPrice}
-                    onChange={(e) => handleItemChange(index, "unitPrice", e.target.value)}
-                    error={!!errors[`${index}-unitPrice`]}
-                    helperText={errors[`${index}-unitPrice`]}
-                  />
-                </Grid>
-
-                <Grid item xs={12} md={2}>
-                  <Typography variant="caption" display="block" gutterBottom>
-                    Total
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    value={`₹${item.totalPrice.toFixed(2)}`}
-                    disabled
-                  />
-                </Grid>
-              </Grid>
-              
-              {item.rawMaterialName && (
-                <Box sx={{ mt: 2 }}>
-                  <Chip
-                    label={item.rawMaterialName}
-                    variant="outlined"
-                    size="small"
-                  />
-                </Box>
-              )}
-            </Box>
-          ))}
-
-          <Button
-            startIcon={<Add />}
-            onClick={handleAddItem}
-            sx={{ mb: 3 }}
-          >
-            Add Another Item
-          </Button>
-
-          <Divider sx={{ my: 3 }} />
-
-          {/* Total Amount */}
-          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
-            <Typography variant="h6">
-              Total Amount: ₹{getTotalAmount().toFixed(2)}
+        <Box sx={{ p: 4, maxHeight: "calc(95vh - 200px)", overflow: "auto" }}>
+          {/* Order Details Section */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" sx={{ mb: 3, fontWeight: "600" }}>
+              Order Details
             </Typography>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Vendor *
+                </Typography>
+                <SelectBox
+                  id="vendorId"
+                  value={vendorId}
+                  options={vendorOptions}
+                  onChange={(_, value) => {
+                    if (typeof value === "string") setVendorId(value);
+                    else setVendorId("");
+                  }}
+                  error={errors.vendorId}
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Requested Date *
+                </Typography>
+                <DatePickerField
+                  label="requestedDate"
+                  value={requestedDate}
+                  onChange={(_, v) => setRequestedDate(v)}
+                />
+                {errors.requestedDate && (
+                  <Typography variant="caption" color="error">{errors.requestedDate}</Typography>
+                )}
+              </Grid>
+            </Grid>
+
+            <Grid container spacing={3} sx={{ mt: 2 }}>
+              <Grid item xs={12} md={4}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Requested By *
+                </Typography>
+                <TextField
+                  fullWidth
+                  size="medium"
+                  value={requestedBy}
+                  onChange={(e) => setRequestedBy(e.target.value)}
+                  error={!!errors.requestedBy}
+                  helperText={errors.requestedBy}
+                  placeholder="Enter requester name"
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 2,
+                    }
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Order Status
+                </Typography>
+                <TextField
+                  fullWidth
+                  size="medium"
+                  select
+                  value={orderStatus}
+                  onChange={(e) => setOrderStatus(e.target.value)}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 2,
+                    }
+                  }}
+                >
+                  <MenuItem value="Pending">Pending</MenuItem>
+                  <MenuItem value="Approved" disabled>Approved</MenuItem>
+                  <MenuItem value="Rejected" disabled>Rejected</MenuItem>
+                  <MenuItem value="Completed" disabled>Completed</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Active Status
+                </Typography>
+                <TextField
+                  fullWidth
+                  size="medium"
+                  select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 2,
+                    }
+                  }}
+                >
+                  <MenuItem value="1">Active</MenuItem>
+                  <MenuItem value="0">Inactive</MenuItem>
+                </TextField>
+              </Grid>
+            </Grid>
           </Box>
 
-          {/* Notes */}
-          <Typography variant="subtitle1" gutterBottom>
-            Notes (Optional)
-          </Typography>
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Add any notes about this purchase order..."
-          />
+          <Divider sx={{ my: 4 }} />
+
+          {/* Order Items Section */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" sx={{ mb: 3, fontWeight: "600" }}>
+              Order Items
+            </Typography>
+            
+            {items.map((item, index) => (
+              <Box 
+                key={index} 
+                sx={{ 
+                  mb: 3, 
+                  p: 3, 
+                  border: 1, 
+                  borderColor: "divider", 
+                  borderRadius: 2,
+                  bgcolor: "background.default"
+                }}
+              >
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                  <Typography variant="subtitle2" fontWeight="600">
+                    Item {index + 1}
+                  </Typography>
+                  {items.length > 1 && (
+                    <IconButton
+                      size="small"
+                      onClick={() => handleRemoveItem(index)}
+                      sx={{ color: "error.main" }}
+                    >
+                      <Delete />
+                    </IconButton>
+                  )}
+                </Box>
+
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={4}>
+                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                      Raw Material *
+                    </Typography>
+                    <SelectBox
+                      id={`rawMaterial-${index}`}
+                      value={item.rawMaterialId}
+                      options={rawMaterialOptions}
+                      onChange={(_, value) => {
+                        if (typeof value === "string") {
+                          handleItemChange(index, "rawMaterialId", value);
+                          const selectedMaterial = rawMaterialsData?.data?.find(
+                            (material: any) => material.id.toString() === value
+                          );
+                          if (selectedMaterial) {
+                            handleItemChange(index, "rawMaterialName", selectedMaterial.name);
+                            handleItemChange(index, "unitPrice", selectedMaterial.unitPrice?.toString() || "");
+                          }
+                        }
+                      }}
+                      error={errors[`${index}-rawMaterialId`]}
+                      fullWidth
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={2}>
+                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                      Quantity *
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      size="medium"
+                      type="number"
+                      value={item.quantity}
+                      onChange={(e) => handleItemChange(index, "quantity", e.target.value)}
+                      error={!!errors[`${index}-quantity`]}
+                      helperText={errors[`${index}-quantity`]}
+                      placeholder="0"
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                        }
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={2}>
+                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                      Unit Price *
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      size="medium"
+                      type="number"
+                      value={item.unitPrice}
+                      onChange={(e) => handleItemChange(index, "unitPrice", e.target.value)}
+                      error={!!errors[`${index}-unitPrice`]}
+                      helperText={errors[`${index}-unitPrice`]}
+                      placeholder="0.00"
+                      InputProps={{
+                        startAdornment: <Typography sx={{ mr: 1, color: "text.secondary" }}>₹</Typography>,
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                        }
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={2}>
+                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                      Total
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      size="medium"
+                      value={`₹${item.totalPrice.toFixed(2)}`}
+                      disabled
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                        }
+                      }}
+                    />
+                  </Grid>
+                </Grid>
+                
+                {item.rawMaterialName && (
+                  <Box sx={{ mt: 2 }}>
+                    <Chip
+                      label={item.rawMaterialName}
+                      variant="outlined"
+                      size="small"
+                      color="primary"
+                    />
+                  </Box>
+                )}
+              </Box>
+            ))}
+
+            <Button
+              startIcon={<Add />}
+              onClick={handleAddItem}
+              variant="outlined"
+              sx={{ 
+                borderRadius: 2,
+                px: 3,
+                py: 1.5,
+                textTransform: "none",
+                fontWeight: "600"
+              }}
+            >
+              Add Another Item
+            </Button>
+          </Box>
+
+          <Divider sx={{ my: 4 }} />
+
+          {/* Summary Section */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" sx={{ mb: 3, fontWeight: "600" }}>
+              Order Summary
+            </Typography>
+            
+            {/* Total Amount */}
+            <Box sx={{ 
+              display: "flex", 
+              justifyContent: "flex-end", 
+              mb: 3,
+              p: 3,
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 2,
+              bgcolor: "grey.50"
+            }}>
+              <Typography variant="h5" fontWeight="600">
+                Total Amount: ₹{getTotalAmount().toFixed(2)}
+              </Typography>
+            </Box>
+
+            {/* Notes */}
+            <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600", mb: 2 }}>
+              Notes (Optional)
+            </Typography>
+            <TextField
+              fullWidth
+              multiline
+              rows={3}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add any notes about this purchase order..."
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                }
+              }}
+            />
+          </Box>
         </Box>
 
-        {/* Footer */}
+        {/* Enhanced Footer */}
         <Box
           sx={{
             p: 3,
             borderTop: 1,
             borderColor: "divider",
+            bgcolor: "background.default",
             display: "flex",
-            justifyContent: "flex-end",
-            gap: 2,
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
         >
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit}>
-            Create Order
-          </Button>
+          <Typography variant="body2" color="text.secondary">
+            * Required fields
+          </Typography>
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <Button 
+              onClick={handleClose}
+              variant="outlined"
+              sx={{ 
+                borderRadius: 2,
+                px: 3,
+                py: 1.5,
+                textTransform: "none",
+                fontWeight: "600"
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="contained" 
+              onClick={handleSubmit}
+              startIcon={<Add />}
+              sx={{ 
+                borderRadius: 2,
+                px: 3,
+                py: 1.5,
+                textTransform: "none",
+                fontWeight: "600"
+              }}
+            >
+              Create Order
+            </Button>
+          </Box>
         </Box>
       </Box>
     </Modal>

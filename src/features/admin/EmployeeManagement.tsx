@@ -1,9 +1,10 @@
-import { 
-  Box, 
-  Container, 
-  Typography, 
-  TextField, 
-  Button, 
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  Box,
+  Container,
+  Typography,
+  TextField,
+  Button,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -14,12 +15,34 @@ import {
   IconButton,
   CircularProgress,
   Backdrop,
-  InputAdornment
+  InputAdornment,
+  Paper,
+  Chip,
+  Stack,
+  Divider,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
-import { useState, useEffect, useMemo } from "react";
+import {
+  Add,
+  Edit,
+  Delete,
+  Close,
+  Visibility,
+  VisibilityOff,
+  Search,
+  Refresh,
+  Person,
+  Email,
+  Phone,
+  Work,
+  CalendarToday,
+  Security,
+} from "@mui/icons-material";
 import { DataTable } from "../../components/UI/DataTable";
 import type { GridColDef } from "@mui/x-data-grid";
-import { Add, Edit, Delete, Close, Visibility, VisibilityOff } from "@mui/icons-material";
 import type { Employee } from "../../types/employee";
 import {
   useGetAllEmployeesQuery,
@@ -34,13 +57,25 @@ interface EmployeeFormData {
   mail: string;
   role: string;
   mobile: string;
-  // Backend-only fields (not stored in UI state after submission)
-  date?: string;
+  date: string;
   password?: string;
   confirmPassword?: string;
 }
 
-const EmployeeManagement = () => {
+interface FormErrors {
+  [key: string]: string | undefined;
+}
+
+const ROLE_OPTIONS = [
+  { value: "admin", label: "Administrator" },
+  { value: "sales_manager", label: "Sales Manager" },
+  { value: "warehouse_manager", label: "Warehouse Manager" },
+  { value: "operation_manager", label: "Operation Manager" },
+  { value: "employee", label: "Employee" },
+];
+
+const EmployeeManagement: React.FC = () => {
+  // State management
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
@@ -49,13 +84,13 @@ const EmployeeManagement = () => {
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [snackbar, setSnackbar] = useState({ 
-    open: false, 
-    message: "", 
-    severity: "success" as "success" | "error" 
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success" as "success" | "error" | "warning" | "info",
   });
 
-  // Form state - includes backend-only fields
+  // Form state
   const [formData, setFormData] = useState<EmployeeFormData>({
     name: "",
     mail: "",
@@ -63,9 +98,9 @@ const EmployeeManagement = () => {
     mobile: "",
     date: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
-  const [formErrors, setFormErrors] = useState<Partial<EmployeeFormData>>({});
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
 
   // Debounce search term
   useEffect(() => {
@@ -75,13 +110,13 @@ const EmployeeManagement = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // RTK Query hook
-  const { 
-    data: rawData, 
-    error: fetchError, 
+  // RTK Query hooks
+  const {
+    data: rawData,
+    error: fetchError,
     isLoading: isLoadingEmployees,
     refetch,
-    isError
+    isError,
   } = useGetAllEmployeesQuery(debouncedSearchTerm, {
     pollingInterval: 0,
     refetchOnMountOrArgChange: true,
@@ -89,50 +124,43 @@ const EmployeeManagement = () => {
     refetchOnReconnect: true,
   });
 
-  // Ensure employees is always a valid array
+  const [addEmployee, { isLoading: isAddingEmployee }] = useAddEmployeeMutation();
+  const [updateEmployee, { isLoading: isUpdatingEmployee }] = useUpdateEmployeeMutation();
+  const [deleteEmployee, { isLoading: isDeletingEmployee }] = useDeleteEmployeeMutation();
+
+  // Process employees data
   const employees = useMemo((): Employee[] => {
     if (!rawData) return [];
     if (Array.isArray(rawData)) return rawData;
     
-    if (typeof rawData === 'object') {
-      if (Array.isArray(rawData.data)) return rawData.data;
-      if (Array.isArray(rawData.employees)) return rawData.employees;
-      if (Array.isArray(rawData.results)) return rawData.results;
-      if (Array.isArray(rawData.items)) return rawData.items;
+    if (typeof rawData === "object" && rawData !== null) {
+      const data = rawData as any;
+      if (Array.isArray(data.data)) return data.data;
+      if (Array.isArray(data.employees)) return data.employees;
+      if (Array.isArray(data.results)) return data.results;
+      if (Array.isArray(data.items)) return data.items;
       
-      if (rawData.entities && typeof rawData.entities === 'object') {
-        return Object.values(rawData.entities).filter(Boolean) as Employee[];
+      if (data.entities && typeof data.entities === "object") {
+        return Object.values(data.entities).filter(Boolean) as Employee[];
       }
     }
     
     return [];
   }, [rawData]);
 
-  const [addEmployee, { 
-    isLoading: isAddingEmployee 
-  }] = useAddEmployeeMutation();
-
-  const [updateEmployee, { 
-    isLoading: isUpdatingEmployee 
-  }] = useUpdateEmployeeMutation();
-
-  const [deleteEmployee, { 
-    isLoading: isDeletingEmployee 
-  }] = useDeleteEmployeeMutation();
-
   // Enhanced error handling
   useEffect(() => {
     if (fetchError) {
-      console.error('Complete fetch error object:', fetchError);
+      console.error("Complete fetch error object:", fetchError);
       
       let errorMessage = "Failed to load employees.";
       
-      if ('status' in fetchError) {
+      if ("status" in fetchError) {
         switch (fetchError.status) {
-          case 'PARSING_ERROR':
-            errorMessage = "Server returned invalid data. Check if your API endpoint exists.";
+          case "PARSING_ERROR":
+            errorMessage = "Server returned invalid data. Please check your API endpoint.";
             break;
-          case 'FETCH_ERROR':
+          case "FETCH_ERROR":
             errorMessage = "Network error. Please check if your backend server is running.";
             break;
           case 404:
@@ -141,33 +169,35 @@ const EmployeeManagement = () => {
           case 500:
             errorMessage = "Internal server error. Please check your backend logs.";
             break;
-          default:
-            errorMessage = `HTTP ${fetchError.status}: ${fetchError?.data?.message || 'Server error'}`;
+                  default:
+          errorMessage = `HTTP ${fetchError.status}: ${(fetchError as any)?.data?.message || "Server error"}`;
         }
       }
       
       setSnackbar({
         open: true,
         message: errorMessage,
-        severity: "error"
+        severity: "error",
       });
     }
   }, [fetchError]);
 
   // Enhanced validation function
   const validateForm = (data: EmployeeFormData): boolean => {
-    const errors: Partial<EmployeeFormData> = {};
+    const errors: FormErrors = {};
     const isEditing = !!editingEmployee;
     
     // Basic field validation
     if (!data.name?.trim()) {
-      errors.name = "Name is required";
+      errors.name = "Full name is required";
+    } else if (data.name.trim().length < 2) {
+      errors.name = "Name must be at least 2 characters long";
     }
     
     if (!data.mail?.trim()) {
-      errors.mail = "mail is required";
+      errors.mail = "Email address is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.mail)) {
-      errors.mail = "Invalid mail format";
+      errors.mail = "Please enter a valid email address";
     }
     
     if (!data.role?.trim()) {
@@ -175,9 +205,9 @@ const EmployeeManagement = () => {
     }
     
     if (!data.mobile?.trim()) {
-      errors.mobile = "Mobile is required";
+      errors.mobile = "Mobile number is required";
     } else if (!/^\+?[\d\s\-\(\)]{10,15}$/.test(data.mobile)) {
-      errors.mobile = "Invalid mobile number format";
+      errors.mobile = "Please enter a valid mobile number";
     }
     
     // Date validation
@@ -193,19 +223,19 @@ const EmployeeManagement = () => {
       }
     }
     
-    // Password validation (only for new employees or when password is provided for edit)
+    // Password validation
     if (!isEditing) {
       // Required for new employees
       if (!data.password?.trim()) {
         errors.password = "Password is required";
       } else if (data.password.length < 8) {
-        errors.password = "Password must be at least 8 characters";
+        errors.password = "Password must be at least 8 characters long";
       } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(data.password)) {
-        errors.password = "Password must contain at least one uppercase letter, one lowercase letter, and one number";
+        errors.password = "Password must contain uppercase, lowercase, and number";
       }
       
       if (!data.confirmPassword?.trim()) {
-        errors.confirmPassword = "Confirm password is required";
+        errors.confirmPassword = "Please confirm your password";
       } else if (data.password !== data.confirmPassword) {
         errors.confirmPassword = "Passwords do not match";
       }
@@ -213,7 +243,7 @@ const EmployeeManagement = () => {
       // Optional for editing, but if provided, validate
       if (data.password && data.password.trim()) {
         if (data.password.length < 8) {
-          errors.password = "Password must be at least 8 characters";
+          errors.password = "Password must be at least 8 characters long";
         } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(data.password)) {
           errors.password = "Password must contain uppercase, lowercase, and number";
         }
@@ -226,23 +256,22 @@ const EmployeeManagement = () => {
       }
     }
 
-    // mail duplication check
+    // Email duplication check
     try {
       if (employees && Array.isArray(employees) && employees.length > 0) {
-        const mailExists = employees.some(emp => {
-          if (!emp || typeof emp !== 'object' || !emp.mail) {
+        const emailExists = employees.some((emp) => {
+          if (!emp || typeof emp !== "object" || !emp.mail) {
             return false;
           }
-          return emp.mail.toLowerCase() === data.mail.toLowerCase() && 
-                 emp.id !== editingEmployee?.id;
+          return emp.mail.toLowerCase() === data.mail.toLowerCase() && emp.id !== editingEmployee?.id;
         });
         
-        if (mailExists) {
-          errors.mail = "mail already exists";
+        if (emailExists) {
+          errors.mail = "Email address already exists";
         }
       }
     } catch (error) {
-      console.error('Error in mail validation:', error);
+      console.error("Error in email validation:", error);
     }
 
     setFormErrors(errors);
@@ -251,43 +280,45 @@ const EmployeeManagement = () => {
 
   // Handle form input changes
   const handleInputChange = (field: keyof EmployeeFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (formErrors[field]) {
-      setFormErrors(prev => ({ ...prev, [field]: undefined }));
+      setFormErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
 
   // Dialog handlers
   const handleAddEmployee = () => {
     setEditingEmployee(null);
-    // Reset form with backend fields
-    setFormData({ 
-      name: "", 
-      mail: "", 
-      role: "", 
+    setFormData({
+      name: "",
+      mail: "",
+      role: "",
       mobile: "",
-      date: "",
+      date: new Date().toISOString().split("T")[0], // Today's date as default
       password: "",
-      confirmPassword: ""
+      confirmPassword: "",
     });
     setFormErrors({});
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setOpenDialog(true);
   };
 
   const handleEditEmployee = (employee: Employee) => {
     setEditingEmployee(employee);
-    // Only populate UI fields for editing, leave backend fields empty
     setFormData({
       id: employee.id,
       name: employee.name || "",
       mail: employee.mail || "",
       role: employee.role || "",
       mobile: employee.mobile || "",
-      date: "", // Don't show existing date
-      password: "", // Don't show existing password
-      confirmPassword: ""
+      date: employee.date ? new Date(String(employee.date)).toISOString().split("T")[0] : "",
+      password: "",
+      confirmPassword: "",
     });
     setFormErrors({});
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setOpenDialog(true);
   };
 
@@ -295,32 +326,29 @@ const EmployeeManagement = () => {
     if (!validateForm(formData)) return;
 
     try {
-      // Prepare payload - include backend fields only when submitting
       const payload = {
         ...formData,
-        // Remove confirm password as it's only for validation
-        confirmPassword: undefined
+        confirmPassword: undefined, // Remove confirm password
       };
 
       // For editing, only include password if it's provided
       if (editingEmployee && !payload.password?.trim()) {
-        delete payload.password;
-        delete payload.date; // Don't update date if not changed
+        payload.password = undefined;
       }
 
       if (editingEmployee) {
         await updateEmployee(payload).unwrap();
-        setSnackbar({ 
-          open: true, 
-          message: "Employee updated successfully!", 
-          severity: "success" 
+        setSnackbar({
+          open: true,
+          message: "Employee updated successfully!",
+          severity: "success",
         });
       } else {
         await addEmployee(payload).unwrap();
-        setSnackbar({ 
-          open: true, 
-          message: "Employee added successfully!", 
-          severity: "success" 
+        setSnackbar({
+          open: true,
+          message: "Employee added successfully!",
+          severity: "success",
         });
       }
       handleCloseDialog();
@@ -329,7 +357,7 @@ const EmployeeManagement = () => {
       setSnackbar({
         open: true,
         message: error?.data?.message || "Failed to save employee. Please try again.",
-        severity: "error"
+        severity: "error",
       });
     }
   };
@@ -337,14 +365,14 @@ const EmployeeManagement = () => {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setEditingEmployee(null);
-    setFormData({ 
-      name: "", 
-      mail: "", 
-      role: "", 
+    setFormData({
+      name: "",
+      mail: "",
+      role: "",
       mobile: "",
       date: "",
       password: "",
-      confirmPassword: ""
+      confirmPassword: "",
     });
     setFormErrors({});
     setShowPassword(false);
@@ -362,10 +390,10 @@ const EmployeeManagement = () => {
 
     try {
       await deleteEmployee(employeeToDelete.id).unwrap();
-      setSnackbar({ 
-        open: true, 
-        message: "Employee deleted successfully!", 
-        severity: "success" 
+      setSnackbar({
+        open: true,
+        message: "Employee deleted successfully!",
+        severity: "success",
       });
       setOpenDeleteDialog(false);
       setEmployeeToDelete(null);
@@ -374,7 +402,7 @@ const EmployeeManagement = () => {
       setSnackbar({
         open: true,
         message: error?.data?.message || "Failed to delete employee. Please try again.",
-        severity: "error"
+        severity: "error",
       });
       setOpenDeleteDialog(false);
       setEmployeeToDelete(null);
@@ -391,42 +419,106 @@ const EmployeeManagement = () => {
   };
 
   // Get today's date in YYYY-MM-DD format for max date
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split("T")[0];
 
-  // Columns definition - only show UI fields
+  // Columns definition
   const columns: GridColDef[] = [
-    { field: "name", headerName: "Name", flex: 1, minWidth: 150 },
-    { field: "mail", headerName: "mail", flex: 1.5, minWidth: 200 },
-    { field: "role", headerName: "Role", flex: 1, minWidth: 120 },
-    { field: "mobile", headerName: "Mobile", flex: 1, minWidth: 150 },
+    {
+      field: "name",
+      headerName: "Employee Name",
+      flex: 1,
+      minWidth: 180,
+      renderCell: (params) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Person sx={{ color: "primary.main", fontSize: 20 }} />
+          <Typography variant="body2" fontWeight="500">
+            {params.value}
+          </Typography>
+        </Box>
+      ),
+    },
+    {
+      field: "mail",
+      headerName: "Email Address",
+      flex: 1.5,
+      minWidth: 220,
+      renderCell: (params) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Email sx={{ color: "info.main", fontSize: 20 }} />
+          <Typography variant="body2">{params.value}</Typography>
+        </Box>
+      ),
+    },
+    {
+      field: "role",
+      headerName: "Role",
+      flex: 1,
+      minWidth: 150,
+      renderCell: (params) => (
+        <Chip
+          label={ROLE_OPTIONS.find(r => r.value === params.value)?.label || params.value}
+          color="primary"
+          variant="outlined"
+          size="small"
+        />
+      ),
+    },
+    {
+      field: "mobile",
+      headerName: "Mobile",
+      flex: 1,
+      minWidth: 140,
+      renderCell: (params) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Phone sx={{ color: "success.main", fontSize: 20 }} />
+          <Typography variant="body2">{params.value}</Typography>
+        </Box>
+      ),
+    },
+    {
+      field: "date",
+      headerName: "Join Date",
+      flex: 1,
+      minWidth: 120,
+      renderCell: (params) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <CalendarToday sx={{ color: "warning.main", fontSize: 20 }} />
+          <Typography variant="body2">
+            {params.value ? new Date(params.value).toLocaleDateString() : "N/A"}
+          </Typography>
+        </Box>
+      ),
+    },
     {
       field: "actions",
       headerName: "Actions",
       sortable: false,
       filterable: false,
       flex: 0.8,
-      minWidth: 100,
+      minWidth: 120,
       renderCell: (params) => (
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
-          <IconButton 
-            size="small" 
+        <Stack direction="row" spacing={0.5}>
+          <IconButton
+            size="small"
             onClick={() => handleEditEmployee(params.row)}
             color="primary"
             disabled={isDeletingEmployee}
             title="Edit Employee"
+            sx={{ "&:hover": { backgroundColor: "primary.light", color: "white" } }}
           >
-            <Edit />
+            <Edit fontSize="small" />
           </IconButton>
-          <IconButton 
-            size="small" 
-            color="error" 
+          <IconButton
+            size="small"
+            color="error"
             onClick={() => handleDeleteEmployee(params.row)}
             disabled={isDeletingEmployee}
             title="Delete Employee"
+            sx={{ "&:hover": { backgroundColor: "error.light", color: "white" } }}
           >
-            <Delete />
+            <Delete fontSize="small" />
           </IconButton>
-        </Box>
+        </Stack>
       ),
     },
   ];
@@ -438,7 +530,13 @@ const EmployeeManagement = () => {
         <Typography variant="h4" gutterBottom sx={{ fontSize: { xs: "1.5rem", md: "2rem" } }}>
           Employee Management
         </Typography>
-        <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="400px">
+        <Box
+          display="flex"
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="400px"
+        >
           <CircularProgress size={60} />
           <Typography variant="body1" sx={{ mt: 2 }}>
             Loading employees...
@@ -455,11 +553,17 @@ const EmployeeManagement = () => {
         <Typography variant="h4" gutterBottom sx={{ fontSize: { xs: "1.5rem", md: "2rem" } }}>
           Employee Management
         </Typography>
-        <Box display="flex" flexDirection="column" alignItems="center" minHeight="400px" justifyContent="center">
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          minHeight="400px"
+          justifyContent="center"
+        >
           <Typography variant="h6" color="error" gutterBottom>
             Failed to load employees
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2, textAlign: 'center' }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2, textAlign: "center" }}>
             Please check if your backend API is running correctly.
           </Typography>
           <Button variant="contained" onClick={handleRetry} sx={{ mb: 1 }}>
@@ -474,84 +578,135 @@ const EmployeeManagement = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography
-        variant="h4"
-        gutterBottom
-        sx={{ fontSize: { xs: "1.5rem", md: "2rem" } }}
-      >
-        Employee Management
-      </Typography>
-      
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          justifyContent: "space-between",
-          alignItems: { xs: "stretch", md: "center" },
-          mb: 3,
-          gap: 2,
-        }}
-      >
-        <TextField
-          size="small"
-          placeholder="Search employees..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{ flexGrow: 1 }}
-          disabled={isLoadingEmployees}
-        />
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={handleAddEmployee}
-          sx={{ py: 1.2, px: 3 }}
-          disabled={isLoadingEmployees}
-        >
-          Add New Employee
-        </Button>
-      </Box>
+      {/* Header Section */}
+      <Paper elevation={0} sx={{ p: 3, mb: 3, bgcolor: "background.default" }}>
+        <Typography variant="h4" gutterBottom sx={{ fontSize: { xs: "1.5rem", md: "2rem" } }}>
+          Employee Management
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Manage your organization's employees, their roles, and access permissions
+        </Typography>
+      </Paper>
 
-      <Box sx={{ width: "100%", marginTop: "8px" }}>
+      {/* Search and Actions Section */}
+      <Paper elevation={0} sx={{ p: 3, mb: 3, bgcolor: "background.default" }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            justifyContent: "space-between",
+            alignItems: { xs: "stretch", md: "center" },
+            gap: 2,
+          }}
+        >
+          <Box sx={{ position: "relative", flexGrow: 1 }}>
+            <TextField
+              size="medium"
+              placeholder="Search employees by name, email, or role..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              fullWidth
+              disabled={isLoadingEmployees}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search sx={{ color: "text.secondary" }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                },
+              }}
+            />
+          </Box>
+          
+          <Stack direction="row" spacing={2}>
+            <Button
+              variant="outlined"
+              startIcon={<Refresh />}
+              onClick={handleRetry}
+              disabled={isLoadingEmployees}
+              sx={{ borderRadius: 2, px: 3 }}
+            >
+              Refresh
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={handleAddEmployee}
+              sx={{ borderRadius: 2, px: 3 }}
+              disabled={isLoadingEmployees}
+            >
+              Add Employee
+            </Button>
+          </Stack>
+        </Box>
+      </Paper>
+
+      {/* Data Table Section */}
+      <Paper elevation={0} sx={{ bgcolor: "background.default" }}>
         <Box sx={{ height: 600, overflowX: "auto" }}>
-          <DataTable 
-            rows={employees} 
-            columns={columns} 
+          <DataTable
+            rows={employees}
+            columns={columns}
             disableColumnMenu
             loading={isLoadingEmployees}
             getRowId={(row) => row.id || row._id || Math.random().toString()}
             sx={{
-              '& .MuiDataGrid-row:hover': {
-                backgroundColor: 'action.hover',
+              "& .MuiDataGrid-row:hover": {
+                backgroundColor: "action.hover",
+              },
+              "& .MuiDataGrid-cell": {
+                borderBottom: "1px solid",
+                borderColor: "divider",
               },
             }}
           />
         </Box>
-      </Box>
+      </Paper>
 
       {/* Add/Edit Employee Dialog */}
-      <Dialog 
-        open={openDialog} 
+      <Dialog
+        open={openDialog}
         onClose={!isSubmitting ? handleCloseDialog : undefined}
         maxWidth="md"
         fullWidth
         disableEscapeKeyDown={isSubmitting}
       >
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {editingEmployee ? "Edit Employee" : "Add New Employee"}
-          <IconButton onClick={handleCloseDialog} disabled={isSubmitting}>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            background: (theme) => theme.palette.primary.main,
+            color: "primary.contrastText",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            {editingEmployee ? <Edit /> : <Add />}
+            <Typography variant="h6">
+              {editingEmployee ? "Edit Employee" : "Add New Employee"}
+            </Typography>
+          </Box>
+          <IconButton onClick={handleCloseDialog} disabled={isSubmitting} sx={{ color: "inherit" }}>
             <Close />
           </IconButton>
         </DialogTitle>
-        
-        <DialogContent>
-          <Grid container spacing={3} sx={{ mt: 1 }}>
-            {/* Basic Information */}
+
+        <DialogContent sx={{ p: 3 }}>
+          <Grid container spacing={3}>
+            {/* Basic Information Section */}
             <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom color="primary">
-                Basic Information
-              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+                <Person sx={{ color: "primary.main" }} />
+                <Typography variant="h6" color="primary">
+                  Basic Information
+                </Typography>
+              </Box>
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
@@ -563,38 +718,59 @@ const EmployeeManagement = () => {
                 required
                 disabled={isSubmitting}
                 autoComplete="name"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                  },
+                }}
               />
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="mail Address"
-                type="mail"
+                label="Email Address"
+                type="email"
                 value={formData.mail}
                 onChange={(e) => handleInputChange("mail", e.target.value)}
                 error={!!formErrors.mail}
                 helperText={formErrors.mail}
                 required
                 disabled={isSubmitting}
-                autoComplete="mail"
+                autoComplete="email"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                  },
+                }}
               />
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Role/Position"
-                value={formData.role}
-                onChange={(e) => handleInputChange("role", e.target.value)}
-                error={!!formErrors.role}
-                helperText={formErrors.role}
-                required
-                disabled={isSubmitting}
-                autoComplete="organization-title"
-              />
+              <FormControl fullWidth error={!!formErrors.role} disabled={isSubmitting}>
+                <InputLabel>Role/Position</InputLabel>
+                <Select
+                  value={formData.role}
+                  onChange={(e) => handleInputChange("role", e.target.value)}
+                  label="Role/Position"
+                  sx={{
+                    borderRadius: 2,
+                  }}
+                >
+                  {ROLE_OPTIONS.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {formErrors.role && (
+                  <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 2 }}>
+                    {formErrors.role}
+                  </Typography>
+                )}
+              </FormControl>
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
@@ -606,16 +782,25 @@ const EmployeeManagement = () => {
                 required
                 disabled={isSubmitting}
                 autoComplete="tel"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                  },
+                }}
               />
             </Grid>
 
-            {/* Employment Details */}
+            {/* Employment Details Section */}
             <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom color="primary" sx={{ mt: 2 }}>
-                Employment Details
-              </Typography>
+              <Divider sx={{ my: 2 }} />
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+                <Work sx={{ color: "primary.main" }} />
+                <Typography variant="h6" color="primary">
+                  Employment Details
+                </Typography>
+              </Box>
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
@@ -631,23 +816,32 @@ const EmployeeManagement = () => {
                   shrink: true,
                 }}
                 inputProps={{
-                  max: today
+                  max: today,
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                  },
                 }}
               />
             </Grid>
 
-            {/* Security Information */}
+            {/* Security Information Section */}
             <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom color="primary" sx={{ mt: 2 }}>
-                Security Information
-              </Typography>
+              <Divider sx={{ my: 2 }} />
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+                <Security sx={{ color: "primary.main" }} />
+                <Typography variant="h6" color="primary">
+                  Security Information
+                </Typography>
+              </Box>
               {editingEmployee && (
                 <Typography variant="body2" color="text.secondary" gutterBottom>
                   Leave password fields empty to keep existing password
                 </Typography>
               )}
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
@@ -673,9 +867,14 @@ const EmployeeManagement = () => {
                     </InputAdornment>
                   ),
                 }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                  },
+                }}
               />
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
@@ -701,20 +900,31 @@ const EmployeeManagement = () => {
                     </InputAdornment>
                   ),
                 }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                },
+                }}
               />
             </Grid>
           </Grid>
         </DialogContent>
-        
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={handleCloseDialog} disabled={isSubmitting}>
+
+        <DialogActions sx={{ p: 3, bgcolor: "background.default" }}>
+          <Button
+            onClick={handleCloseDialog}
+            disabled={isSubmitting}
+            variant="outlined"
+            sx={{ borderRadius: 2, px: 3 }}
+          >
             Cancel
           </Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleSubmit}
             disabled={isSubmitting}
             startIcon={isSubmitting ? <CircularProgress size={20} /> : null}
+            sx={{ borderRadius: 2, px: 3 }}
           >
             {editingEmployee ? "Update" : "Create"} Employee
           </Button>
@@ -722,12 +932,14 @@ const EmployeeManagement = () => {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog 
-        open={openDeleteDialog} 
+      <Dialog
+        open={openDeleteDialog}
         onClose={!isDeletingEmployee ? handleCancelDelete : undefined}
         disableEscapeKeyDown={isDeletingEmployee}
+        maxWidth="sm"
+        fullWidth
       >
-        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogTitle sx={{ color: "error.main" }}>Confirm Delete</DialogTitle>
         <DialogContent>
           <Typography>
             Are you sure you want to delete employee <strong>"{employeeToDelete?.name}"</strong>? 
@@ -735,15 +947,21 @@ const EmployeeManagement = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelDelete} disabled={isDeletingEmployee}>
+          <Button
+            onClick={handleCancelDelete}
+            disabled={isDeletingEmployee}
+            variant="outlined"
+            sx={{ borderRadius: 2, px: 3 }}
+          >
             Cancel
           </Button>
-          <Button 
-            variant="contained" 
-            color="error" 
+          <Button
+            variant="contained"
+            color="error"
             onClick={handleConfirmDelete}
             disabled={isDeletingEmployee}
             startIcon={isDeletingEmployee ? <CircularProgress size={20} /> : null}
+            sx={{ borderRadius: 2, px: 3 }}
           >
             Delete
           </Button>
@@ -754,14 +972,14 @@ const EmployeeManagement = () => {
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
-        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
-        <Alert 
-          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))} 
+        <Alert
+          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
           severity={snackbar.severity}
           variant="filled"
-          sx={{ width: '100%' }}
+          sx={{ width: "100%" }}
         >
           {snackbar.message}
         </Alert>
@@ -769,7 +987,7 @@ const EmployeeManagement = () => {
 
       {/* Loading Backdrop */}
       <Backdrop
-        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
         open={isDeletingEmployee}
       >
         <Box display="flex" flexDirection="column" alignItems="center">

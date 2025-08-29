@@ -7,8 +7,12 @@ import {
   TextField,
   Grid,
   IconButton,
+  Paper,
+  Divider,
+  Chip,
+  Stack,
 } from "@mui/material";
-import { Close } from "@mui/icons-material";
+import { Close, Add, Edit } from "@mui/icons-material";
 import { SelectBox } from "./SelectBox";
 import { useGetVendorsQuery } from "../../app/api/vendorsApi";
 import {
@@ -26,13 +30,13 @@ const modalStyle = {
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  width: "90%",
-  maxWidth: 600,
-  maxHeight: "90vh",
+  width: "95%",
+  maxWidth: 800,
+  maxHeight: "95vh",
   bgcolor: "background.paper",
   boxShadow: 24,
   borderRadius: 2,
-  overflow: "auto",
+  overflow: "hidden",
 };
 
 interface RawMaterialModalProps {
@@ -181,162 +185,326 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
   return (
     <Modal open={open} onClose={onClose}>
       <Box sx={modalStyle}>
-        {/* Header */}
+        {/* Enhanced Header */}
         <Box
           sx={{
+            background: (theme) => theme.palette.primary.main,
+            color: "primary.contrastText",
             p: 3,
-            borderBottom: 1,
-            borderColor: "divider",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
           }}
         >
-          <Typography variant="h6">
-            {material ? "Edit Raw Material" : "Add Raw Material"}
-          </Typography>
-          <IconButton onClick={onClose}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            {material ? (
+              <Edit sx={{ fontSize: 28 }} />
+            ) : (
+              <Add sx={{ fontSize: 28 }} />
+            )}
+            <Box>
+              <Typography variant="h5" fontWeight="600">
+                {material ? "Edit Raw Material" : "Add New Raw Material"}
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
+                {material ? "Update material information" : "Create a new raw material entry"}
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton 
+            onClick={onClose}
+            sx={{ 
+              color: "inherit",
+              "&:hover": { 
+                backgroundColor: "rgba(255, 255, 255, 0.1)" 
+              } 
+            }}
+          >
             <Close />
           </IconButton>
         </Box>
 
         {/* Content */}
-        <Box sx={{ p: 3 }}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <Typography variant="caption" display="block" gutterBottom>
-                Material Name *
-              </Typography>
-              <TextField
-                fullWidth
-                size="small"
-                value={formData.name}
-                onChange={(e) => handleChange("name", e.target.value)}
-                error={!!errors.name}
-                helperText={errors.name}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Typography variant="caption" display="block" gutterBottom>
-                Category *
-              </Typography>
-              <SelectBox
-                id="category"
-                value={formData.category}
-                options={categoryOptions}
-                onChange={(_, value) => handleChange("category", value as string)}
-                error={errors.category}
-                fullWidth
-              />
-            </Grid>
-
+        <Box sx={{ p: 4, maxHeight: "calc(95vh - 200px)", overflow: "auto" }}>
+          <Grid container spacing={3}>
+            {/* Basic Information Section */}
             <Grid item xs={12}>
-              <Typography variant="caption" display="block" gutterBottom>
-                Description *
-              </Typography>
-              <TextField
-                fullWidth
-                size="small"
-                multiline
-                rows={2}
-                value={formData.description}
-                onChange={(e) => handleChange("description", e.target.value)}
-                error={!!errors.description}
-                helperText={errors.description}
-              />
+              <Paper 
+                elevation={0} 
+                sx={{ 
+                  p: 3, 
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 2,
+                  bgcolor: "background.default"
+                }}
+              >
+                <Typography variant="h6" sx={{ mb: 3, fontWeight: "600" }}>
+                  Basic Information
+                </Typography>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                      Material Name *
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      size="medium"
+                      value={formData.name}
+                      onChange={(e) => handleChange("name", e.target.value)}
+                      error={!!errors.name}
+                      helperText={errors.name}
+                      placeholder="Enter material name"
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                        }
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                      Category *
+                    </Typography>
+                    <SelectBox
+                      id="category"
+                      value={formData.category}
+                      options={categoryOptions}
+                      onChange={(_, value) => handleChange("category", value as string)}
+                      error={errors.category}
+                      fullWidth
+                    />
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                      Description *
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      size="medium"
+                      multiline
+                      rows={3}
+                      value={formData.description}
+                      onChange={(e) => handleChange("description", e.target.value)}
+                      error={!!errors.description}
+                      helperText={errors.description}
+                      placeholder="Describe the material properties and specifications"
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                        }
+                      }}
+                    />
+                  </Grid>
+                </Grid>
+              </Paper>
             </Grid>
 
-            <Grid item xs={12} md={4}>
-              <Typography variant="caption" display="block" gutterBottom>
-                Unit *
-              </Typography>
-              <SelectBox
-                id="unit"
-                value={formData.unit}
-                options={unitOptions}
-                onChange={(_, value) => handleChange("unit", value as string)}
-                error={errors.unit}
-                fullWidth
-              />
+            {/* Stock & Pricing Section */}
+            <Grid item xs={12}>
+              <Paper 
+                elevation={0} 
+                sx={{ 
+                  p: 3, 
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 2,
+                  bgcolor: "background.default"
+                }}
+              >
+                <Typography variant="h6" sx={{ mb: 3, fontWeight: "600" }}>
+                  Stock & Pricing
+                </Typography>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={4}>
+                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                      Unit *
+                    </Typography>
+                    <SelectBox
+                      id="unit"
+                      value={formData.unit}
+                      options={unitOptions}
+                      onChange={(_, value) => handleChange("unit", value as string)}
+                      error={errors.unit}
+                      fullWidth
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={4}>
+                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                      Minimum Stock *
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      size="medium"
+                      type="number"
+                      value={formData.minimumStock}
+                      onChange={(e) => handleChange("minimumStock", e.target.value)}
+                      error={!!errors.minimumStock}
+                      helperText={errors.minimumStock}
+                      placeholder="0"
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                        }
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={4}>
+                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                      Current Stock *
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      size="medium"
+                      type="number"
+                      value={formData.currentStock}
+                      onChange={(e) => handleChange("currentStock", e.target.value)}
+                      error={!!errors.currentStock}
+                      helperText={errors.currentStock}
+                      placeholder="0"
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                        }
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                      Unit Price *
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      size="medium"
+                      type="number"
+                      value={formData.unitPrice}
+                      onChange={(e) => handleChange("unitPrice", e.target.value)}
+                      error={!!errors.unitPrice}
+                      helperText={errors.unitPrice}
+                      placeholder="0.00"
+                      InputProps={{
+                        startAdornment: <Typography sx={{ mr: 1, color: "text.secondary" }}>₹</Typography>,
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                        }
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                      Vendor (Optional)
+                    </Typography>
+                    <SelectBox
+                      id="vendorId"
+                      value={formData.vendorId}
+                      options={vendorOptions}
+                      onChange={(_, value) => handleChange("vendorId", value as string)}
+                      error={errors.vendorId}
+                      fullWidth
+                    />
+                  </Grid>
+                </Grid>
+              </Paper>
             </Grid>
 
-            <Grid item xs={12} md={4}>
-              <Typography variant="caption" display="block" gutterBottom>
-                Minimum Stock *
-              </Typography>
-              <TextField
-                fullWidth
-                size="small"
-                type="number"
-                value={formData.minimumStock}
-                onChange={(e) => handleChange("minimumStock", e.target.value)}
-                error={!!errors.minimumStock}
-                helperText={errors.minimumStock}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <Typography variant="caption" display="block" gutterBottom>
-                Current Stock *
-              </Typography>
-              <TextField
-                fullWidth
-                size="small"
-                type="number"
-                value={formData.currentStock}
-                onChange={(e) => handleChange("currentStock", e.target.value)}
-                error={!!errors.currentStock}
-                helperText={errors.currentStock}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Typography variant="caption" display="block" gutterBottom>
-                Unit Price *
-              </Typography>
-              <TextField
-                fullWidth
-                size="small"
-                type="number"
-                value={formData.unitPrice}
-                onChange={(e) => handleChange("unitPrice", e.target.value)}
-                error={!!errors.unitPrice}
-                helperText={errors.unitPrice}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Typography variant="caption" display="block" gutterBottom>
-                Vendor (Optional)
-              </Typography>
-              <SelectBox
-                id="vendorId"
-                value={formData.vendorId}
-                options={vendorOptions}
-                onChange={(_, value) => handleChange("vendorId", value as string)}
-                error={errors.vendorId}
-                fullWidth
-              />
+            {/* Summary Section */}
+            <Grid item xs={12}>
+              <Paper 
+                elevation={0} 
+                sx={{ 
+                  p: 3, 
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 2,
+                  bgcolor: "grey.50"
+                }}
+              >
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: "600" }}>
+                  Summary
+                </Typography>
+                <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+                  {formData.category && (
+                    <Chip 
+                      label={`Category: ${formData.category}`} 
+                      color="primary" 
+                      variant="outlined" 
+                      size="small" 
+                    />
+                  )}
+                  {formData.unit && (
+                    <Chip 
+                      label={`Unit: ${formData.unit}`} 
+                      color="secondary" 
+                      variant="outlined" 
+                      size="small" 
+                    />
+                  )}
+                  {formData.vendorId && (
+                    <Chip 
+                      label={`Vendor: ${vendorOptions.find((v: OptionProps) => v.value === formData.vendorId)?.label || 'Selected'}`} 
+                      color="info" 
+                      variant="outlined" 
+                      size="small" 
+                    />
+                  )}
+                </Stack>
+              </Paper>
             </Grid>
           </Grid>
         </Box>
 
-        {/* Footer */}
+        {/* Enhanced Footer */}
         <Box
           sx={{
             p: 3,
             borderTop: 1,
             borderColor: "divider",
+            bgcolor: "background.default",
             display: "flex",
-            justifyContent: "flex-end",
-            gap: 2,
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
         >
-          <Button onClick={onClose}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit}>
-            {material ? "Update" : "Add"} Material
-          </Button>
+          <Typography variant="body2" color="text.secondary">
+            * Required fields
+          </Typography>
+          <Stack direction="row" spacing={2}>
+            <Button 
+              onClick={onClose}
+              variant="outlined"
+              sx={{ 
+                borderRadius: 2,
+                px: 3,
+                py: 1.5,
+                textTransform: "none",
+                fontWeight: "600"
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="contained" 
+              onClick={handleSubmit}
+              startIcon={material ? <Edit /> : <Add />}
+              sx={{ 
+                borderRadius: 2,
+                px: 3,
+                py: 1.5,
+                textTransform: "none",
+                fontWeight: "600"
+              }}
+            >
+              {material ? "Update Material" : "Add Material"}
+            </Button>
+          </Stack>
         </Box>
       </Box>
     </Modal>

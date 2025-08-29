@@ -1,7 +1,7 @@
 import { Route } from "react-router-dom";
 import ProtectedRoute from "../features/auth/ProtectedRoute";
 import OrderManagementList from "../features/operationManager/OrderManagementList";
-import AdminDashboard from "../pages/admin/AdminDashboard";
+import OperationManagerDashboard from "../features/operationManager/OperationManagerDashboard";
 import OperationManagerLayout from "../layouts/OperationManagerLayout";
 
 const OperationManagerRoutes = () => (
@@ -14,7 +14,7 @@ const OperationManagerRoutes = () => (
         </ProtectedRoute>
       }
     >
-      <Route key="dashboard" path="dashboard" element={<AdminDashboard />} />
+      <Route key="dashboard" path="dashboard" element={<OperationManagerDashboard />} />
       <Route key="order-management" path="order-management" element={<OrderManagementList />} />
     </Route>
   </>

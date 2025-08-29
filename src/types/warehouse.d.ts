@@ -1,6 +1,7 @@
 export interface RawMaterial {
   id: number;
   name: string;
+  barcode: string;
   description: string;
   unit: string;
   category: string;
@@ -16,6 +17,7 @@ export interface RawMaterial {
 
 export interface RawMaterialFormData {
   name: string;
+  barcode: string;
   description: string;
   unit: string;
   category: string;
