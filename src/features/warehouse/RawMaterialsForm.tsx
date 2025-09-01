@@ -40,6 +40,7 @@ const RawMaterialsForm = () => {
 
   const [rawMaterialForm, setRawMaterialForm] = useState<RawMaterialFormData>({
     name: "",
+    barcode: "",
     description: "",
     unit: "",
     category: "",
@@ -75,6 +76,7 @@ const RawMaterialsForm = () => {
 
   const formFields: FormField[] = [
     { label: "Material Name", key: "name", type: "text" },
+    { label: "Barcode", key: "barcode", type: "text" },
     { label: "Description", key: "description", type: "text" },
     { label: "Unit", key: "unit", type: "select" },
     { label: "Category", key: "category", type: "select" },
@@ -104,6 +106,7 @@ const RawMaterialsForm = () => {
     if (id && data) {
       setRawMaterialForm({
         name: data?.data?.name || "",
+        barcode: data?.data?.barcode || "",
         description: data?.data?.description || "",
         unit: data?.data?.unit || "",
         category: data?.data?.category || "",
@@ -161,6 +164,7 @@ const RawMaterialsForm = () => {
         );
         setRawMaterialForm({
           name: "",
+          barcode: "",
           description: "",
           unit: "",
           category: "",

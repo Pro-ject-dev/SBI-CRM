@@ -5,6 +5,7 @@ import {
   TrendingUp,
   Clock,
   CheckCircle,
+  Info,
 } from "lucide-react";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
@@ -200,7 +201,7 @@ const OperationManagerDashboard = () => {
             case "Material Issued & Work Ongoing": return <Package size={16} />;
             case "Completed": return <CheckCircle size={16} />;
             case "Delayed": return <AlertTriangle size={16} />;
-            default: return null;
+            default: return <Info size={16} />;
           }
         };
 

@@ -19,15 +19,15 @@ const LeadManagement = () => {
       if (Array.isArray(leadsData)) {
         // If API returns array directly
         setLeads(leadsData);
-      } else if (leadsData.data && Array.isArray(leadsData.data)) {
+      } else if ((leadsData as any).data && Array.isArray((leadsData as any).data)) {
         // If API returns { data: [...] }
-        setLeads(leadsData.data);
-      } else if (leadsData.leads && Array.isArray(leadsData.leads)) {
+        setLeads((leadsData as any).data);
+      } else if ((leadsData as any).leads && Array.isArray((leadsData as any).leads)) {
         // If API returns { leads: [...] }
-        setLeads(leadsData.leads);
-      } else if (leadsData.result && Array.isArray(leadsData.result)) {
+        setLeads((leadsData as any).leads);
+      } else if ((leadsData as any).result && Array.isArray((leadsData as any).result)) {
         // If API returns { result: [...] }
-        setLeads(leadsData.result);
+        setLeads((leadsData as any).result);
       } else {
         console.error("Unexpected API response structure:", leadsData);
         setLeads([]);

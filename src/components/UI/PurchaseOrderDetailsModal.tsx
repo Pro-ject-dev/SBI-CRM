@@ -46,9 +46,9 @@ const DetailItem = ({ label, value }: { label: string; value: React.ReactNode })
     <Typography variant="caption" className="text-gray-600 font-medium uppercase tracking-wide text-xs">
       {label}
     </Typography>
-    <Typography variant="body1" className="font-semibold text-gray-800 mt-1">
-      {value}
-    </Typography>
+    <div className="font-semibold text-gray-800 mt-1">
+      {value || 'N/A'}
+    </div>
   </div>
 );
 
@@ -86,9 +86,9 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
     setConfirmationDialog({
       open: true,
       title: `${action === 'approve' ? 'Approve' : 'Reject'} Purchase Order`,
-      message: `Are you sure you want to ${action} purchase order #${purchaseOrder.id}?`,
+      message: `Are you sure you want to ${action} purchase order #${purchaseOrder.id || 'N/A'}?`,
       action: action,
-      orderId: purchaseOrder.id.toString(),
+              orderId: purchaseOrder.id?.toString() || '',
     });
   };
 
@@ -135,38 +135,54 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
   };
 
   const getStatusChip = (status: string) => {
-    const s = String(status || "").toLowerCase();
-    let color: "warning" | "success" | "error" | "info" | "default" = "default";
-    
-    switch (s) {
-      case "pending":
-        color = "warning";
-        break;
-      case "approved":
-        color = "success";
-        break;
-      case "rejected":
-        color = "error";
-        break;
-      case "completed":
-        color = "info";
-        break;
+    try {
+      if (!status) return <Chip label="Unknown" color="default" size="small" className="font-medium" />;
+      
+      const s = String(status).toLowerCase().trim();
+      let color: "warning" | "success" | "error" | "info" | "default" = "default";
+      
+      switch (s) {
+        case "pending":
+          color = "warning";
+          break;
+        case "approved":
+          color = "success";
+          break;
+        case "rejected":
+          color = "error";
+          break;
+        case "completed":
+          color = "info";
+          break;
+        default:
+          color = "default";
+      }
+      
+      return <Chip label={status} color={color} size="small" className="font-medium" />;
+    } catch (error) {
+      console.error("Error in getStatusChip:", error);
+      return <Chip label="Error" color="default" size="small" className="font-medium" />;
     }
-    
-    return <Chip label={status} color={color} size="small" className="font-medium" />;
   };
 
   const getItemStatusChip = (status: string) => {
-    const s = String(status || "").toLowerCase();
-    let color: "success" | "default" = "default";
-    let label = "Inactive";
-    
-    if (s === "1") {
-      color = "success";
-      label = "Active";
+    try {
+      if (!status) return <Chip label="Unknown" color="default" size="small" className="font-medium" />;
+      
+      const s = String(status).toLowerCase().trim();
+      let color: "success" | "default" = "default";
+      let label = "Inactive";
+      
+      if (s === "1" || s === "active" || s === "true") {
+        color = "success";
+        label = "Active";
+      }
+      
+      return <Chip label={label} color={color} size="small" className="font-medium" />;
+    } catch (error) {
+      console.error("Error in getItemStatusChip:", error);
+      return <Chip label="Error" color="default" size="small" className="font-medium" />;
     }
-    
-    return <Chip label={label} color={color} size="small" className="font-medium" />;
   };
 
   if (!purchaseOrder) return null;
@@ -176,7 +192,7 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
                        purchaseOrder.orderStatus || 
                        '';
                        
-  const isPendingStatus = currentStatus.toLowerCase() === 'pending';
+  const isPendingStatus = currentStatus && currentStatus.toLowerCase() === 'pending';
 
   return (
     <>
@@ -186,7 +202,7 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
           <Box className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 flex justify-between items-center">
             <div className="flex items-center gap-3">
               <Typography variant="h6" className="font-bold text-gray-800">
-                Purchase Order Details - #{purchaseOrder.id}
+                Purchase Order Details - #{purchaseOrder.id || 'N/A'}
               </Typography>
             </div>
             <div className="flex items-center gap-2">
@@ -235,13 +251,27 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
                 Order Information
               </Typography>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <DetailItem label="Vendor" value={purchaseOrder.vendor|| 'N/A'} />
+                <DetailItem 
+                  label="Vendor" 
+                  value={
+                    typeof purchaseOrder.vendor === 'string' 
+                      ? purchaseOrder.vendor 
+                      : purchaseOrder.vendor?.name || 'N/A'
+                  } 
+                />
                 <DetailItem label="Requested By" value={purchaseOrder.requestedBy || 'N/A'} />
                 <DetailItem
                   label="Requested Date"
                   value={
                     purchaseOrder.requestedDate
-                      ? format(new Date(purchaseOrder.requestedDate), "PPpp")
+                      ? (() => {
+                          try {
+                            return format(new Date(purchaseOrder.requestedDate), "PPpp");
+                          } catch (error) {
+                            console.error("Error formatting date:", error);
+                            return purchaseOrder.requestedDate || "N/A";
+                          }
+                        })()
                       : "N/A"
                   }
                 />
@@ -249,7 +279,16 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
                   label="Total Amount"
                   value={
                     <span className="text-green-600 font-bold text-lg">
-                      ₹{Number(purchaseOrder.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      ₹{(() => {
+                        try {
+                          const amount = Number(purchaseOrder.totalAmount || 0);
+                          if (isNaN(amount)) return "0.00";
+                          return amount.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                        } catch (error) {
+                          console.error("Error formatting amount:", error);
+                          return "0.00";
+                        }
+                      })()}
                     </span>
                   }
                 />
@@ -262,7 +301,7 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
               <Typography variant="h6" className="mb-4 font-bold text-gray-800 pb-2 border-b border-gray-100 flex items-center gap-2">
                 Order Items 
                 <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
-                  {purchaseOrder.items?.length || 0} items
+                  {Array.isArray(purchaseOrder.items) ? purchaseOrder.items.length : 0} items
                 </span>
               </Typography>
               <div className="space-y-4">
@@ -274,10 +313,23 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
                     >
                       <div className="flex justify-between items-center mb-3">
                         <Typography variant="subtitle1" className="font-bold text-blue-700">
-                          {typeof item.rawMaterial === 'string' 
-                            ? item.rawMaterial 
-                            : item.rawMaterial?.name 
-                            || `Material ${item.rawMaterialId || 'N/A'}`}
+                          {(() => {
+                            try {
+                              if (typeof item.rawMaterial === 'string') {
+                                return item.rawMaterial || 'Unknown Material';
+                              }
+                              if (item.rawMaterial?.name) {
+                                return item.rawMaterial.name;
+                              }
+                              if (item.rawMaterialId) {
+                                return `Material ${item.rawMaterialId}`;
+                              }
+                              return 'Unknown Material';
+                            } catch (error) {
+                              console.error("Error getting raw material name:", error);
+                              return 'Unknown Material';
+                            }
+                          })()}
                         </Typography>
                         <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full font-medium">
                           Item #{index + 1}
@@ -289,7 +341,16 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
                             Quantity
                           </Typography>
                           <Typography variant="body1" className="font-bold text-gray-800">
-                            {item.quantity || 0}
+                            {(() => {
+                              try {
+                                const quantity = Number(item.quantity || 0);
+                                if (isNaN(quantity)) return "0";
+                                return quantity.toString();
+                              } catch (error) {
+                                console.error("Error formatting quantity:", error);
+                                return "0";
+                              }
+                            })()}
                           </Typography>
                         </div>
                         <div className="text-center p-2 bg-white rounded-md border border-gray-100">
@@ -297,7 +358,16 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
                             Unit Price
                           </Typography>
                           <Typography variant="body1" className="font-bold text-gray-800">
-                            ₹{Number(item.unitPrice || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                            ₹{(() => {
+                              try {
+                                const price = Number(item.unitPrice || 0);
+                                if (isNaN(price)) return "0.00";
+                                return price.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                              } catch (error) {
+                                console.error("Error formatting unit price:", error);
+                                return "0.00";
+                              }
+                            })()}
                           </Typography>
                         </div>
                         <div className="text-center p-2 bg-white rounded-md border border-gray-100">
@@ -305,7 +375,16 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
                             Total Price
                           </Typography>
                           <Typography variant="body1" className="font-bold text-green-600">
-                            ₹{Number(item.totalPrice || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                            ₹{(() => {
+                              try {
+                                const price = Number(item.totalPrice || 0);
+                                if (isNaN(price)) return "0.00";
+                                return price.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                              } catch (error) {
+                                console.error("Error formatting total price:", error);
+                                return "0.00";
+                              }
+                            })()}
                           </Typography>
                         </div>
                         <div className="flex justify-center items-center">

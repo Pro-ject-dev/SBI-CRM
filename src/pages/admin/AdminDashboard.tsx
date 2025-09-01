@@ -17,10 +17,10 @@ const AdminDashboard = () => {
   const { data: vendorsData, isLoading: vendorsLoading } = useGetVendorsQuery({});
 
   // Handle different API response structures with proper fallbacks
-  const leadsArray = Array.isArray(leadsData) ? leadsData : (leadsData?.data && Array.isArray(leadsData.data) ? leadsData.data : []);
-  const ordersArray = Array.isArray(ordersData) ? ordersData : (ordersData?.data && Array.isArray(ordersData.data) ? ordersData.data : []);
-  const purchaseOrdersArray = Array.isArray(purchaseOrdersData) ? purchaseOrdersData : (purchaseOrdersData?.data && Array.isArray(purchaseOrdersData.data) ? purchaseOrdersData.data : []);
-  const productsArray = Array.isArray(productsData) ? productsData : (productsData?.data && Array.isArray(productsData.data) ? productsData.data : []);
+  const leadsArray = Array.isArray(leadsData) ? leadsData : ((leadsData as any)?.data && Array.isArray((leadsData as any).data) ? (leadsData as any).data : []);
+  const ordersArray = Array.isArray(ordersData) ? ordersData : ((ordersData as any)?.data && Array.isArray((ordersData as any).data) ? (ordersData as any).data : []);
+  const purchaseOrdersArray = Array.isArray(purchaseOrdersData) ? purchaseOrdersData : ((purchaseOrdersData as any)?.data && Array.isArray((purchaseOrdersData as any).data) ? (purchaseOrdersData as any).data : []);
+  const productsArray = Array.isArray(productsData) ? productsData : ((productsData as any)?.data && Array.isArray((productsData as any).data) ? (productsData as any).data : []);
 
   const totalLeads = leadsArray.length;
   const totalOrders = ordersArray.length;

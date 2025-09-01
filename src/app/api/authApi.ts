@@ -18,16 +18,9 @@ export const authApi = createApi({
         
         // Transform the backend response to match our frontend structure
         if (response.success && response.token && response.data) {
-          // Map display names back to role values for internal use
-          const roleValueMap: { [key: string]: string } = {
-            "Administrator": "admin",
-            "Sales Manager": "sales_manager",
-            "Operation Manager": "operation_manager",
-            "Warehouse Manager": "warehouse_manager"
-          };
-
-          const roleDisplayName = response.data.role || "Administrator";
-          const role = roleValueMap[roleDisplayName] || "admin";
+          // The backend already sends the correct role values
+          const role = response.data.role || "admin";
+          const roleDisplayName = response.data.roleDisplayName || response.data.role || "Administrator";
 
           const transformedResponse = {
             userName: response.data.name || "User",

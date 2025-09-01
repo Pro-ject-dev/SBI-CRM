@@ -20,17 +20,42 @@ export const SelectBox: React.FC<SelectBoxProps> = ({
   readonly,
   ...props
 }) => {
+  console.log("SelectBox render:", { id, value, valueType: typeof value, valueString: String(value || ""), options: options?.length, disabled, optionsData: options });
   return (
     <FormControl
       fullWidth={fullWidth}
       error={error ? true : false}
-      sx={{ width: 220 }}
+      sx={fullWidth ? {} : { width: 220 }}
     >
       <Select
         id={id}
         name={name}
-        value={value}
-        onChange={(e) => onChange(id, e.target.value)}
+        value={String(value || "")}
+        onChange={(e) => {
+          console.log("SelectBox onChange triggered:", { id, currentValue: value, newValue: e.target.value, newValueType: typeof e.target.value, options: options?.length });
+          console.log("Calling parent onChange with:", { id, value: e.target.value });
+          onChange(id, e.target.value);
+        }}
+        renderValue={(selectedValue) => {
+          console.log("renderValue called:", { selectedValue, selectedValueType: typeof selectedValue, options: options?.length, optionsData: options });
+          if (!selectedValue) return "Select a raw material";
+          
+          // Debug: Log all options and their values
+          console.log("All options:", options);
+          console.log("Looking for value:", selectedValue);
+          
+          const selectedOption = options?.find(option => {
+            const match = String(option.value) === String(selectedValue);
+            console.log("Comparing:", { optionValue: option.value, optionValueType: typeof option.value, selectedValue, selectedValueType: typeof selectedValue, match });
+            return match;
+          });
+          
+          console.log("Found selected option:", selectedOption, "for value:", selectedValue);
+          return selectedOption?.label || selectedValue;
+        }}
+        onOpen={() => {
+          console.log("SelectBox opened:", { id, value, options: options?.length });
+        }}
         disabled={disabled}
         fullWidth={fullWidth}
         inputRef={inputRef}
@@ -42,12 +67,17 @@ export const SelectBox: React.FC<SelectBoxProps> = ({
         {...props}
       >
         <MenuItem value="" disabled>
-          None
+          Select a raw material
         </MenuItem>
         {options?.map((option, idx) => {
+          console.log("Rendering MenuItem:", { idx, option, value: option?.value, label: option?.label, type: typeof option?.value });
+          if (!option?.value || String(option.value).trim() === "") {
+            console.log("Skipping invalid option:", option);
+            return null;
+          }
           return (
-            <MenuItem key={idx} value={option?.value}>
-              {option?.label}
+            <MenuItem key={`${id}-${option.value}`} value={String(option.value)}>
+              {option.label}
             </MenuItem>
           );
         })}

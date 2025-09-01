@@ -54,8 +54,8 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
   onClose,
 }) => {
   const dispatch: AppDispatch = useDispatch();
-  const { data: vendorsData } = useGetVendorsQuery({});
-  const { data: rawMaterialsData } = useGetRawMaterialsQuery({});
+  const { data: vendorsData, isLoading: isLoadingVendors, error: vendorsError } = useGetVendorsQuery({});
+  const { data: rawMaterialsData, isLoading: isLoadingRawMaterials, error: rawMaterialsError } = useGetRawMaterialsQuery({});
   const [createPurchaseOrder] = useCreatePurchaseOrderMutation();
 
   const [vendorId, setVendorId] = useState("");
@@ -76,15 +76,61 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
   const [status, setStatus] = useState<string>("1");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const vendorOptions = vendorsData?.data?.map((vendor: any) => ({
-    label: vendor.name,
-    value: vendor.id.toString(),
-  })) || [];
+  const vendorOptions = React.useMemo(() => {
+    if (!vendorsData?.data || !Array.isArray(vendorsData.data)) {
+      console.log("No vendors data available");
+      return [];
+    }
+    
+    const options = vendorsData.data.map((vendor: any) => ({
+      label: vendor.name || 'Unknown Vendor',
+      value: vendor.id?.toString() || '',
+    })).filter((option: any) => option.value); // Filter out options with empty values
+    
+    console.log("Vendor options:", options);
+    return options;
+  }, [vendorsData]);
 
-  const rawMaterialOptions = rawMaterialsData?.data?.map((material: any) => ({
-    label: `${material.name} (${material.currentStock} ${material.unit})`,
-    value: material.id.toString(),
-  })) || [];
+  const rawMaterialOptions = React.useMemo(() => {
+    if (!rawMaterialsData?.data || !Array.isArray(rawMaterialsData.data)) {
+      console.log("No raw materials data available");
+      return [];
+    }
+    
+    console.log("Raw materials data:", rawMaterialsData.data);
+    
+    const options = rawMaterialsData.data.map((material: any) => {
+      const option = {
+        label: `${material.name || 'Unknown'} (${material.currentStock || 0} ${material.unit || 'units'})`,
+        value: material.id?.toString() || '',
+      };
+      console.log("Created option:", option, "material.id:", material.id, "material.id type:", typeof material.id);
+      return option;
+    }).filter(option => {
+      const isValid = option.value && option.value.trim() !== '';
+      console.log("Filtering option:", option, "isValid:", isValid);
+      return isValid;
+    });
+    
+    console.log("Final raw material options:", options);
+    return options;
+  }, [rawMaterialsData]);
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log("Raw materials data:", rawMaterialsData);
+    console.log("Raw material options:", rawMaterialOptions);
+  }, [rawMaterialsData, rawMaterialOptions]);
+
+  // Debug logging for items state
+  React.useEffect(() => {
+    console.log("Items state updated:", items);
+    items.forEach((item, index) => {
+      if (item.rawMaterialId) {
+        console.log(`Item ${index} rawMaterialId:`, item.rawMaterialId, "type:", typeof item.rawMaterialId);
+      }
+    });
+  }, [items]);
 
   const handleAddItem = () => {
     setItems([
@@ -107,19 +153,24 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
   };
 
   const handleItemChange = (index: number, field: string, value: string) => {
+    console.log("handleItemChange called:", { index, field, value });
     const newItems = [...items];
     
     if (field === "rawMaterialId") {
       const selectedMaterial = rawMaterialsData?.data?.find(
-        (material: any) => material.id.toString() === value
+        (material: any) => material.id?.toString() === value
       );
+      console.log("Found material in handleItemChange:", selectedMaterial);
       if (selectedMaterial) {
         newItems[index] = {
           ...newItems[index],
           rawMaterialId: value,
           rawMaterialName: selectedMaterial.name,
-          unitPrice: selectedMaterial.unitPrice.toString(),
+          unitPrice: selectedMaterial.unitPrice?.toString() || "0",
         };
+        console.log("Updated item with material:", newItems[index]);
+      } else {
+        console.log("No material found for value:", value);
       }
     } else {
       newItems[index] = {
@@ -133,6 +184,7 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
     const unitPrice = Number(newItems[index].unitPrice) || 0;
     newItems[index].totalPrice = quantity * unitPrice;
     
+    console.log("Updated items:", newItems);
     setItems(newItems);
     
     // Clear errors for this field
@@ -183,7 +235,7 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
     try {
 
       const selectedVendor = vendorsData?.data?.find(
-        (v: any) => v.id.toString() === vendorId
+        (v: any) => v.id?.toString() === vendorId
       );
 
       const payload = {
@@ -289,17 +341,18 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
                 <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
-                  Vendor *
+                  Vendor * {isLoadingVendors && "(Loading...)"}
                 </Typography>
                 <SelectBox
                   id="vendorId"
-                  value={vendorId}
+                                     value={String(vendorId || "")}
                   options={vendorOptions}
-                  onChange={(_, value) => {
-                    if (typeof value === "string") setVendorId(value);
-                    else setVendorId("");
-                  }}
-                  error={errors.vendorId}
+                                     onChange={(id, value) => {
+                     if (typeof value === "string") setVendorId(value);
+                     else setVendorId("");
+                   }}
+                  error={errors.vendorId || (vendorsError ? "Failed to load vendors" : "") || (vendorOptions.length === 0 && !isLoadingVendors ? "No vendors available" : "")}
+                  disabled={isLoadingVendors}
                   fullWidth
                 />
               </Grid>
@@ -421,25 +474,39 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
                 <Grid container spacing={3}>
                   <Grid item xs={12} md={4}>
                     <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
-                      Raw Material *
+                      Raw Material * {isLoadingRawMaterials && "(Loading...)"}
                     </Typography>
-                    <SelectBox
-                      id={`rawMaterial-${index}`}
-                      value={item.rawMaterialId}
-                      options={rawMaterialOptions}
-                      onChange={(_, value) => {
-                        if (typeof value === "string") {
-                          handleItemChange(index, "rawMaterialId", value);
-                          const selectedMaterial = rawMaterialsData?.data?.find(
-                            (material: any) => material.id.toString() === value
-                          );
-                          if (selectedMaterial) {
-                            handleItemChange(index, "rawMaterialName", selectedMaterial.name);
-                            handleItemChange(index, "unitPrice", selectedMaterial.unitPrice?.toString() || "");
-                          }
-                        }
-                      }}
-                      error={errors[`${index}-rawMaterialId`]}
+                                         <SelectBox
+                       key={`rawMaterial-${index}`}
+                       id={`rawMaterial-${index}`}
+                       value={String(item.rawMaterialId || "")}
+                       options={rawMaterialOptions || []}
+                                             onChange={(id, value) => {
+                         console.log("Raw material selection:", { index, id, value, type: typeof value, rawMaterialOptions });
+                         if (typeof value === "string" && value.trim() !== "") {
+                           console.log("Processing selection:", value);
+                           console.log("Calling handleItemChange for rawMaterialId:", value);
+                           handleItemChange(index, "rawMaterialId", value);
+                           
+                           // Additional debugging
+                           console.log("After handleItemChange call, checking if we need to update other fields");
+                           const selectedMaterial = rawMaterialsData?.data?.find(
+                             (material: any) => material.id?.toString() === value
+                           );
+                           console.log("Selected material found:", selectedMaterial);
+                           
+                           if (selectedMaterial) {
+                             console.log("Updating additional fields for material:", selectedMaterial.name);
+                             // Note: We don't need to call handleItemChange again since it's already handled above
+                           } else {
+                             console.log("No material found in rawMaterialsData for value:", value);
+                           }
+                         } else {
+                           console.log("Invalid value:", value);
+                         }
+                       }}
+                                             error=""
+                                             disabled={false}
                       fullWidth
                     />
                   </Grid>

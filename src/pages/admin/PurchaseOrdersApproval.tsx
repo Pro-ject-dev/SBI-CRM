@@ -504,8 +504,6 @@ const PurchaseOrdersApproval = () => {
         open={detailsModalOpen}
         onClose={() => setDetailsModalOpen(false)}
         purchaseOrder={selectedPurchaseOrder}
-        onApprove={(id) => handleApproveReject(id, "approve")}
-        onReject={(id) => handleApproveReject(id, "reject")}
       />
 
       {/* Confirmation Dialog */}

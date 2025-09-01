@@ -274,7 +274,7 @@ const WarehouseDashboard = () => {
                   />
                   <Legend />
                   <Bar dataKey="value" barSize={50} radius={[4, 4, 0, 0]}>
-                    {purchaseOrderStatusData.map((entry: any, index) => (
+                    {purchaseOrderStatusData.map((entry: any, index: number) => (
                       <Cell 
                         key={`cell-${index}`} 
                         fill={STATUS_COLORS[entry.name as keyof typeof STATUS_COLORS] || '#8884d8'} 

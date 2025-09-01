@@ -2,6 +2,7 @@ import { Route } from "react-router-dom";
 import ProtectedRoute from "../features/auth/ProtectedRoute";
 import OrderManagementList from "../features/operationManager/OrderManagementList";
 import OperationManagerDashboard from "../features/operationManager/OperationManagerDashboard";
+import JobCardManagement from "../features/operationManager/JobCardManagement";
 import OperationManagerLayout from "../layouts/OperationManagerLayout";
 
 const OperationManagerRoutes = () => (
@@ -16,6 +17,7 @@ const OperationManagerRoutes = () => (
     >
       <Route key="dashboard" path="dashboard" element={<OperationManagerDashboard />} />
       <Route key="order-management" path="order-management" element={<OrderManagementList />} />
+      <Route key="job-cards" path="job-cards" element={<JobCardManagement />} />
     </Route>
   </>
 );

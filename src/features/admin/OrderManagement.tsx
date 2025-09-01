@@ -236,7 +236,7 @@ const OrderManagement = () => {
                 id="status"
                 name="status"
                 value={filters.status || ""}
-                onChange={(key, value) => handleFilterChange(key, value)}
+                onChange={(key, value) => handleFilterChange(key, value as string)}
                 options={statusOptions}
               />
             </Box>
