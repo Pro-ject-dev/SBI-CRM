@@ -72,7 +72,6 @@ const ROLE_OPTIONS = [
   { value: "sales_manager", label: "Sales Manager" },
   { value: "warehouse_manager", label: "Warehouse Manager" },
   { value: "operation_manager", label: "Operation Manager" },
-  { value: "employee", label: "Employee" },
 ];
 
 const EmployeeManagement: React.FC = () => {
