@@ -219,8 +219,8 @@ const JobCardManagement = () => {
   return (
     <Container maxWidth="lg" sx={{ mt: 2 }}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
-          📋 Job Card Management
+        <Typography variant="h4" component="h1" gutterBottom sx={{  fontWeight: 'bold' }}>
+          Job Card Management
         </Typography>
         <Typography variant="body1" color="text.secondary">
           Generate and download professional job cards for production orders. Track production stages and manage workflow efficiently.
@@ -247,7 +247,7 @@ const JobCardManagement = () => {
                 }}
               />
             </Grid>
-            <Grid item xs={12} md={3}>
+            {/* <Grid item xs={12} md={3}>
               <FormControl fullWidth size="small">
                 <InputLabel>Status Filter</InputLabel>
                 <Select
@@ -262,24 +262,24 @@ const JobCardManagement = () => {
                   <MenuItem value="cancelled">Cancelled</MenuItem>
                 </Select>
               </FormControl>
-            </Grid>
+            </Grid> */}
             <Grid item xs={12} md={5}>
               <Stack direction="row" spacing={2} justifyContent="flex-end">
-                <Button
+                {/* <Button
                   variant="outlined"
                   startIcon={<DownloadIcon />}
                   onClick={() => setBulkDownloadDialog(true)}
                   disabled={filteredData.length === 0}
                 >
                   Download All ({filteredData.length})
-                </Button>
-                <Button
+                </Button> */}
+                {/* <Button
                   variant="contained"
                   startIcon={<AssignmentIcon />}
                   onClick={() => window.print()}
                 >
                   Print View
-                </Button>
+                </Button> */}
               </Stack>
             </Grid>
           </Grid>

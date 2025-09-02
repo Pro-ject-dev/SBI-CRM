@@ -42,6 +42,10 @@ interface PurchaseOrderItem {
   unitPrice: string;
   totalPrice: number;
   status?: string;
+  unit?: string;        // UOM
+  spec?: string;        // Spec/Make
+  gstPct?: string;      // GST % per item
+  delivery?: string;    // Delivery date per item (DD/MM/YYYY)
 }
 
 interface PurchaseOrderModalProps {
@@ -75,6 +79,19 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
   const [orderStatus, setOrderStatus] = useState<string>("Pending");
   const [status, setStatus] = useState<string>("1");
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Additional header/summary fields required for PO PDF generation
+  const [placeOfDestination, setPlaceOfDestination] = useState<string>("");
+  const [deliveryBy, setDeliveryBy] = useState<string>("");
+  const [cgstPct, setCgstPct] = useState<string>("");
+  const [sgstPct, setSgstPct] = useState<string>("");
+  const [roundOff, setRoundOff] = useState<string>("0");
+  const [paymentNote, setPaymentNote] = useState<string>("");
+  const [deliveryNote, setDeliveryNote] = useState<string>("");
+  const [freightNote, setFreightNote] = useState<string>("");
+  const [insuranceNote, setInsuranceNote] = useState<string>("");
+  const [warrantyNote, setWarrantyNote] = useState<string>("");
+  const [remarksNote, setRemarksNote] = useState<string>("");
 
   const vendorOptions = React.useMemo(() => {
     if (!vendorsData?.data || !Array.isArray(vendorsData.data)) {
@@ -223,6 +240,9 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
       if (!item.unitPrice || Number(item.unitPrice) <= 0) {
         newErrors[`${index}-unitPrice`] = "Valid unit price is required";
       }
+      if (!item.unit) {
+        newErrors[`${index}-unit`] = "UOM is required";
+      }
     });
 
     setErrors(newErrors);
@@ -249,6 +269,21 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
           requestedDate,
           status,
           notes,
+          placeOfDestination,
+          deliveryBy,
+          taxes: {
+            cgstPct,
+            sgstPct,
+            roundOff,
+          },
+          notesSection: {
+            payment: paymentNote,
+            delivery: deliveryNote,
+            freight: freightNote,
+            insurance: insuranceNote,
+            warranty: warrantyNote,
+            remarks: remarksNote,
+          },
         },
         items: items.map((item) => ({
           rawMaterialId: item.rawMaterialId,
@@ -257,6 +292,10 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
           unitPrice: item.unitPrice,
           totalPrice: String(item.totalPrice),
           status: item.status ?? "1",
+          unit: item.unit || "Nos",
+          spec: item.spec || "",
+          gstPct: item.gstPct || "",
+          delivery: item.delivery || deliveryBy || "",
         })),
       };
 
@@ -438,6 +477,81 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
 
           <Divider sx={{ my: 4 }} />
 
+          {/* Additional Details for PO PDF */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" sx={{ mb: 3, fontWeight: "600" }}>
+              Additional Details (for PO PDF)
+            </Typography>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Place of Destination
+                </Typography>
+                <TextField fullWidth value={placeOfDestination} onChange={(e)=>setPlaceOfDestination(e.target.value)} placeholder="Enter place of destination" />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Delivery By (Date)
+                </Typography>
+                <DatePickerField label="deliveryBy" value={deliveryBy} onChange={(_, v)=>setDeliveryBy(v)} />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Round Off
+                </Typography>
+                <TextField fullWidth type="number" value={roundOff} onChange={(e)=>setRoundOff(e.target.value)} placeholder="0.00" />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  CGST %
+                </Typography>
+                <TextField fullWidth type="number" value={cgstPct} onChange={(e)=>setCgstPct(e.target.value)} placeholder="9" />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  SGST %
+                </Typography>
+                <TextField fullWidth type="number" value={sgstPct} onChange={(e)=>setSgstPct(e.target.value)} placeholder="9" />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Payment Note
+                </Typography>
+                <TextField fullWidth value={paymentNote} onChange={(e)=>setPaymentNote(e.target.value)} placeholder="Payment terms..." />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Delivery Note
+                </Typography>
+                <TextField fullWidth value={deliveryNote} onChange={(e)=>setDeliveryNote(e.target.value)} placeholder="Delivery terms..." />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Freight
+                </Typography>
+                <TextField fullWidth value={freightNote} onChange={(e)=>setFreightNote(e.target.value)} placeholder="Freight scope..." />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Insurance
+                </Typography>
+                <TextField fullWidth value={insuranceNote} onChange={(e)=>setInsuranceNote(e.target.value)} placeholder="Insurance details..." />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Warranty
+                </Typography>
+                <TextField fullWidth value={warrantyNote} onChange={(e)=>setWarrantyNote(e.target.value)} placeholder="Warranty..." />
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Remarks
+                </Typography>
+                <TextField fullWidth value={remarksNote} onChange={(e)=>setRemarksNote(e.target.value)} placeholder="Remarks..." />
+              </Grid>
+            </Grid>
+          </Box>
+
           {/* Order Items Section */}
           <Box sx={{ mb: 4 }}>
             <Typography variant="h6" sx={{ mb: 3, fontWeight: "600" }}>
@@ -553,6 +667,59 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
                           borderRadius: 2,
                         }
                       }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={2}>
+                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                      UOM *
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      size="medium"
+                      value={item.unit || ""}
+                      onChange={(e) => handleItemChange(index, "unit", e.target.value)}
+                      error={!!errors[`${index}-unit`]}
+                      helperText={errors[`${index}-unit`]}
+                      placeholder="Nos"
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={4}>
+                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                      Spec./Make
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      size="medium"
+                      value={item.spec || ""}
+                      onChange={(e) => handleItemChange(index, "spec", e.target.value)}
+                      placeholder="Specification / Make"
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={2}>
+                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                      GST %
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      size="medium"
+                      type="number"
+                      value={item.gstPct || ""}
+                      onChange={(e) => handleItemChange(index, "gstPct", e.target.value)}
+                      placeholder="18"
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={2}>
+                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                      Delivery
+                    </Typography>
+                    <DatePickerField
+                      label={`delivery-${index}`}
+                      value={item.delivery || ""}
+                      onChange={(_, v) => handleItemChange(index, "delivery", v || "")}
                     />
                   </Grid>
 

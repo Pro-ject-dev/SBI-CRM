@@ -6,6 +6,7 @@ import { useLoginMutation } from "../app/api/authApi";
 import { addToast, removeToast, clearAllToasts } from "../app/slices/toastSlice";
 import type { LoginResponse } from "../types/auth";
 import type { RootState } from "../app/store";
+import { EyeIcon, EyeOffIcon } from "lucide-react";
 
 const LoginPage = () => {
   const dispatch = useDispatch();
@@ -206,12 +207,12 @@ const LoginPage = () => {
                 >
                   Password
                 </label>
-                <a
+                {/* <a
                   href="#"
                   className="text-sm font-medium text-blue-600 hover:text-blue-800"
                 >
                   Forgot password?
-                </a>
+                </a> */}
               </div>
               <div className="relative">
                 <input
@@ -230,11 +231,11 @@ const LoginPage = () => {
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {/* {showPassword ? (
+                  {showPassword ? (
                         <EyeOffIcon className="h-5 w-5 text-gray-400" />
                       ) : (
                         <EyeIcon className="h-5 w-5 text-gray-400" />
-                      )} */}
+                      )}
                 </button>
               </div>
             </div>

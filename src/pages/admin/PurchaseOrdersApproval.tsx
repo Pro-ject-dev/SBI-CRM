@@ -12,6 +12,7 @@ import {
 import { useGetVendorsQuery } from "../../app/api/vendorsApi";
 import { useGetRawMaterialsQuery } from "../../app/api/rawMaterialsApi";
 import PurchaseOrderDetailsModal from "../../components/UI/PurchaseOrderDetailsModal";
+import { generatePurchaseOrderPdf } from "../../utils/generatePurchaseOrderPdf";
 import { Visibility } from "@mui/icons-material";
 
 const PurchaseOrdersApproval = () => {
@@ -226,6 +227,13 @@ const PurchaseOrdersApproval = () => {
         message: `Purchase order ${status} successfully`, 
         type: "success" 
       }));
+      // Auto-generate PDF on approval
+      if (status === 'approved') {
+        const approved = filteredData.find((o: any) => o.id === orderId);
+        if (approved) {
+          try { generatePurchaseOrderPdf(approved as any); } catch {}
+        }
+      }
       setConfirmationDialog({ open: false, title: "", message: "", action: "", orderId: "" });
       setDetailsModalOpen(false); // Close the details modal after action
       refetch();
@@ -375,6 +383,16 @@ const PurchaseOrdersApproval = () => {
                 title="View Details"
               >
                 <Visibility fontSize="small" />
+              </Button>
+              <Button
+                size="small"
+                variant="contained"
+                color="primary"
+                disabled={String(params?.row?.status).toLowerCase() !== 'approved'}
+                onClick={() => generatePurchaseOrderPdf(params.row as any)}
+                title={String(params?.row?.status).toLowerCase() === 'approved' ? 'Download PO (PDF)' : 'Only approved orders can be downloaded'}
+              >
+                Download
               </Button>
             </Box>
           );
