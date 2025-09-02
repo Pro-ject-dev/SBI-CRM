@@ -150,10 +150,10 @@ const PurchaseOrdersManagement = () => {
                 };
               } catch (itemErr) {
                 console.error("Error processing item:", item, itemErr);
-                return {
-                  ...item,
+              return {
+                ...item,
                   rawMaterial: "Unknown Material",
-                };
+              };
               }
             }
           );
@@ -209,8 +209,8 @@ const PurchaseOrdersManagement = () => {
 
   useEffect(() => {
     try {
-      if (!purchaseOrderModalOpen) {
-        refetch();
+    if (!purchaseOrderModalOpen) {
+      refetch();
       }
     } catch (error) {
       console.error("Error in purchase order modal effect:", error);
@@ -219,8 +219,8 @@ const PurchaseOrdersManagement = () => {
 
   useEffect(() => {
     try {
-      if (!detailsModalOpen) {
-        refetch();
+    if (!detailsModalOpen) {
+      refetch();
       }
     } catch (error) {
       console.error("Error in details modal effect:", error);
@@ -235,9 +235,9 @@ const PurchaseOrdersManagement = () => {
         );
         return;
       }
-      dispatch(
-        addToast({ message: "Edit functionality coming soon", type: "warning" })
-      );
+    dispatch(
+      addToast({ message: "Edit functionality coming soon", type: "warning" })
+    );
     } catch (error) {
       console.error("Error in handleEditRow:", error);
       dispatch(
@@ -249,9 +249,9 @@ const PurchaseOrdersManagement = () => {
   const handleViewRow = (id: string) => {
     try {
       const purchaseOrder = filteredData?.find((order: any) => order?.id === id);
-      if (purchaseOrder) {
-        setSelectedPurchaseOrder(purchaseOrder);
-        setDetailsModalOpen(true);
+    if (purchaseOrder) {
+      setSelectedPurchaseOrder(purchaseOrder);
+      setDetailsModalOpen(true);
       } else {
         console.warn("Purchase order not found for ID:", id);
         dispatch(
@@ -268,7 +268,7 @@ const PurchaseOrdersManagement = () => {
 
   const handleAddNew = () => {
     try {
-      setPurchaseOrderModalOpen(true);
+    setPurchaseOrderModalOpen(true);
     } catch (error) {
       console.error("Error opening add new modal:", error);
       dispatch(
@@ -565,10 +565,10 @@ const PurchaseOrdersManagement = () => {
             variant="outlined"
             onClick={() => {
               try {
-                setSearchTerm("");
-                setStatusFilter("all");
-                setStartDate("");
-                setEndDate("");
+              setSearchTerm("");
+              setStatusFilter("all");
+              setStartDate("");
+              setEndDate("");
               } catch (error) {
                 console.error("Error clearing filters:", error);
               }
@@ -617,12 +617,12 @@ const PurchaseOrdersManagement = () => {
       <Box sx={{ width: "100%", marginTop: "8px" }}>
         <Box sx={{ height: 600, overflowX: "auto" }}>
           {filteredData && filteredData.length > 0 ? (
-            <DataTable
-              rows={filteredData}
-              columns={columns}
-              disableColumnMenu
-              disableRowSelectionOnClick
-              loading={isLoading || isFetching}
+                     <DataTable
+             rows={filteredData}
+             columns={columns}
+             disableColumnMenu
+             disableRowSelectionOnClick
+             loading={isLoading || isFetching}
               getRowId={(row: any) => row?.id ?? row?.orderId ?? row?.orderNumber ?? `${row?.vendorId || 'unknown'}-${row?.requestedDate || 'unknown'}`}
             />
           ) : (

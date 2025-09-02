@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "../../app/store";
 import {
   Modal,
   Box,
@@ -74,7 +76,6 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
     },
   ]);
   const [notes, setNotes] = useState("");
-  const [requestedBy, setRequestedBy] = useState("");
   const [requestedDate, setRequestedDate] = useState<string>("");
   const [orderStatus, setOrderStatus] = useState<string>("Pending");
   const [status, setStatus] = useState<string>("1");
@@ -223,9 +224,6 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
     if (!vendorId) {
       newErrors.vendorId = "Vendor is required";
     }
-    if (!requestedBy) {
-      newErrors.requestedBy = "Requested By is required";
-    }
     if (!requestedDate) {
       newErrors.requestedDate = "Requested Date is required";
     }
@@ -254,18 +252,20 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
 
     try {
 
-      const selectedVendor = vendorsData?.data?.find(
-        (v: any) => v.id?.toString() === vendorId
-      );
+      const selectedVendor = vendorsData?.data?.find((v: any) => v.id?.toString() === vendorId);
+
+      // Get the username from the authSlice
+      const userName = useSelector((state: RootState) => state.auth.userName);
 
       const payload = {
         orderData: {
           orderId: "PO-STATIC", // As requested
           vendorId,
+          createdBy: userName, // Add the username here
           vendor: selectedVendor ? selectedVendor.name : "",
           totalAmount: String(getTotalAmount()),
           orderStatus,
-          requestedBy,
+          requestedBy: userName, // Add the username here
           requestedDate,
           status,
           notes,
@@ -324,7 +324,6 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
       },
     ]);
     setNotes("");
-    setRequestedBy("");
     setRequestedDate("");
     setOrderStatus("Pending");
     setStatus("1");
@@ -387,9 +386,9 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
                                      value={String(vendorId || "")}
                   options={vendorOptions}
                                      onChange={(id, value) => {
-                     if (typeof value === "string") setVendorId(value);
-                     else setVendorId("");
-                   }}
+                    if (typeof value === "string") setVendorId(value);
+                    else setVendorId("");
+                  }}
                   error={errors.vendorId || (vendorsError ? "Failed to load vendors" : "") || (vendorOptions.length === 0 && !isLoadingVendors ? "No vendors available" : "")}
                   disabled={isLoadingVendors}
                   fullWidth
@@ -411,25 +410,7 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
             </Grid>
 
             <Grid container spacing={3} sx={{ mt: 2 }}>
-              <Grid item xs={12} md={4}>
-                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
-                  Requested By *
-                </Typography>
-                <TextField
-                  fullWidth
-                  size="medium"
-                  value={requestedBy}
-                  onChange={(e) => setRequestedBy(e.target.value)}
-                  error={!!errors.requestedBy}
-                  helperText={errors.requestedBy}
-                  placeholder="Enter requester name"
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                    }
-                  }}
-                />
-              </Grid>
+
               <Grid item xs={12} md={4}>
                 <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
                   Order Status
@@ -590,9 +571,9 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
                     <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
                       Raw Material * {isLoadingRawMaterials && "(Loading...)"}
                     </Typography>
-                                         <SelectBox
+                    <SelectBox
                        key={`rawMaterial-${index}`}
-                       id={`rawMaterial-${index}`}
+                      id={`rawMaterial-${index}`}
                        value={String(item.rawMaterialId || "")}
                        options={rawMaterialOptions || []}
                                              onChange={(id, value) => {
@@ -600,16 +581,16 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
                          if (typeof value === "string" && value.trim() !== "") {
                            console.log("Processing selection:", value);
                            console.log("Calling handleItemChange for rawMaterialId:", value);
-                           handleItemChange(index, "rawMaterialId", value);
+                          handleItemChange(index, "rawMaterialId", value);
                            
                            // Additional debugging
                            console.log("After handleItemChange call, checking if we need to update other fields");
-                           const selectedMaterial = rawMaterialsData?.data?.find(
+                          const selectedMaterial = rawMaterialsData?.data?.find(
                              (material: any) => material.id?.toString() === value
-                           );
+                          );
                            console.log("Selected material found:", selectedMaterial);
                            
-                           if (selectedMaterial) {
+                          if (selectedMaterial) {
                              console.log("Updating additional fields for material:", selectedMaterial.name);
                              // Note: We don't need to call handleItemChange again since it's already handled above
                            } else {
