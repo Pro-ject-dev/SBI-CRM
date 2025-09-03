@@ -56,7 +56,9 @@ export interface PurchaseOrderItem {
   id?: number;
   purchaseId?: string;         // Added - from API response
   rawMaterialId: string;       // Changed to string to match API
-  rawMaterial?: RawMaterial | string; // Can be string or object
+  rawMaterial?: RawMaterial | string;
+  gst: string; // Can be string or object
+  deliveryDate: string;
   quantity: string;            // Changed to string to match API
   unitPrice: string;           // Changed to string to match API  
   totalPrice: string;          // Changed to string to match API
@@ -69,13 +71,22 @@ export interface PurchaseOrder {
   id: number;
   orderNumber?: string;        // Made optional since API doesn't return it
   vendorId: string;            // Changed to string to match API
-  vendor?: Vendor | string;    // Can be string or object
+  vendor?: Vendor | string;  
+  vendorAddress?: Vendor | string;    // Can be string or object
   items: PurchaseOrderItem[];
   totalAmount: string;         // Changed to string to match API
   status: "1" | "0";
   orderStatus: 'Pending' | 'Approved' | 'Rejected' | 'Completed'; // Capitalized to match API
   requestedBy: string;
   requestedDate: string;
+  deliveryDate: string;
+  cgst: string;
+  sgst: string;
+  paymentNote: string;
+  deliveryNote: string;
+  insurance: string;
+  warranty: string;
+  remarks: string;
   approvedBy?: string | null;
   approvedDate?: string | null;
   notes?: string;

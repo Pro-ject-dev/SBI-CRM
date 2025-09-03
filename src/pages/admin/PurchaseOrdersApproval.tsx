@@ -1,4 +1,4 @@
-import { Box, Button, Chip, Container, TextField, Typography, Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import { Box, Button, Chip, Container, TextField, Typography, Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText, FormControl, InputLabel, Select, MenuItem, Tooltip, IconButton } from "@mui/material";
 import { useEffect, useState, useMemo } from "react";
 import { DataTable } from "../../components/UI/DataTable";
 import type { GridColDef } from "@mui/x-data-grid";
@@ -13,7 +13,7 @@ import { useGetVendorsQuery } from "../../app/api/vendorsApi";
 import { useGetRawMaterialsQuery } from "../../app/api/rawMaterialsApi";
 import PurchaseOrderDetailsModal from "../../components/UI/PurchaseOrderDetailsModal";
 import { generatePurchaseOrderPdf } from "../../utils/generatePurchaseOrderPdf";
-import { Visibility } from "@mui/icons-material";
+import { Visibility, Download } from "@mui/icons-material";
 
 const PurchaseOrdersApproval = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -160,6 +160,16 @@ const PurchaseOrdersApproval = () => {
             vendor: vendorName,
             vendorName: vendorName, // String version for display
             vendorId: row.vendorId,
+            // Additional details needed by details modal
+            vendorAddress: row.vendorAddress ?? row.vendor_address ?? "",
+            deliveryDate: row.deliveryDate ?? row.delivery_date ?? "",
+            cgst: row.cgst ?? "",
+            sgst: row.sgst ?? "",
+            paymentNote: row.paymentNote ?? row.payment_note ?? "",
+            deliveryNote: row.deliveryNote ?? row.delivery_note ?? "",
+            insurance: row.insurance ?? "",
+            warranty: row.warranty ?? "",
+            remarks: row.remarks ?? "",
             requestedDate: row.requestedDate ?? row.requested_date ?? row.createdAt ?? row.created_at ?? new Date().toISOString(),
             requestedBy: row.requestedBy ?? row.requested_by ?? "N/A",
             notes: row.notes ?? "",
@@ -375,25 +385,29 @@ const PurchaseOrdersApproval = () => {
           if (!id) return null;
           return (
             <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-              <Button
-                size="small"
-                variant="outlined"
-                color="info"
-                onClick={() => handleViewRow(id)}
-                title="View Details"
-              >
-                <Visibility fontSize="small" />
-              </Button>
-              <Button
-                size="small"
-                variant="contained"
-                color="primary"
-                disabled={String(params?.row?.status).toLowerCase() !== 'approved'}
-                onClick={() => generatePurchaseOrderPdf(params.row as any)}
-                title={String(params?.row?.status).toLowerCase() === 'approved' ? 'Download PO (PDF)' : 'Only approved orders can be downloaded'}
-              >
-                Download
-              </Button>
+              <Tooltip title="View Details">
+                <IconButton
+                  size="small"
+                  color="info"
+                  onClick={() => handleViewRow(id)}
+                  sx={{ p: 0.75 }}
+                >
+                  <Visibility fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={String(params?.row?.status).toLowerCase() === 'approved' ? 'Download PO (PDF)' : 'Only approved orders can be downloaded'}>
+                <span>
+                  <IconButton
+                    size="small"
+                    color="primary"
+                    disabled={String(params?.row?.status).toLowerCase() !== 'approved'}
+                    onClick={() => generatePurchaseOrderPdf(params.row as any)}
+                    sx={{ p: 0.75 }}
+                  >
+                    <Download fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
             </Box>
           );
         } catch {

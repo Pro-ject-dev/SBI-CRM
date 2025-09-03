@@ -48,6 +48,7 @@ interface PurchaseOrderItem {
   spec?: string;        // Spec/Make
   gstPct?: string;      // GST % per item
   delivery?: string;    // Delivery date per item (DD/MM/YYYY)
+  deliveryDate?: string; // Explicit delivery date for API compatibility
 }
 
 interface PurchaseOrderModalProps {
@@ -60,6 +61,8 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
   onClose,
 }) => {
   const dispatch: AppDispatch = useDispatch();
+  // Get the username from the authSlice at component level (hooks must be top-level)
+  const userName = useSelector((state: RootState) => state.auth.userName);
   const { data: vendorsData, isLoading: isLoadingVendors, error: vendorsError } = useGetVendorsQuery({});
   const { data: rawMaterialsData, isLoading: isLoadingRawMaterials, error: rawMaterialsError } = useGetRawMaterialsQuery({});
   const [createPurchaseOrder] = useCreatePurchaseOrderMutation();
@@ -73,10 +76,15 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
       unitPrice: "",
       totalPrice: 0,
       status: "1",
+      gstPct: "18",
     },
   ]);
   const [notes, setNotes] = useState("");
-  const [requestedDate, setRequestedDate] = useState<string>("");
+  // Set default values - no need for UI fields
+  const [requestedDate, setRequestedDate] = useState<string>(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+  });
   const [orderStatus, setOrderStatus] = useState<string>("Pending");
   const [status, setStatus] = useState<string>("1");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -84,12 +92,10 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
   // Additional header/summary fields required for PO PDF generation
   const [placeOfDestination, setPlaceOfDestination] = useState<string>("");
   const [deliveryBy, setDeliveryBy] = useState<string>("");
-  const [cgstPct, setCgstPct] = useState<string>("");
-  const [sgstPct, setSgstPct] = useState<string>("");
-  const [roundOff, setRoundOff] = useState<string>("0");
+  const [cgstPct, setCgstPct] = useState<string>("9");
+  const [sgstPct, setSgstPct] = useState<string>("9");
   const [paymentNote, setPaymentNote] = useState<string>("");
   const [deliveryNote, setDeliveryNote] = useState<string>("");
-  const [freightNote, setFreightNote] = useState<string>("");
   const [insuranceNote, setInsuranceNote] = useState<string>("");
   const [warrantyNote, setWarrantyNote] = useState<string>("");
   const [remarksNote, setRemarksNote] = useState<string>("");
@@ -160,6 +166,8 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
         unitPrice: "",
         totalPrice: 0,
         status: "1",
+        unit: "", // Initialize with empty unit
+        gstPct: "18",
       },
     ]);
   };
@@ -185,6 +193,7 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
           rawMaterialId: value,
           rawMaterialName: selectedMaterial.name,
           unitPrice: selectedMaterial.unitPrice?.toString() || "0",
+          unit: selectedMaterial.unit || "Nos", // Auto-populate UOM from material
         };
         console.log("Updated item with material:", newItems[index]);
       } else {
@@ -224,9 +233,7 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
     if (!vendorId) {
       newErrors.vendorId = "Vendor is required";
     }
-    if (!requestedDate) {
-      newErrors.requestedDate = "Requested Date is required";
-    }
+    // requestedDate has a default value (today's date), so no validation needed
 
     items.forEach((item, index) => {
       if (!item.rawMaterialId) {
@@ -254,15 +261,13 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
 
       const selectedVendor = vendorsData?.data?.find((v: any) => v.id?.toString() === vendorId);
 
-      // Get the username from the authSlice
-      const userName = useSelector((state: RootState) => state.auth.userName);
-
       const payload = {
         orderData: {
           orderId: "PO-STATIC", // As requested
           vendorId,
           createdBy: userName, // Add the username here
           vendor: selectedVendor ? selectedVendor.name : "",
+          vendorAddress: selectedVendor ? selectedVendor.address : "",
           totalAmount: String(getTotalAmount()),
           orderStatus,
           requestedBy: userName, // Add the username here
@@ -270,20 +275,15 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
           status,
           notes,
           placeOfDestination,
-          deliveryBy,
-          taxes: {
-            cgstPct,
-            sgstPct,
-            roundOff,
-          },
-          notesSection: {
-            payment: paymentNote,
-            delivery: deliveryNote,
-            freight: freightNote,
-            insurance: insuranceNote,
-            warranty: warrantyNote,
-            remarks: remarksNote,
-          },
+          deliveryDate: deliveryBy,
+          cgst: cgstPct,
+          sgst: sgstPct,
+          paymentNote: paymentNote,
+          deliveryNote: deliveryNote,
+          insurance: insuranceNote,
+          warranty: warrantyNote,
+          remarks: remarksNote,
+          
         },
         items: items.map((item) => ({
           rawMaterialId: item.rawMaterialId,
@@ -293,21 +293,29 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
           totalPrice: String(item.totalPrice),
           status: item.status ?? "1",
           unit: item.unit || "Nos",
-          spec: item.spec || "",
-          gstPct: item.gstPct || "",
-          delivery: item.delivery || deliveryBy || "",
+          specification: item.spec || "",
+          gst: item.gstPct || "",
+          deliveryDate: item.delivery || deliveryBy || "",
         })),
       };
 
+      console.log("Creating purchase order with payload:", payload);
       await createPurchaseOrder(payload).unwrap();
       dispatch(
         addToast({ message: "Purchase order created successfully", type: "success" })
       );
       handleClose();
     } catch (error) {
-      dispatch(
-        addToast({ message: "Failed to create purchase order", type: "error" })
-      );
+      // Try to surface server error details if available
+      let message = "Failed to create purchase order";
+      try {
+        const anyErr: any = error as any;
+        if (anyErr?.data?.message) message = anyErr.data.message;
+        else if (anyErr?.error) message = String(anyErr.error);
+        else if (anyErr?.status) message = `Request failed (${anyErr.status})`;
+        console.error("Create PO error:", anyErr);
+      } catch {}
+      dispatch(addToast({ message, type: "error" }));
     }
   };
 
@@ -321,12 +329,17 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
         unitPrice: "",
         totalPrice: 0,
         status: "1",
+        unit: "", // Reset unit field
+        gstPct: "18",
       },
     ]);
     setNotes("");
-    setRequestedDate("");
+    // Reset to default values
+    const today = new Date();
+    setRequestedDate(today.toISOString().split('T')[0]);
     setOrderStatus("Pending");
     setStatus("1");
+    setPlaceOfDestination("");
     setErrors({});
     onClose();
   };
@@ -386,74 +399,29 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
                                      value={String(vendorId || "")}
                   options={vendorOptions}
                                      onChange={(id, value) => {
-                    if (typeof value === "string") setVendorId(value);
-                    else setVendorId("");
+                    if (typeof value === "string") {
+                      setVendorId(value);
+                      // Auto-populate place of destination from vendor address
+                      const selectedVendor = vendorsData?.data?.find((v: any) => v.id?.toString() === value);
+                      if (selectedVendor?.address) {
+                        setPlaceOfDestination(selectedVendor.address);
+                      } else {
+                        setPlaceOfDestination("");
+                      }
+                    } else {
+                      setVendorId("");
+                      setPlaceOfDestination("");
+                    }
                   }}
                   error={errors.vendorId || (vendorsError ? "Failed to load vendors" : "") || (vendorOptions.length === 0 && !isLoadingVendors ? "No vendors available" : "")}
                   disabled={isLoadingVendors}
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
-                  Requested Date *
-                </Typography>
-                <DatePickerField
-                  label="requestedDate"
-                  value={requestedDate}
-                  onChange={(_, v) => setRequestedDate(v)}
-                />
-                {errors.requestedDate && (
-                  <Typography variant="caption" color="error">{errors.requestedDate}</Typography>
-                )}
-              </Grid>
+
             </Grid>
 
-            <Grid container spacing={3} sx={{ mt: 2 }}>
 
-              <Grid item xs={12} md={4}>
-                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
-                  Order Status
-                </Typography>
-                <TextField
-                  fullWidth
-                  size="medium"
-                  select
-                  value={orderStatus}
-                  onChange={(e) => setOrderStatus(e.target.value)}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                    }
-                  }}
-                >
-                  <MenuItem value="Pending">Pending</MenuItem>
-                  <MenuItem value="Approved" disabled>Approved</MenuItem>
-                  <MenuItem value="Rejected" disabled>Rejected</MenuItem>
-                  <MenuItem value="Completed" disabled>Completed</MenuItem>
-                </TextField>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
-                  Active Status
-                </Typography>
-                <TextField
-                  fullWidth
-                  size="medium"
-                  select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                    }
-                  }}
-                >
-                  <MenuItem value="1">Active</MenuItem>
-                  <MenuItem value="0">Inactive</MenuItem>
-                </TextField>
-              </Grid>
-            </Grid>
           </Box>
 
           <Divider sx={{ my: 4 }} />
@@ -464,24 +432,19 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
               Additional Details (for PO PDF)
             </Typography>
             <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
-                  Place of Destination
-                </Typography>
-                <TextField fullWidth value={placeOfDestination} onChange={(e)=>setPlaceOfDestination(e.target.value)} placeholder="Enter place of destination" />
-              </Grid>
+
               <Grid item xs={12} md={3}>
                 <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
                   Delivery By (Date)
                 </Typography>
                 <DatePickerField label="deliveryBy" value={deliveryBy} onChange={(_, v)=>setDeliveryBy(v)} />
               </Grid>
-              <Grid item xs={12} md={3}>
+              {/* <Grid item xs={12} md={3}>
                 <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
                   Round Off
                 </Typography>
                 <TextField fullWidth type="number" value={roundOff} onChange={(e)=>setRoundOff(e.target.value)} placeholder="0.00" />
-              </Grid>
+              </Grid> */}
               <Grid item xs={12} md={3}>
                 <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
                   CGST %
@@ -506,12 +469,12 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
                 </Typography>
                 <TextField fullWidth value={deliveryNote} onChange={(e)=>setDeliveryNote(e.target.value)} placeholder="Delivery terms..." />
               </Grid>
-              <Grid item xs={12} md={4}>
+              {/* <Grid item xs={12} md={4}>
                 <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
                   Freight
                 </Typography>
                 <TextField fullWidth value={freightNote} onChange={(e)=>setFreightNote(e.target.value)} placeholder="Freight scope..." />
-              </Grid>
+              </Grid> */}
               <Grid item xs={12} md={4}>
                 <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
                   Insurance
@@ -659,10 +622,17 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
                       fullWidth
                       size="medium"
                       value={item.unit || ""}
-                      onChange={(e) => handleItemChange(index, "unit", e.target.value)}
+                      InputProps={{
+                        readOnly: true,
+                      }}
                       error={!!errors[`${index}-unit`]}
                       helperText={errors[`${index}-unit`]}
-                      placeholder="Nos"
+                      placeholder="Auto-filled from material"
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          backgroundColor: "grey.50",
+                        }
+                      }}
                     />
                   </Grid>
 

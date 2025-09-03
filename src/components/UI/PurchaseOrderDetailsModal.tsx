@@ -296,6 +296,62 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
               </div>
             </Box>
 
+            {/* Additional Details (PO-wise) */}
+            {(() => {
+              const po: any = purchaseOrder;
+
+              const destination =
+                typeof po?.vendorAddress === 'string'
+                  ? (po.vendorAddress || '').trim()
+                  : (po?.vendorAddress?.address || po?.vendorAddress?.name || '').trim();
+
+              const deliveryRaw = (po?.deliveryDate || '').trim();
+              const deliveryDisplay = deliveryRaw
+                ? (() => { try { return format(new Date(deliveryRaw), 'PP'); } catch { return String(deliveryRaw); } })()
+                : '';
+
+              const cgst = (po?.cgst ?? '').toString().trim();
+              const sgst = (po?.sgst ?? '').toString().trim();
+              const hasTaxes = !!(cgst || sgst);
+
+              const paymentNote = (po?.paymentNote || '').trim();
+              const deliveryNote = (po?.deliveryNote || '').trim();
+              const insurance = (po?.insurance || '').trim();
+              const warranty = (po?.warranty || '').trim();
+              const remarks = (po?.remarks || '').trim();
+
+
+              return (
+                <Box className="mb-6 bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
+                  <Typography variant="h6" className="mb-4 font-bold text-gray-800 pb-2 border-b border-gray-100">
+                    Additional Details
+                  </Typography>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <DetailItem label="Place of Destination" value={destination || 'N/A'} />
+                    <DetailItem label="Delivery By" value={deliveryDisplay || 'N/A'} />
+                    <DetailItem
+                      label="Taxes"
+                      value={
+                        hasTaxes ? (
+                          <span>
+                            {cgst ? `CGST: ${cgst}%` : ''}
+                            {sgst ? `${cgst ? ' | ' : ''}SGST: ${sgst}%` : ''}
+                          </span>
+                        ) : 'N/A'
+                      }
+                    />
+                  </div>
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {paymentNote && <DetailItem label="Payment Note" value={paymentNote} />}
+                    {deliveryNote && <DetailItem label="Delivery Note" value={deliveryNote} />}
+                    {insurance && <DetailItem label="Insurance" value={insurance} />}
+                    {warranty && <DetailItem label="Warranty" value={warranty} />}
+                    {remarks && <DetailItem label="Remarks" value={remarks} />}
+                  </div>
+                </Box>
+              );
+            })()}
+
             {/* Items */}
             <Box className="mb-6 bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
               <Typography variant="h6" className="mb-4 font-bold text-gray-800 pb-2 border-b border-gray-100 flex items-center gap-2">
@@ -389,6 +445,42 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
                         </div>
                         <div className="flex justify-center items-center">
                           {getItemStatusChip(item.status || "0")}
+                        </div>
+                      </div>
+
+                      {/* Item additional details */}
+                      <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="text-center p-2 bg-white rounded-md border border-gray-100">
+                          <Typography variant="caption" className="text-gray-500 font-medium block">
+                            UOM
+                          </Typography>
+                          <Typography variant="body2" className="font-semibold text-gray-800">
+                            {(item as any)?.unit || 'N/A'}
+                          </Typography>
+                        </div>
+                        <div className="text-center p-2 bg-white rounded-md border border-gray-100">
+                          <Typography variant="caption" className="text-gray-500 font-medium block">
+                            Spec / Make
+                          </Typography>
+                          <Typography variant="body2" className="font-semibold text-gray-800">
+                            {(item as any)?.specification || 'N/A'}
+                          </Typography>
+                        </div>
+                        <div className="text-center p-2 bg-white rounded-md border border-gray-100">
+                          <Typography variant="caption" className="text-gray-500 font-medium block">
+                            GST %
+                          </Typography>
+                          <Typography variant="body2" className="font-semibold text-gray-800">
+                            {(item as any)?.gst || 'N/A'}
+                          </Typography>
+                        </div>
+                        <div className="text-center p-2 bg-white rounded-md border border-gray-100">
+                          <Typography variant="caption" className="text-gray-500 font-medium block">
+                            Delivery
+                          </Typography>
+                          <Typography variant="body2" className="font-semibold text-gray-800">
+                            {(() => { const d = (item as any)?.deliveryDate; if (!d) return 'N/A'; try { return format(new Date(d), 'PP'); } catch { return String(d); } })()}
+                          </Typography>
                         </div>
                       </div>
                     </div>

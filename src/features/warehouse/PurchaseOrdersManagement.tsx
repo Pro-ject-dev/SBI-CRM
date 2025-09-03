@@ -177,6 +177,16 @@ const PurchaseOrdersManagement = () => {
               id: vendorId || null,
               name: vendorName,
             },
+            // Additional details passed through for details modal
+            vendorAddress: row?.vendorAddress ?? row?.vendor_address ?? "",
+            deliveryDate: row?.deliveryDate ?? row?.delivery_date ?? "",
+            cgst: row?.cgst ?? "",
+            sgst: row?.sgst ?? "",
+            paymentNote: row?.paymentNote ?? row?.payment_note ?? "",
+            deliveryNote: row?.deliveryNote ?? row?.delivery_note ?? "",
+            insurance: row?.insurance ?? "",
+            warranty: row?.warranty ?? "",
+            remarks: row?.remarks ?? "",
             requestedDate:
               row?.requestedDate ??
               row?.requested_date ??
