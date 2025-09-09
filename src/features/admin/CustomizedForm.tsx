@@ -12,6 +12,7 @@ import type { AppDispatch } from "../../app/store";
 import { useDispatch } from "react-redux";
 import { addToast } from "../../app/slices/toastSlice";
 import { useIsProductExistMutation } from "../../app/api/standardProductApi";
+import { height } from "@mui/system";
 
 interface FormField {
   label: string;
@@ -81,7 +82,7 @@ const CustomizedForm = () => {
     { label: "Grade", key: "grade", type: "text" },
     { label: "Length(inch)", key: "length", type: "number", min: 0 },
     { label: "Width(inch)", key: "width", type: "number", min: 0 },
-    { label: "Height(inch)", key: "height", type: "number", min: 0 },
+    { label: "Height(inch)", key: "height", type: "text", min: 0 },
     { label: "Thickness(inch)", key: "thickness", type: "number", min: 0 },
     { label: "Minimum Cost", key: "minimumCost", type: "number", min: 0 },
     { label: "Maximum Cost", key: "maximumCost", type: "number", min: 0 },
@@ -151,6 +152,7 @@ const CustomizedForm = () => {
           weightOfObject: `${customizedForm.weight}`,
           length: `${customizedForm.length}`,
           width: `${customizedForm.width}`,
+          height: `${customizedForm.height}`,
           thickness: `${customizedForm.thickness}`,
           minCost: `${customizedForm.minimumCost}`,
           maxCost: `${customizedForm.maximumCost}`,
@@ -170,6 +172,7 @@ const CustomizedForm = () => {
           grade: `${customizedForm.grade}`,
           length: `${customizedForm.length}`,
           width: `${customizedForm.width}`,
+          height: `${customizedForm.height}`,
           thickness: `${customizedForm.thickness}`,
           minCost: `${customizedForm.minimumCost}`,
           maxCost: `${customizedForm.maximumCost}`,

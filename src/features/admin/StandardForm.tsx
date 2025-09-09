@@ -12,6 +12,7 @@ import { useSearchParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../app/store";
 import { addToast } from "../../app/slices/toastSlice";
+import { height } from "@mui/system";
 
 interface FormField {
   label: string;
@@ -78,7 +79,7 @@ const StandardForm = () => {
     { label: "Grade", key: "grade", type: "text" },
     { label: "Length(inch)", key: "length", type: "number", min: 0 },
     { label: "Width(inch)", key: "width", type: "number", min: 0 },
-    { label: "Height(inch)", key: "height", type: "number", min: 0 },
+    { label: "Height(inch)", key: "height", type: "text", min: 0 },
     { label: "Thickness(inch)", key: "thickness", type: "number", min: 0 },
     { label: "Minimum Cost", key: "minimumCost", type: "number", min: 0 },
     { label: "Maximum Cost", key: "maximumCost", type: "number", min: 0 },
@@ -143,6 +144,7 @@ const StandardForm = () => {
           productName: `${standardForm.productName}`,
           ratePerQuantity: `${standardForm.ratePerQuantity}`,
           grade: `${standardForm.grade}`,
+          height: `${standardForm.height}`,
           length: `${standardForm.length}`,
           width: `${standardForm.width}`,
           thickness: `${standardForm.thickness}`,
@@ -162,6 +164,7 @@ const StandardForm = () => {
           ratePerQuantity: `${standardForm.ratePerQuantity}`,
           grade: `${standardForm.grade}`,
           length: `${standardForm.length}`,
+          height: `${standardForm.height}`,
           width: `${standardForm.width}`,
           thickness: `${standardForm.thickness}`,
           minCost: `${standardForm.minimumCost}`,
