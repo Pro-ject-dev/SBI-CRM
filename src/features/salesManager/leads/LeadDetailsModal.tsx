@@ -49,7 +49,7 @@ const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({ open, handleClose, 
         <Typography variant="h6" sx={{ mb: 2 }}>Existing Estimations</Typography>
         <Grid container spacing={2}>
           {estimations.map((est) => (
-            <Grid xs={12} md={12} key={est.id}>
+            <Grid item xs={12} md={12} key={est.id}>
               <Paper variant="outlined" sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box>
                   <Typography fontWeight="bold">{`${est.documentType} - ${est.referenceNumber}`}</Typography>
