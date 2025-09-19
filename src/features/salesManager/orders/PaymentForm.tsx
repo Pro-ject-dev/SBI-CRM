@@ -55,10 +55,10 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, initialData, isSubmi
         <Grid item xs={12} md={6}>
           <TextField label="Date" name="date" type="date" value={formData.date} onChange={handleChange} fullWidth required InputLabelProps={{ shrink: true }} />
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={12}>
           <TextField label="Paid Amount" name="paidAmt" type="number" value={formData.paidAmt} onChange={handleChange} fullWidth required inputProps={{ min: "0.01", step: "0.01" }} InputLabelProps={{ shrink: true }} />
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={12}>
           <TextField label="Remark" name="remark" value={formData.remark} onChange={handleChange} fullWidth multiline rows={2} required InputLabelProps={{ shrink: true }} />
         </Grid>
       </Grid>
