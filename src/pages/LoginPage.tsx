@@ -165,12 +165,13 @@ const LoginPage = () => {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-blue-500/30 p-6 rounded-lg backdrop-blur">
-            <p className="text-white font-medium mb-2">
-              "This CRM platform has transformed how we manage our client
-              relationships."
-            </p>
-            <p className="text-blue-200">— Sarah Johnson, CEO</p>
+          {/* Illustration */}
+          <div className="flex items-center justify-center">
+            <img
+              src="https://www.go.ooo/img/bg-img/Login.jpg"
+              alt="Login Illustration"
+              className="max-h-[68rem] w-auto rounded-xl shadow-2xl border border-white/20 bg-white/10 backdrop-blur"
+            />
           </div>
 
           <div className="flex space-x-2">
@@ -288,7 +289,7 @@ const LoginPage = () => {
 
           <div className="mt-10 text-center">
             <p className="text-xs text-gray-500">
-              © 2025 Sri Bramha Industries. All rights reserved.
+              © 2025 Sustainnovatechlabs All rights reserved.
             </p>
           </div>
         </div>

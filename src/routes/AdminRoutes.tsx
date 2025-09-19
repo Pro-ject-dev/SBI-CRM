@@ -9,6 +9,7 @@ import RawMaterialsManagement from "../features/admin/RawMaterialsManagement";
 import LeadManagement from "../features/admin/LeadManagement";
 import OrderManagement from "../features/admin/OrderManagement";
 import EmployeeManagement from "../features/admin/EmployeeManagement";
+import HelpSupport from "../pages/HelpSupport";
 
 
 const AdminRoutes = () => (
@@ -30,6 +31,7 @@ const AdminRoutes = () => (
       <Route path="view-products" element={<ProductManagement />} />
       <Route path="purchase-orders-approval" element={<PurchaseOrdersApproval />} />
       <Route path="raw-materials" element={<RawMaterialsManagement />} />
+      <Route path="help" element={<HelpSupport />} />
 
     </Route>
   </>

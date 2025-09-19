@@ -6,6 +6,7 @@ import {
   Group as GroupIcon, // For Employees
   Category as CategoryIcon, // For Raw Materials
   Assignment as AssignmentIcon, // For Leads (or another suitable icon)
+  HelpOutline as HelpOutlineIcon,
 } from "@mui/icons-material";
 
 import WarehouseIcon from "@mui/icons-material/Warehouse";
@@ -60,5 +61,11 @@ export const adminMenuItems: SideBar[] = [
     label: "Master Forms",
     icon: PeopleIcon,
     path: "/admin/master-form",
+  },
+  {
+    id: "help",
+    label: "Help & Support",
+    icon: HelpOutlineIcon,
+    path: "/admin/help",
   },
 ];

@@ -8,7 +8,6 @@ import { addToast } from "../../app/slices/toastSlice";
 import {
   useGetPurchaseOrdersQuery,
   useUpdatePurchaseOrderStatusMutation,
-  useSendPurchaseOrderPdfMutation,
 } from "../../app/api/purchaseOrdersApi";
 import { useGetVendorsQuery } from "../../app/api/vendorsApi";
 import { useGetRawMaterialsQuery } from "../../app/api/rawMaterialsApi";
@@ -41,7 +40,6 @@ const PurchaseOrdersApproval = () => {
   } = useGetPurchaseOrdersQuery({});
 
   const [updatePurchaseOrderStatus] = useUpdatePurchaseOrderStatusMutation();
-  const [sendPurchaseOrderPdf] = useSendPurchaseOrderPdfMutation();
   const { data: vendorsData } = useGetVendorsQuery({});
   const { data: rawMaterialsData } = useGetRawMaterialsQuery({});
   const [orderData, setOrderData] = useState<any[]>([]);
@@ -231,42 +229,26 @@ const PurchaseOrdersApproval = () => {
 
   const handleConfirmAction = async () => {
     const { action, orderId } = confirmationDialog;
-    const status = action === 'approve' ? 'approved' : 'rejected';
+    const status = action === 'approve' ? 'Approved' : 'Rejected';
     
     try {
-      await updatePurchaseOrderStatus({ id: orderId, status }).unwrap();
-      dispatch(addToast({ 
-        message: `Purchase order ${status} successfully`, 
-        type: "success" 
-      }));
-      
-      // Auto-generate and send PDF on approval
-      if (status === 'approved') {
+      let pdfBlob: Blob | undefined;
+      if (status === 'Approved') {
         const approved = filteredData.find((o: any) => o.id === orderId);
         if (approved) {
           try {
-            // Generate PDF blob
-            const pdfBlob = generatePurchaseOrderPdf(approved as any);
-            
-            // Send PDF to API
-            await sendPurchaseOrderPdf({ 
-              orderId: orderId, 
-              pdfBlob: pdfBlob 
-            }).unwrap();
-            
-            dispatch(addToast({ 
-              message: `Purchase order PDF sent successfully`, 
-              type: "success" 
-            }));
+            pdfBlob = generatePurchaseOrderPdf(approved as any);
           } catch (pdfError) {
-            console.error("Error generating or sending PDF:", pdfError);
-            dispatch(addToast({ 
-              message: "PDF generated but failed to send to API", 
-              type: "warning" 
-            }));
+            console.error("Error generating PDF:", pdfError);
           }
         }
       }
+
+      await updatePurchaseOrderStatus({ id: orderId, status, pdfBlob }).unwrap();
+      dispatch(addToast({ 
+        message: `Purchase order ${status.toLowerCase()} successfully`, 
+        type: "success" 
+      }));
       
       setConfirmationDialog({ open: false, title: "", message: "", action: "", orderId: "" });
       setDetailsModalOpen(false); // Close the details modal after action

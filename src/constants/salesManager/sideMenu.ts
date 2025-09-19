@@ -1,6 +1,7 @@
 import {
   Dashboard as DashboardIcon,
   People as PeopleIcon,
+  HelpOutline as HelpOutlineIcon,
 } from "@mui/icons-material";
 import type { SideBar } from "../../types/sideBar";
 import { BarChartIcon, ListIcon } from "lucide-react";
@@ -29,5 +30,11 @@ export const salesManagerMenuItems: SideBar[] = [
     label: "Orders Management",
     icon: ListIcon,
     path: "/sales/orderManagement",
+  },
+  {
+    id: "help",
+    label: "Help & Support",
+    icon: HelpOutlineIcon,
+    path: "/sales/help",
   }
 ];

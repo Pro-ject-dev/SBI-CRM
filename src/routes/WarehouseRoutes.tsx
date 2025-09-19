@@ -7,6 +7,7 @@ import WarehouseVendors from "../pages/warehouse/WarehouseVendors";
 // import WarehousePurchaseOrders from "../pages/warehouse/WarehousePurchaseOrders";
 import PurchaseOrdersManagement from "../features/warehouse/PurchaseOrdersManagement";
 import WarehouseOrdersManagement from "../features/warehouse/WarehouseOrdersManagement";
+import HelpSupport from "../pages/HelpSupport";
 
 const WarehouseRoutes = () => (
   <>
@@ -30,6 +31,7 @@ const WarehouseRoutes = () => (
       {/* New separated routes: */}
       <Route path="purchase-orders" element={<PurchaseOrdersManagement />} />
       <Route path="stock-assignment" element={<WarehouseOrdersManagement />} />
+      <Route path="help" element={<HelpSupport />} />
     </Route>
   </>
 );
