@@ -105,6 +105,21 @@ export const purchaseOrdersApi = createApi({
       }),
       invalidatesTags: ["PurchaseOrders"],
     }),
+
+    sendPurchaseOrderPdf: builder.mutation({
+      query: ({ orderId, pdfBlob }) => {
+        const formData = new FormData();
+        formData.append('purchaseOrderId', orderId);
+        formData.append('pdfFile', pdfBlob, `PO-${orderId}.pdf`);
+        
+        return {
+          url: `${localStorage.getItem("api_endpoint")}/sendPurchaseOrderPdf`,
+          method: "POST",
+          body: formData,
+        };
+      },
+      invalidatesTags: ["PurchaseOrders"],
+    }),
   }),
 });
 
@@ -113,4 +128,5 @@ export const {
   useGetPurchaseOrderByIdQuery,
   useCreatePurchaseOrderMutation,
   useUpdatePurchaseOrderStatusMutation,
+  useSendPurchaseOrderPdfMutation,
 } = purchaseOrdersApi;

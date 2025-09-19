@@ -22,7 +22,21 @@ const LoginPage = () => {
   
   useEffect(() => {
     console.log("LoginPage - Current auth state:", authState);
-  }, [authState]);
+    
+    // If user is already authenticated, redirect to appropriate dashboard
+    if (authState.role) {
+      console.log("User already authenticated, redirecting to dashboard");
+      if (authState.role === "admin") {
+        navigate("/admin/dashboard", { replace: true });
+      } else if (authState.role === "sales_manager") {
+        navigate("/sales/dashboard", { replace: true });
+      } else if (authState.role === "operation_manager") {
+        navigate("/operation-manager/dashboard", { replace: true });
+      } else if (authState.role === "warehouse_manager") {
+        navigate("/warehouse/dashboard", { replace: true });
+      }
+    }
+  }, [authState, navigate]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

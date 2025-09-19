@@ -64,7 +64,7 @@ export function generatePurchaseOrderPdf(
       billingAddresses?: string[];
     };
   }
-) {
+): Blob {
   const doc = new jsPDF();
 
   // Header section - STATIC SRI BRAMHA INDUSTRIES
@@ -385,5 +385,8 @@ export function generatePurchaseOrderPdf(
     doc.text("This is a computer generated document. No signature required.", 105, pageHeight - 8, { align: "center" });
     doc.setTextColor(0);
   } catch {}
-  doc.save(`${fileName}.pdf`);
+  
+  // Return the PDF as a blob instead of saving it
+  const pdfBlob = doc.output('blob');
+  return pdfBlob;
 }

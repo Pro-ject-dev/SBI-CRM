@@ -44,6 +44,7 @@ const Header = () => {
     // Clear localStorage
     localStorage.removeItem("authToken");
     localStorage.removeItem("role");
+    localStorage.removeItem("roleDisplayName");
     localStorage.removeItem("api_endpoint");
     
     // Close menu

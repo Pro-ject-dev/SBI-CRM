@@ -8,6 +8,7 @@ import { addToast } from "../../app/slices/toastSlice";
 import {
   useGetPurchaseOrdersQuery,
   useUpdatePurchaseOrderStatusMutation,
+  useSendPurchaseOrderPdfMutation,
 } from "../../app/api/purchaseOrdersApi";
 import { useGetVendorsQuery } from "../../app/api/vendorsApi";
 import { useGetRawMaterialsQuery } from "../../app/api/rawMaterialsApi";
@@ -40,6 +41,7 @@ const PurchaseOrdersApproval = () => {
   } = useGetPurchaseOrdersQuery({});
 
   const [updatePurchaseOrderStatus] = useUpdatePurchaseOrderStatusMutation();
+  const [sendPurchaseOrderPdf] = useSendPurchaseOrderPdfMutation();
   const { data: vendorsData } = useGetVendorsQuery({});
   const { data: rawMaterialsData } = useGetRawMaterialsQuery({});
   const [orderData, setOrderData] = useState<any[]>([]);
@@ -237,13 +239,35 @@ const PurchaseOrdersApproval = () => {
         message: `Purchase order ${status} successfully`, 
         type: "success" 
       }));
-      // Auto-generate PDF on approval
+      
+      // Auto-generate and send PDF on approval
       if (status === 'approved') {
         const approved = filteredData.find((o: any) => o.id === orderId);
         if (approved) {
-          try { generatePurchaseOrderPdf(approved as any); } catch {}
+          try {
+            // Generate PDF blob
+            const pdfBlob = generatePurchaseOrderPdf(approved as any);
+            
+            // Send PDF to API
+            await sendPurchaseOrderPdf({ 
+              orderId: orderId, 
+              pdfBlob: pdfBlob 
+            }).unwrap();
+            
+            dispatch(addToast({ 
+              message: `Purchase order PDF sent successfully`, 
+              type: "success" 
+            }));
+          } catch (pdfError) {
+            console.error("Error generating or sending PDF:", pdfError);
+            dispatch(addToast({ 
+              message: "PDF generated but failed to send to API", 
+              type: "warning" 
+            }));
+          }
         }
       }
+      
       setConfirmationDialog({ open: false, title: "", message: "", action: "", orderId: "" });
       setDetailsModalOpen(false); // Close the details modal after action
       refetch();

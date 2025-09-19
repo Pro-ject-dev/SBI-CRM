@@ -31,6 +31,21 @@ const authSlice = createSlice({
       state.refreshToken = action.payload.refreshToken;
       state.email = action.payload.email || null;
     },
+    restoreCredentials: (state) => {
+      // Restore authentication state from localStorage on page refresh
+      const storedToken = localStorage.getItem("authToken");
+      const storedRole = localStorage.getItem("role");
+      const storedRoleDisplayName = localStorage.getItem("roleDisplayName");
+      
+      if (storedToken && storedRole) {
+        state.idToken = storedToken;
+        state.role = storedRole;
+        state.roleDisplayName = storedRoleDisplayName;
+        state.refreshToken = storedToken; // Using same token as refresh for now
+        // Note: userName and email are not stored in localStorage, so they remain null
+        // This is acceptable as the main purpose is to maintain authentication state
+      }
+    },
     logout: (state) => {
       state.userName = null;
       state.role = null;
@@ -42,5 +57,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setCredentials, logout } = authSlice.actions;
+export const { setCredentials, restoreCredentials, logout } = authSlice.actions;
 export default authSlice.reducer;
