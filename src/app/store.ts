@@ -19,7 +19,9 @@ import { purchaseOrdersApi } from "./api/purchaseOrdersApi";
 import { stockAssignmentApi } from "./api/stockAssignmentApi";
 import { leadsApi } from "./api/leadsApi";
 import { employeeApi } from "./api/employeeApi";
-
+import ordersReducer from "./slices/ordersSlice";
+import leadsReducer from "./slices/leadsSlice";
+import estimationReducer from "./slices/estimationSlice";
 
 export const store = configureStore({
   reducer: {
@@ -29,6 +31,9 @@ export const store = configureStore({
     customized: customizedReducer,
     addons: addonsReducer,
     combo: comboReducer,
+    estimation: estimationReducer,
+    leads: leadsReducer,
+    orders: ordersReducer,
     [authApi.reducerPath]: authApi.reducer,
     [standardProductApi.reducerPath]: standardProductApi.reducer,
     [customizedProductApi.reducerPath]: customizedProductApi.reducer,
@@ -60,8 +65,9 @@ export const store = configureStore({
       stockAssignmentApi.middleware,
       leadsApi.middleware,
       employeeApi.middleware
-    ),
+    )
 });
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+
