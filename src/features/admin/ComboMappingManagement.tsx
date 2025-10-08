@@ -195,10 +195,10 @@ const ComboMappingManagement = () => {
     comboSelector.filterData.comboId,
   ]);
 
-  const handleDeleteRow = async (ids: Number[]) => {
+  const handleDeleteRow = async (id: Number[]) => {
     try {
-      if (ids) {
-        const deleteData = await deleteCombo({ ids });
+      if (id) {
+        const deleteData = await deleteCombo({ id });
         if (deleteData.error) {
           dispatch(
             addToast({ message: "Failed to Deleting Product!", type: "error" })
@@ -454,7 +454,7 @@ const ComboMappingManagement = () => {
           <Button
             color="error"
             sx={{ minWidth: 0, padding: 0 }}
-            onClick={() => handleDeleteRow(params.row.id)}
+            onClick={() => handleDeleteRow([params.row.id])}
           >
             <Delete />
           </Button>
