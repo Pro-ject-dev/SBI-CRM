@@ -92,6 +92,8 @@ const ComboMappingManagement = () => {
     // { isLoading: deleteLoading }
   ] = useDeleteComboByIdMutation();
 
+  const [comboDeleted, setComboDeleted] = useState<Boolean>(false);
+
   const { data: comboOptionData } = useGetComboQuery("");
 
   const [getCategoryOptions] = useLazyGetCategoryByComboQuery();
@@ -182,6 +184,7 @@ const ComboMappingManagement = () => {
       } catch (error) {
         console.error("Error fetching product data");
       }
+      setComboDeleted(false);
     };
     fetchData();
   }, [
@@ -193,6 +196,7 @@ const ComboMappingManagement = () => {
     comboSelector.filterData.grade,
     comboSelector.filterData.catId,
     comboSelector.filterData.comboId,
+    comboDeleted === true,
   ]);
 
   const handleDeleteRow = async (id: Number[]) => {
@@ -210,6 +214,7 @@ const ComboMappingManagement = () => {
               type: "success",
             })
           );
+          setComboDeleted(true);
         }
         setSelectedRows([]);
         return deleteData;
