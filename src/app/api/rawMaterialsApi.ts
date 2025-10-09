@@ -1,11 +1,12 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import type { RawMaterial } from "../../types/warehouse";
 
 export const rawMaterialsApi = createApi({
   reducerPath: "rawMaterialsApi",
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_LIVE_SERVER_BASE_URL,
     prepareHeaders: (headers) => {
-      const accessToken = import.meta.env.VITE_AUTHORIZATION_TOKEN;
+      const accessToken = localStorage.getItem("authToken");
       if (accessToken) {
         headers.set("authorization", `Bearer ${accessToken}`);
       }
@@ -14,22 +15,45 @@ export const rawMaterialsApi = createApi({
   }),
   tagTypes: ["RawMaterials"],
   endpoints: (builder) => ({
-    getRawMaterials: builder.query({
-      query: ({ search, category } = {}) => {
+    getRawMaterials: builder.query<{ data: RawMaterial[] }, { search?: string; category?: string } | void>({
+      query: (paramsObj) => {
         const params = new URLSearchParams();
-        if (search) params.append('search', search);
-        if (category) params.append('category', category);
-        return `${localStorage.getItem("api_endpoint")}/getRawMaterials?${params.toString()}`;
+        if (paramsObj && 'search' in paramsObj && paramsObj.search) params.append('search', paramsObj.search);
+        if (paramsObj && 'category' in paramsObj && paramsObj.category) params.append('category', paramsObj.category);
+        return `${localStorage.getItem("api_endpoint")}/getAllRawMaterials?${params.toString()}`;
       },
       providesTags: ["RawMaterials"],
     }),
-    getRawMaterialById: builder.query({
-      query: ({ id }: { id: string }) => {
+    getRawMaterialById: builder.query<{ data: RawMaterial }, { id: string }>({
+      query: ({ id }) => {
         return `${localStorage.getItem("api_endpoint")}/getRawMaterialById?id=${id}`;
       },
       providesTags: ["RawMaterials"],
     }),
-    addRawMaterial: builder.mutation({
+    getRawMaterialByBarcode: builder.query<{ data: RawMaterial }, { barcode: string }>({
+      query: ({ barcode }) => {
+        return `${localStorage.getItem("api_endpoint")}/getRawMaterialByBarcode?barcode=${barcode}`;
+      },
+      providesTags: ["RawMaterials"],
+    }),
+    getRawMaterialByName: builder.query<{ data: RawMaterial }, { name: string }>({
+      query: ({ name }) => {
+        return `${localStorage.getItem("api_endpoint")}/getRawMaterialByName?name=${name}`;
+      },
+      providesTags: ["RawMaterials"],
+    }),
+    getRawMaterialsByNames: builder.query<{
+      length: number;
+      find(arg0: (s: any) => boolean): unknown; data: RawMaterial[] 
+}, { names: string[] }>({
+      query: ({ names }) => {
+        const params = new URLSearchParams();
+        names.forEach(name => params.append('names[]', name));
+        return `${localStorage.getItem("api_endpoint")}/getRawMaterialsByNames?${params.toString()}`;
+      },
+      providesTags: ["RawMaterials"],
+    }),
+    addRawMaterial: builder.mutation<any, any>({
       query: (payload) => ({
         url: `${localStorage.getItem("api_endpoint")}/addRawMaterial`,
         method: "POST",
@@ -37,29 +61,32 @@ export const rawMaterialsApi = createApi({
       }),
       invalidatesTags: ["RawMaterials"],
     }),
-    updateRawMaterial: builder.mutation({
-      query: (payload) => ({
-        url: `${localStorage.getItem("api_endpoint")}/updateRawMaterial`,
+    updateRawMaterial: builder.mutation<any, { id: string; [key: string]: any }>({
+      query: ({ id, ...payload }) => ({
+        url: `${localStorage.getItem(
+          "api_endpoint"
+        )}/updateRawMaterial?id=${id}`,
         method: "PUT",
         body: payload,
       }),
       invalidatesTags: ["RawMaterials"],
     }),
-    deleteRawMaterial: builder.mutation({
-      query: (payload) => ({
-        url: `${localStorage.getItem("api_endpoint")}/deleteRawMaterial`,
-        method: "PUT",
-        body: payload,
+    deleteRawMaterial: builder.mutation<any, { id: string }>({
+      query: ({ id }) => ({
+        url: `${localStorage.getItem(
+          "api_endpoint"
+        )}/deleteRawMaterial?id=${id}`,
+        method: "DELETE",
       }),
       invalidatesTags: ["RawMaterials"],
     }),
-    getLowStockAlerts: builder.query({
+    getLowStockAlerts: builder.query<{ data: RawMaterial[] }, void>({
       query: () => {
         return `${localStorage.getItem("api_endpoint")}/getLowStockAlerts`;
       },
       providesTags: ["RawMaterials"],
     }),
-    updateStock: builder.mutation({
+    updateStock: builder.mutation<any, any>({
       query: (payload) => ({
         url: `${localStorage.getItem("api_endpoint")}/updateStock`,
         method: "PUT",
@@ -73,6 +100,10 @@ export const rawMaterialsApi = createApi({
 export const {
   useGetRawMaterialsQuery,
   useGetRawMaterialByIdQuery,
+  useLazyGetRawMaterialByIdQuery,
+  useLazyGetRawMaterialByBarcodeQuery,
+  useGetRawMaterialByNameQuery,
+  useGetRawMaterialsByNamesQuery, 
   useAddRawMaterialMutation,
   useUpdateRawMaterialMutation,
   useDeleteRawMaterialMutation,

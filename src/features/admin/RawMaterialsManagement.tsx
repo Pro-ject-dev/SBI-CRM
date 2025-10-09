@@ -1,0 +1,252 @@
+import {
+  Box,
+  Button,
+  Container,
+  TextField,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Typography,
+} from "@mui/material";
+import { useEffect, useState } from "react";
+import { Delete, Edit, Add, Warning } from "@mui/icons-material";
+import { DataTable } from "../../components/UI/DataTable";
+import type { GridColDef } from "@mui/x-data-grid";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "../../app/store";
+import { addToast } from "../../app/slices/toastSlice";
+import {
+  useGetRawMaterialsQuery,
+  useDeleteRawMaterialMutation,
+} from "../../app/api/rawMaterialsApi";
+import type { RawMaterial } from "../../types/warehouse";
+import RawMaterialModal from "../../components/UI/RawMaterialModal";
+
+const RawMaterialsManagement = () => {
+  const dispatch: AppDispatch = useDispatch();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingMaterial, setEditingMaterial] = useState<RawMaterial | null>(
+    null
+  );
+  const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
+  const [materialToDelete, setMaterialToDelete] = useState<string | null>(null);
+
+  const {
+    data,
+    refetch,
+  } = useGetRawMaterialsQuery({
+    search: searchTerm,
+    category: categoryFilter,
+  });
+
+  const [deleteRawMaterial] = useDeleteRawMaterialMutation();
+
+  const [materialData, setMaterialData] = useState<RawMaterial[]>([]);
+
+  useEffect(() => {
+    refetch();
+  }, [searchTerm, categoryFilter]);
+
+  useEffect(() => {
+    const materials = data?.data || [];
+    setMaterialData(materials);
+  }, [data]);
+
+  const handleDeleteRow = (id: string) => {
+    setMaterialToDelete(id);
+    setDeleteConfirmationOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (materialToDelete) {
+      try {
+        await deleteRawMaterial({ id: materialToDelete });
+        dispatch(
+          addToast({ message: "Raw Material Deleted Successfully", type: "success" })
+        );
+      } catch (error) {
+        dispatch(
+          addToast({
+            message: "Failed to Delete Raw Material!",
+            type: "error",
+          })
+        );
+      }
+      setDeleteConfirmationOpen(false);
+      setMaterialToDelete(null);
+    }
+  };
+
+  const handleEditRow = (id: string) => {
+    const material = materialData.find(m => m.id === Number(id));
+    if (material) {
+      setEditingMaterial(material);
+      setModalOpen(true);
+    }
+  };
+
+  const handleAddNew = () => {
+    setEditingMaterial(null);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setEditingMaterial(null);
+  };
+
+  const getStockStatus = (current: number, minimum: number) => {
+    if (current === 0) {
+      return <Chip label="Out of Stock" color="error" size="small" />;
+    } else if (current <= minimum) {
+      return <Chip label="Low Stock" color="warning" size="small" />;
+    } else {
+      return <Chip label="In Stock" color="success" size="small" />;
+    }
+  };
+
+  const columns: GridColDef[] = [
+    {
+      field: "name",
+      headerName: "Material Name",
+      flex: 1,
+      minWidth: 150,
+      headerAlign: "center",
+      align: "center",
+    },
+    {
+      field: "category",
+      headerName: "Category",
+      flex: 1,
+      minWidth: 150,
+      headerAlign: "center",
+      align: "center",
+    },
+    {
+      field: "currentStock",
+      headerName: "Current Stock",
+      flex: 1,
+      minWidth: 150,
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {params.row.currentStock <= params.row.minimumStock && (
+            <Warning color="warning" fontSize="small" />
+          )}
+          {params.row.currentStock} {params.row.unit}
+        </Box>
+      ),
+    },
+    {
+      field: "minimumStock",
+      headerName: "Min Stock",
+      flex: 1,
+      minWidth: 150,
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => `${params.row.minimumStock} ${params.row.unit}`,
+    },
+    {
+      field: "unitPrice",
+      headerName: "Unit Price",
+      flex: 1,
+      minWidth: 150,
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => `₹${params.row.unitPrice}`,
+    },
+    {
+      field: "status",
+      headerName: "Stock Status",
+      flex: 1,
+      minWidth: 150,
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) =>
+        getStockStatus(params.row.currentStock, params.row.minimumStock),
+    },
+    {
+      field: "vendor",
+      headerName: "Vendor",
+      flex: 1,
+      minWidth: 150,
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => params.row.vendor?.name || "N/A",
+    },
+  ];
+
+  return (
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Typography
+        variant="h4"
+        gutterBottom
+        sx={{
+          fontSize: { xs: "1.5rem", md: "2rem" },
+        }}
+      >
+        Raw Materials Management
+      </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" },
+          justifyContent: "space-between",
+          alignItems: { xs: "stretch", md: "center" },
+          mb: 3,
+          gap: 2,
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            flexDirection: { xs: "column", sm: "row" },
+            alignItems: { xs: "stretch", sm: "center" },
+          }}
+        >
+          <TextField
+            size="small"
+            placeholder="Search materials..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{ flexGrow: 1 }}
+          />
+          <TextField
+            size="small"
+            placeholder="Filter by category..."
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            sx={{ flexGrow: 1 }}
+          />
+        </Box>
+        {/* <Button
+          variant="contained"
+          startIcon={<Add />}
+          onClick={handleAddNew}
+          sx={{ py: 1.2, px: 3 }}
+        >
+          Add Raw Material
+        </Button> */}
+      </Box>
+
+      <Box sx={{ width: "100%", marginTop: "8px" }}>
+        <Box sx={{ height: 600, overflowX: "auto" }}>          
+          <DataTable rows={materialData} columns={columns} disableColumnMenu />
+        </Box>
+      </Box>
+
+     
+
+     
+    </Container>
+  );
+};
+
+export default RawMaterialsManagement;

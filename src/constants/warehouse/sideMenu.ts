@@ -4,6 +4,7 @@ import {
   ShoppingCart as ShoppingCartIcon,
   Assignment as AssignmentIcon,
   Dashboard as DashboardIcon,
+  HelpOutline as HelpOutlineIcon,
 } from "@mui/icons-material";
 import type { SideBar } from "../../types/sideBar";
 
@@ -37,5 +38,11 @@ export const warehouseMenuItems: SideBar[] = [
     label: "Stock Assignment",
     icon: AssignmentIcon,
     path: "/warehouse/stock-assignment",
+  },
+  {
+    id: "help",
+    label: "Help & Support",
+    icon: HelpOutlineIcon,
+    path: "/warehouse/help",
   },
 ];

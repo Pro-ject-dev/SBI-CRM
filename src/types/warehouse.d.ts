@@ -1,22 +1,23 @@
-// Raw Materials Types
 export interface RawMaterial {
   id: number;
   name: string;
+  barcode: string;
   description: string;
-  unit: string; // kg, pieces, liters, etc.
+  unit: string;
   category: string;
   minimumStock: number;
   currentStock: number;
   unitPrice: number;
   vendorId?: number;
   vendor?: Vendor;
-  status: 'active' | 'inactive';
+  status: '1' | '0';
   createdAt: string;
   updatedAt: string;
 }
 
 export interface RawMaterialFormData {
   name: string;
+  barcode: string;
   description: string;
   unit: string;
   category: string;
@@ -26,7 +27,6 @@ export interface RawMaterialFormData {
   vendorId: string;
 }
 
-// Vendor Types
 export interface Vendor {
   id: number;
   name: string;
@@ -36,7 +36,7 @@ export interface Vendor {
   address: string;
   gstNumber?: string;
   paymentTerms: string;
-  status: 'active' | 'inactive';
+  status: '1' | '0';
   createdAt: string;
   updatedAt: string;
 }
@@ -51,32 +51,49 @@ export interface VendorFormData {
   paymentTerms: string;
 }
 
-// Purchase Order Types
+
 export interface PurchaseOrderItem {
   id?: number;
-  rawMaterialId: number;
-  rawMaterial?: RawMaterial;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
+  purchaseId?: string;         // Added - from API response
+  rawMaterialId: string;       // Changed to string to match API
+  rawMaterial?: RawMaterial | string;
+  gst: string; // Can be string or object
+  deliveryDate: string;
+  quantity: string;            // Changed to string to match API
+  unitPrice: string;           // Changed to string to match API  
+  totalPrice: string;          // Changed to string to match API
+  status: string;
+  createdAt?: string;          // Added
+  updatedAt?: string;          // Added
 }
 
 export interface PurchaseOrder {
   id: number;
-  orderNumber: string;
-  vendorId: number;
-  vendor?: Vendor;
+  orderNumber?: string;        // Made optional since API doesn't return it
+  vendorId: string;            // Changed to string to match API
+  vendor?: Vendor | string;  
+  vendorAddress?: Vendor | string;    // Can be string or object
   items: PurchaseOrderItem[];
-  totalAmount: number;
-  status: 'pending' | 'approved' | 'rejected' | 'completed';
+  totalAmount: string;         // Changed to string to match API
+  status: "1" | "0";
+  orderStatus: 'Pending' | 'Approved' | 'Rejected' | 'Completed'; // Capitalized to match API
   requestedBy: string;
   requestedDate: string;
-  approvedBy?: string;
-  approvedDate?: string;
+  deliveryDate: string;
+  cgst: string;
+  sgst: string;
+  paymentNote: string;
+  deliveryNote: string;
+  insurance: string;
+  warranty: string;
+  remarks: string;
+  approvedBy?: string | null;
+  approvedDate?: string | null;
   notes?: string;
   createdAt: string;
   updatedAt: string;
 }
+
 
 export interface PurchaseOrderFormData {
   vendorId: string;
@@ -88,7 +105,7 @@ export interface PurchaseOrderFormData {
   notes: string;
 }
 
-// Stock Assignment Types
+
 export interface StockAssignment {
   id: number;
   orderId: number;

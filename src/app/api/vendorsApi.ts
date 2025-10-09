@@ -5,7 +5,7 @@ export const vendorsApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_LIVE_SERVER_BASE_URL,
     prepareHeaders: (headers) => {
-      const accessToken = import.meta.env.VITE_AUTHORIZATION_TOKEN;
+      const accessToken = localStorage.getItem("authToken");
       if (accessToken) {
         headers.set("authorization", `Bearer ${accessToken}`);
       }
@@ -14,17 +14,17 @@ export const vendorsApi = createApi({
   }),
   tagTypes: ["Vendors"],
   endpoints: (builder) => ({
-    getVendors: builder.query({
+    getVendors: builder.query<any, { search?: string }>({
       query: ({ search } = {}) => {
         const params = new URLSearchParams();
         if (search) params.append('search', search);
-        return `${localStorage.getItem("api_endpoint")}/getVendors?${params.toString()}`;
+        return `${localStorage.getItem("api_endpoint")}/getAllVendors?${params.toString()}`;
       },
       providesTags: ["Vendors"],
     }),
     getVendorById: builder.query({
       query: ({ id }: { id: string }) => {
-        return `${localStorage.getItem("api_endpoint")}/getVendorById?id=${id}`;
+        return `${localStorage.getItem("api_endpoint")}/getVendorbyId?id=${id}`;
       },
       providesTags: ["Vendors"],
     }),
@@ -37,18 +37,21 @@ export const vendorsApi = createApi({
       invalidatesTags: ["Vendors"],
     }),
     updateVendor: builder.mutation({
-      query: (payload) => ({
-        url: `${localStorage.getItem("api_endpoint")}/updateVendor`,
+      query: ({ id, ...payload }) => ({
+        url: `${localStorage.getItem(
+          "api_endpoint"          
+        )}/updateVendor?id=${id}`,
         method: "PUT",
         body: payload,
       }),
       invalidatesTags: ["Vendors"],
     }),
     deleteVendor: builder.mutation({
-      query: (payload) => ({
-        url: `${localStorage.getItem("api_endpoint")}/deleteVendor`,
-        method: "PUT",
-        body: payload,
+      query: ({ id }) => ({
+        url: `${localStorage.getItem(
+          "api_endpoint"
+        )}/deleteVendor?id=${id}`,
+        method: "DELETE",
       }),
       invalidatesTags: ["Vendors"],
     }),

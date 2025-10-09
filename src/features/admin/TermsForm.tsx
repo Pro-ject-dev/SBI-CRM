@@ -79,53 +79,6 @@ const TermsForm = () => {
     }
   };
 
-  const renderField = (field: FormField) => (
-    <Grid container spacing={2} key={field.key}>
-      <Box sx={{ width: "100%" }}>
-        <Typography
-          variant="caption"
-          display="block"
-          gutterBottom
-          sx={{ fontWeight: 500, color: "text.secondary", mb: 0.5 }}
-        >
-          {field.label}
-        </Typography>
-        {field.type === "text" ? (
-          <InputBox
-            id={field.key}
-            name={field.key}
-            value={termsForm[field.key]}
-            type="text"
-            onChange={handleTermsChange}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "8px",
-              },
-            }}
-            error={errors[field.key]}
-          />
-        ) : (
-          <InputBox
-            id={field.key}
-            name={field.key}
-            value={termsForm[field.key]}
-            type="text"
-            onChange={handleTermsChange}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "8px",
-              },
-            }}
-            multiline={true}
-            minRows="5"
-            maxRows="20"
-            error={errors[field.key]}
-          />
-        )}
-      </Box>
-    </Grid>
-  );
-
   return (
     <Container maxWidth="lg" sx={{ mt: 2 }}>
       <Box
@@ -155,19 +108,62 @@ const TermsForm = () => {
       <Paper
         elevation={1}
         sx={{
-          p: 2,
+          p: 3,
           mt: 2,
           borderRadius: "16px",
           border: "1px solid #e0e0e0",
         }}
       >
-        <Grid
-          container
-          spacing={2}
-          sx={{ display: "flex", flexDirection: "column" }}
-        >
-          {formFields.map(renderField)}
-        </Grid>
+        <Box sx={{ maxWidth: "100%" }}>
+          <Grid container spacing={4}>
+            {formFields.map((field) => (
+              <Grid item xs={12} sm={6} key={field.key}>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    display="block"
+                    gutterBottom
+                    sx={{ fontWeight: 500, color: "text.secondary", mb: 1 }}
+                  >
+                    {field.label}
+                  </Typography>
+                  {field.type === "text" ? (
+                    <InputBox
+                      id={field.key}
+                      name={field.key}
+                      value={termsForm[field.key]}
+                      type="text"
+                      onChange={handleTermsChange}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "8px",
+                        },
+                      }}
+                      error={errors[field.key]}
+                    />
+                  ) : (
+                    <InputBox
+                      id={field.key}
+                      name={field.key}
+                      value={termsForm[field.key]}
+                      type="text"
+                      onChange={handleTermsChange}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "8px",
+                        },
+                      }}
+                      multiline={true}
+                      minRows="5"
+                      maxRows="20"
+                      error={errors[field.key]}
+                    />
+                  )}
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
       </Paper>
 
       <Box

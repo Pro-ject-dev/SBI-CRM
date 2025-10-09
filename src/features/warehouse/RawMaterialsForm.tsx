@@ -40,6 +40,7 @@ const RawMaterialsForm = () => {
 
   const [rawMaterialForm, setRawMaterialForm] = useState<RawMaterialFormData>({
     name: "",
+    barcode: "",
     description: "",
     unit: "",
     category: "",
@@ -75,6 +76,7 @@ const RawMaterialsForm = () => {
 
   const formFields: FormField[] = [
     { label: "Material Name", key: "name", type: "text" },
+    { label: "Barcode", key: "barcode", type: "text" },
     { label: "Description", key: "description", type: "text" },
     { label: "Unit", key: "unit", type: "select" },
     { label: "Category", key: "category", type: "select" },
@@ -84,9 +86,15 @@ const RawMaterialsForm = () => {
     { label: "Vendor", key: "vendorId", type: "select" },
   ];
 
-  const handleRawMaterialChange = (key: string, value: string) => {
-    setRawMaterialForm((prev) => ({ ...prev, [key]: value }));
-    if (value.trim()) {
+  const handleRawMaterialChange = (key: string, value: string | any[]) => {
+    let newValue: string;
+    if (Array.isArray(value)) {
+      newValue = value.length > 0 && typeof value[0] === "object" && "value" in value[0] ? value[0].value : "";
+    } else {
+      newValue = value;
+    }
+    setRawMaterialForm((prev) => ({ ...prev, [key]: newValue }));
+    if (typeof newValue === "string" && newValue.trim()) {
       const removeError = Object.fromEntries(
         Object.entries(errors).filter(([objKey]) => objKey !== key)
       );
@@ -98,6 +106,7 @@ const RawMaterialsForm = () => {
     if (id && data) {
       setRawMaterialForm({
         name: data?.data?.name || "",
+        barcode: data?.data?.barcode || "",
         description: data?.data?.description || "",
         unit: data?.data?.unit || "",
         category: data?.data?.category || "",
@@ -155,6 +164,7 @@ const RawMaterialsForm = () => {
         );
         setRawMaterialForm({
           name: "",
+          barcode: "",
           description: "",
           unit: "",
           category: "",

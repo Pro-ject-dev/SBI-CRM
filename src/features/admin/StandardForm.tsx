@@ -12,6 +12,7 @@ import { useSearchParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../app/store";
 import { addToast } from "../../app/slices/toastSlice";
+import { height } from "@mui/system";
 
 interface FormField {
   label: string;
@@ -78,7 +79,7 @@ const StandardForm = () => {
     { label: "Grade", key: "grade", type: "text" },
     { label: "Length(inch)", key: "length", type: "number", min: 0 },
     { label: "Width(inch)", key: "width", type: "number", min: 0 },
-    { label: "Height(inch)", key: "height", type: "number", min: 0 },
+    { label: "Height(inch)", key: "height", type: "text", min: 0 },
     { label: "Thickness(inch)", key: "thickness", type: "number", min: 0 },
     { label: "Minimum Cost", key: "minimumCost", type: "number", min: 0 },
     { label: "Maximum Cost", key: "maximumCost", type: "number", min: 0 },
@@ -143,6 +144,7 @@ const StandardForm = () => {
           productName: `${standardForm.productName}`,
           ratePerQuantity: `${standardForm.ratePerQuantity}`,
           grade: `${standardForm.grade}`,
+          height: `${standardForm.height}`,
           length: `${standardForm.length}`,
           width: `${standardForm.width}`,
           thickness: `${standardForm.thickness}`,
@@ -162,6 +164,7 @@ const StandardForm = () => {
           ratePerQuantity: `${standardForm.ratePerQuantity}`,
           grade: `${standardForm.grade}`,
           length: `${standardForm.length}`,
+          height: `${standardForm.height}`,
           width: `${standardForm.width}`,
           thickness: `${standardForm.thickness}`,
           minCost: `${standardForm.minimumCost}`,
@@ -242,54 +245,6 @@ const StandardForm = () => {
     }
   };
 
-  const renderField = (field: FormField) => (
-    <Grid container spacing={2} key={field.key}>
-      <Box>
-        <Typography
-          variant="caption"
-          display="block"
-          gutterBottom
-          sx={{ fontWeight: 500, color: "text.secondary", mb: 0.5 }}
-        >
-          {field.label}
-        </Typography>
-        {field.type === "text" ? (
-          <InputBox
-            id={field.key}
-            name={field.key}
-            value={standardForm[field.key]}
-            type="text"
-            onChange={handleStandardChange}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "8px",
-              },
-            }}
-            error={errors[field.key]}
-            {...(field.key === "productName" && { handleIsProductExist })}
-          />
-        ) : (
-          <InputBox
-            id={field.key}
-            name={field.key}
-            value={standardForm[field.key]}
-            type="number"
-            min={field.min}
-            max={field.max}
-            onChange={handleStandardChange}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "8px",
-              },
-            }}
-            error={errors[field.key]}
-            readonly={field.readonly}
-          />
-        )}
-      </Box>
-    </Grid>
-  );
-
   return (
     <Container maxWidth="lg" sx={{ mt: 2 }}>
       <Box
@@ -319,14 +274,58 @@ const StandardForm = () => {
       <Paper
         elevation={1}
         sx={{
-          p: 2,
+          p: 3,
           mt: 2,
           borderRadius: "16px",
           border: "1px solid #e0e0e0",
         }}
       >
-        <Grid container spacing={2}>
-          {formFields.map(renderField)}
+        <Grid container spacing={3}>
+          {formFields.map((field) => (
+            <Grid item xs={12} sm={6} key={field.key}>
+              <Typography
+                variant="caption"
+                display="block"
+                gutterBottom
+                sx={{ fontWeight: 500, color: "text.secondary", mb: 0.5 }}
+              >
+                {field.label}
+              </Typography>
+              {field.type === "text" ? (
+                <InputBox
+                  id={field.key}
+                  name={field.key}
+                  value={standardForm[field.key]}
+                  type="text"
+                  onChange={handleStandardChange}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "8px",
+                    },
+                  }}
+                  error={errors[field.key]}
+                  {...(field.key === "productName" && { handleIsProductExist })}
+                />
+              ) : (
+                <InputBox
+                  id={field.key}
+                  name={field.key}
+                  value={standardForm[field.key]}
+                  type="number"
+                  min={field.min}
+                  max={field.max}
+                  onChange={handleStandardChange}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "8px",
+                    },
+                  }}
+                  error={errors[field.key]}
+                  readonly={field.readonly}
+                />
+              )}
+            </Grid>
+          ))}
         </Grid>
       </Paper>
 

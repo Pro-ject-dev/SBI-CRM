@@ -1,24 +1,29 @@
 import { Chip } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
+import BuildIcon from "@mui/icons-material/Build";
+import TaskAltIcon from "@mui/icons-material/TaskAlt";
+import WarningIcon from "@mui/icons-material/Warning";
 import type { GridRenderCellParams } from "@mui/x-data-grid";
 
 const OrderStatusChip = (params: GridRenderCellParams) => {
   const status = params.value;
+  
   const orderStatus = () => {
     switch (status) {
       case "0":
         return (
           <Chip
-            icon={<CheckCircleIcon sx={{ color: "green" }} />}
+            icon={<CheckCircleIcon />}
             label="New"
             sx={{
-              backgroundColor: "#d4efdf",
-              color: "green",
-              borderColor: "green",
+              backgroundColor: "#e3f2fd",
+              color: "#1976d2",
+              borderColor: "#1976d2",
               borderWidth: 1,
               borderStyle: "solid",
               "& .MuiChip-icon": {
-                color: "green",
+                color: "#1976d2",
               },
             }}
             variant="filled"
@@ -27,15 +32,16 @@ const OrderStatusChip = (params: GridRenderCellParams) => {
       case "1":
         return (
           <Chip
-            icon={<CheckCircleIcon sx={{ color: "green" }} />}
-            label="Pending"
+            icon={<HourglassEmptyIcon />}
+            label="Waiting for Raw Material"
             sx={{
-              color: "green",
-              borderColor: "green",
+              backgroundColor: "#fff3e0",
+              color: "#f57c00",
+              borderColor: "#f57c00",
               borderWidth: 1,
               borderStyle: "solid",
               "& .MuiChip-icon": {
-                color: "green",
+                color: "#f57c00",
               },
             }}
             variant="filled"
@@ -44,15 +50,16 @@ const OrderStatusChip = (params: GridRenderCellParams) => {
       case "2":
         return (
           <Chip
-            icon={<CheckCircleIcon sx={{ color: "green" }} />}
-            label="Available"
+            icon={<BuildIcon />}
+            label="Material Issued & Work Ongoing"
             sx={{
-              color: "green",
-              borderColor: "green",
+              backgroundColor: "#f3e5f5",
+              color: "#7b1fa2",
+              borderColor: "#7b1fa2",
               borderWidth: 1,
               borderStyle: "solid",
               "& .MuiChip-icon": {
-                color: "green",
+                color: "#7b1fa2",
               },
             }}
             variant="filled"
@@ -61,15 +68,16 @@ const OrderStatusChip = (params: GridRenderCellParams) => {
       case "3":
         return (
           <Chip
-            icon={<CheckCircleIcon sx={{ color: "green" }} />}
-            label="Ongoing"
+            icon={<TaskAltIcon />}
+            label="Completed"
             sx={{
-              color: "green",
-              borderColor: "green",
+              backgroundColor: "#d4efdf",
+              color: "#2e7d32",
+              borderColor: "#2e7d32",
               borderWidth: 1,
               borderStyle: "solid",
               "& .MuiChip-icon": {
-                color: "green",
+                color: "#2e7d32",
               },
             }}
             variant="filled"
@@ -78,39 +86,38 @@ const OrderStatusChip = (params: GridRenderCellParams) => {
       case "4":
         return (
           <Chip
-            icon={<CheckCircleIcon sx={{ color: "green" }} />}
-            label="Delivered"
+            icon={<WarningIcon />}
+            label="Delayed"
             sx={{
-              color: "green",
-              borderColor: "green",
+              backgroundColor: "#ffebee",
+              color: "#d32f2f",
+              borderColor: "#d32f2f",
               borderWidth: 1,
               borderStyle: "solid",
               "& .MuiChip-icon": {
-                color: "green",
+                color: "#d32f2f",
               },
             }}
             variant="filled"
           />
         );
-      case "5":
+      default:
         return (
           <Chip
-            icon={<CheckCircleIcon sx={{ color: "green" }} />}
-            label="Delayed"
+            label="Unknown Status"
             sx={{
-              color: "green",
-              borderColor: "green",
+              backgroundColor: "#f5f5f5",
+              color: "#616161",
+              borderColor: "#616161",
               borderWidth: 1,
               borderStyle: "solid",
-              "& .MuiChip-icon": {
-                color: "green",
-              },
             }}
             variant="filled"
           />
         );
     }
   };
+  
   return <>{orderStatus()}</>;
 };
 

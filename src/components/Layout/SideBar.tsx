@@ -103,7 +103,7 @@ const Sidebar = ({ sideMenuItems }: { sideMenuItems: SideBar[] }) => {
             }),
           }}
         >
-          Enterprise CRM
+          SBI CRM
         </Typography>
         <IconButton
           onClick={handleDrawerToggle}
@@ -173,7 +173,7 @@ const Sidebar = ({ sideMenuItems }: { sideMenuItems: SideBar[] }) => {
         ))}
       </List>
 
-      <Box sx={{ padding: theme.spacing(2), borderTop: "1px solid #334155" }}>
+      {/* <Box sx={{ padding: theme.spacing(2), borderTop: "1px solid #334155" }}>
         {" "}
         <ListItem disablePadding sx={{ display: "block" }}>
           <ListItemButton
@@ -188,16 +188,16 @@ const Sidebar = ({ sideMenuItems }: { sideMenuItems: SideBar[] }) => {
                 color: "white",
               },
             }}
-          >
-            <ListItemIcon
+          > */}
+            {/* <ListItemIcon
               sx={{
                 minWidth: 0,
                 mr: open ? 3 : "auto",
                 justifyContent: "center",
                 color: "inherit",
               }}
-            >
-              <HelpOutline />
+            > */}
+              {/* <HelpOutline />
             </ListItemIcon>
             <ListItemText
               primary="Help & Support"
@@ -208,10 +208,10 @@ const Sidebar = ({ sideMenuItems }: { sideMenuItems: SideBar[] }) => {
                   fontSize: "0.875rem",
                 },
               }}
-            />
-          </ListItemButton>
+            /> */}
+          {/* </ListItemButton>
         </ListItem>
-      </Box>
+      </Box> */}
     </Drawer>
   );
 };

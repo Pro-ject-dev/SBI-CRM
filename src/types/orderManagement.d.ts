@@ -22,6 +22,29 @@ export interface OrderManagementDataDto {
   LeadId: string;
   estimation: Estimation;
   leads: Lead | [];
+  deadline?: Deadline[];
+  rawMaterials?: RawMaterial[];
+}
+
+export interface Deadline {
+  id: string;
+  orderId: string;
+  name: string;
+  startAt: string;
+  endAt: string;
+  status: string;
+  delayReason: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RawMaterial {
+  id: string;
+  rawMaterial: string;
+  qty: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Estimation {

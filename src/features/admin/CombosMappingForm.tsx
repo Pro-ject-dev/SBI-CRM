@@ -393,156 +393,130 @@ const CombosMappingForm = () => {
     }
   }, [comboData, categoryData, productData]);
 
-  const renderField = (field: FormField) => (
-    <Grid container spacing={2} key={field.key}>
-      <Box>
-        <Typography
-          variant="caption"
-          display="block"
-          gutterBottom
-          sx={{ fontWeight: 500, color: "text.secondary", mb: 0.5 }}
-        >
-          {field.label}
-        </Typography>
-        {field.key === "product" ? (
-          <MultiSelectSearch
-            id={field.key}
-            name={field.key}
-            value={""}
-            options={productOptions}
-            onChange={handleCombosChange}
-            onSearch={handleSearch}
-            placeholder="Select multiple products"
-            searchPlaceholder="Search for products..."
-            loading={productBySearchLoading}
-            debounceTimeout={700}
-            error={errors[field.key]}
-          />
-        ) : (
-          <AutocompleteInput
-            id={field.key}
-            name={field.key}
-            value={combosForm[field.key]}
-            options={
-              field.key === "combo"
-                ? comboOptions
-                : field.key === "category"
-                ? categoryOptions
-                : productOptions
-            }
-            onChange={handleCombosChange}
-            error={errors[field.key]}
-            placeholder={`Select the ${field.key}`}
-          />
-        )}
-      </Box>
-    </Grid>
-  );
-
   return (
     <Container maxWidth="lg" sx={{ mt: 2 }}>
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
-        <Box
-          sx={{
-            width: "8px",
-            height: "24px",
-            backgroundColor: "#2563eb",
-            mr: 1.5,
-            borderRadius: "3px",
-          }}
-        />
-        <Typography
-          variant="h6"
-          component="h3"
-          sx={{ fontWeight: "bold", color: "#4b5563" }}
-        >
-          Combo Mapping
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Box
+            sx={{
+              width: "8px",
+              height: "24px",
+              backgroundColor: "#2563eb",
+              mr: 1.5,
+              borderRadius: "3px",
+            }}
+          />
+          <Typography
+            variant="h6"
+            component="h3"
+            sx={{ fontWeight: "bold", color: "#4b5563" }}
+          >
+            Combo Mapping
+          </Typography>
+        </Box>
+        <Box>
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            sx={{
+              py: 1.2,
+              px: 2.2,
+              borderRadius: "16px",
+              color: "#2563eb",
+              borderColor: "#2563eb",
+            }}
+            onClick={() =>
+              setModalData((prev) => ({
+                ...prev,
+                combo: { ...prev.combo, open: true },
+              }))
+            }
+          >
+            New Combo
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            sx={{
+              py: 1.2,
+              px: 2.2,
+              ml: 2,
+              borderRadius: "16px",
+              color: "#2563eb",
+              borderColor: "#2563eb",
+            }}
+            onClick={() =>
+              setModalData((prev) => ({
+                ...prev,
+                category: { ...prev.category, open: true },
+              }))
+            }
+          >
+            New Category
+          </Button>
+        </Box>
       </Box>
-
-      <Button
-        variant="outlined"
-        startIcon={<AddIcon />}
-        sx={{
-          mt: 2,
-          py: 1.2,
-          px: 2.2,
-          borderRadius: "16px",
-          color: "#2563eb",
-          borderColor: "#2563eb",
-        }}
-        onClick={() =>
-          setModalData((prev) => ({
-            ...prev,
-            combo: { ...prev.combo, open: true },
-          }))
-        }
-      >
-        New Combo
-      </Button>
-      <Button
-        variant="outlined"
-        startIcon={<AddIcon />}
-        sx={{
-          py: 1.2,
-          px: 2.2,
-          mt: 2,
-          ml: 2,
-          borderRadius: "16px",
-          color: "#2563eb",
-          borderColor: "#2563eb",
-        }}
-        onClick={() =>
-          setModalData((prev) => ({
-            ...prev,
-            category: { ...prev.category, open: true },
-          }))
-        }
-      >
-        New Category
-      </Button>
-
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          gap: 2,
-          mt: 2,
-        }}
-      ></Box>
 
       <Paper
         elevation={1}
         sx={{
-          p: 2,
+          p: 3,
+          mt: 2,
           borderRadius: "16px",
           border: "1px solid #e0e0e0",
         }}
       >
-        <Grid container spacing={2}>
-          {formFields.map(renderField)}
+        <Grid container spacing={3}>
+          {formFields.map((field) => (
+            <Grid item xs={12} sm={6} key={field.key}>
+              <Typography
+                variant="caption"
+                display="block"
+                gutterBottom
+                sx={{ fontWeight: 500, color: "text.secondary", mb: 0.5 }}
+              >
+                {field.label}
+              </Typography>
+              {field.key === "product" ? (
+                <MultiSelectSearch
+                  id={field.key}
+                  name={field.key}
+                  value={""}
+                  options={productOptions}
+                  onChange={handleCombosChange}
+                  onSearch={handleSearch}
+                  placeholder="Select multiple products"
+                  searchPlaceholder="Search for products..."
+                  loading={productBySearchLoading}
+                  debounceTimeout={700}
+                  error={errors[field.key]}
+                />
+              ) : (
+                <AutocompleteInput
+                  id={field.key}
+                  name={field.key}
+                  value={combosForm[field.key]}
+                  options={
+                    field.key === "combo"
+                      ? comboOptions
+                      : field.key === "category"
+                      ? categoryOptions
+                      : productOptions
+                  }
+                  onChange={handleCombosChange}
+                  error={errors[field.key]}
+                  placeholder={`Select the ${field.key}`}
+                />
+              )}
+            </Grid>
+          ))}
         </Grid>
-        {/* <div style={{ marginTop: "20px" }}>
-          <h4>Globally Selected Products:</h4>
-          {combosForm?.product?.length > 0 ? (
-            <ul>
-              {combosForm?.product
-                .filter((opt) => opt?.checked)
-                .map((opt) => (
-                  <li key={opt.value}>
-                    {opt.label} (<code>{opt.value}</code>)
-                  </li>
-                ))}
-            </ul>
-          ) : (
-            <p>No products selected yet.</p>
-          )}
-        </div> */}
       </Paper>
 
       <Box

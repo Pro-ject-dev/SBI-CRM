@@ -12,6 +12,7 @@ import type { AppDispatch } from "../../app/store";
 import { useDispatch } from "react-redux";
 import { addToast } from "../../app/slices/toastSlice";
 import { useIsProductExistMutation } from "../../app/api/standardProductApi";
+import { height } from "@mui/system";
 
 interface FormField {
   label: string;
@@ -81,7 +82,7 @@ const CustomizedForm = () => {
     { label: "Grade", key: "grade", type: "text" },
     { label: "Length(inch)", key: "length", type: "number", min: 0 },
     { label: "Width(inch)", key: "width", type: "number", min: 0 },
-    { label: "Height(inch)", key: "height", type: "number", min: 0 },
+    { label: "Height(inch)", key: "height", type: "text", min: 0 },
     { label: "Thickness(inch)", key: "thickness", type: "number", min: 0 },
     { label: "Minimum Cost", key: "minimumCost", type: "number", min: 0 },
     { label: "Maximum Cost", key: "maximumCost", type: "number", min: 0 },
@@ -151,6 +152,7 @@ const CustomizedForm = () => {
           weightOfObject: `${customizedForm.weight}`,
           length: `${customizedForm.length}`,
           width: `${customizedForm.width}`,
+          height: `${customizedForm.height}`,
           thickness: `${customizedForm.thickness}`,
           minCost: `${customizedForm.minimumCost}`,
           maxCost: `${customizedForm.maximumCost}`,
@@ -170,6 +172,7 @@ const CustomizedForm = () => {
           grade: `${customizedForm.grade}`,
           length: `${customizedForm.length}`,
           width: `${customizedForm.width}`,
+          height: `${customizedForm.height}`,
           thickness: `${customizedForm.thickness}`,
           minCost: `${customizedForm.minimumCost}`,
           maxCost: `${customizedForm.maximumCost}`,
@@ -245,54 +248,6 @@ const CustomizedForm = () => {
     }
   };
 
-  const renderField = (field: FormField) => (
-    <Grid container spacing={2}>
-      <Box>
-        <Typography
-          variant="caption"
-          display="block"
-          gutterBottom
-          sx={{ fontWeight: 500, color: "text.secondary", mb: 0.5 }}
-        >
-          {field.label}
-        </Typography>
-        {field.type === "text" ? (
-          <InputBox
-            id={field.key}
-            name={field.key}
-            value={customizedForm[field.key]}
-            type="text"
-            onChange={handleCustomizedChange}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "8px",
-              },
-            }}
-            error={errors[field.key]}
-            {...(field.key === "productName" && { handleIsProductExist })}
-          />
-        ) : (
-          <InputBox
-            id={field.key}
-            name={field.key}
-            value={customizedForm[field.key]}
-            type="number"
-            min={field.min}
-            max={field.max}
-            onChange={handleCustomizedChange}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "8px",
-              },
-            }}
-            error={errors[field.key]}
-            readonly={field.readonly}
-          />
-        )}
-      </Box>
-    </Grid>
-  );
-
   return (
     <Container maxWidth="lg" sx={{ mt: 2 }}>
       <Box
@@ -322,14 +277,58 @@ const CustomizedForm = () => {
       <Paper
         elevation={1}
         sx={{
-          p: 2,
+          p: 3,
           mt: 2,
           borderRadius: "16px",
           border: "1px solid #e0e0e0",
         }}
       >
-        <Grid container spacing={2}>
-          {formFields.map(renderField)}
+        <Grid container spacing={3}>
+          {formFields.map((field) => (
+            <Grid item xs={12} sm={6} key={field.key}>
+              <Typography
+                variant="caption"
+                display="block"
+                gutterBottom
+                sx={{ fontWeight: 500, color: "text.secondary", mb: 0.5 }}
+              >
+                {field.label}
+              </Typography>
+              {field.type === "text" ? (
+                <InputBox
+                  id={field.key}
+                  name={field.key}
+                  value={customizedForm[field.key]}
+                  type="text"
+                  onChange={handleCustomizedChange}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "8px",
+                    },
+                  }}
+                  error={errors[field.key]}
+                  {...(field.key === "productName" && { handleIsProductExist })}
+                />
+              ) : (
+                <InputBox
+                  id={field.key}
+                  name={field.key}
+                  value={customizedForm[field.key]}
+                  type="number"
+                  min={field.min}
+                  max={field.max}
+                  onChange={handleCustomizedChange}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "8px",
+                    },
+                  }}
+                  error={errors[field.key]}
+                  readonly={field.readonly}
+                />
+              )}
+            </Grid>
+          ))}
         </Grid>
       </Paper>
 

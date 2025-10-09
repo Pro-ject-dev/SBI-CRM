@@ -5,7 +5,7 @@ export const orderManagementApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_LIVE_SERVER_BASE_URL,
     prepareHeaders: (headers) => {
-      const accessToken = import.meta.env.VITE_AUTHORIZATION_TOKEN;
+      const accessToken = localStorage.getItem("authToken");
       if (accessToken) {
         headers.set("authorization", `Bearer ${accessToken}`);
       }
@@ -20,7 +20,51 @@ export const orderManagementApi = createApi({
       },
       providesTags: ["OrderManagement"],
     }),
+    updateOrderDeadline: builder.mutation({
+      query: ({ id, startDate, endDate }) => ({
+        url: `${localStorage.getItem("api_endpoint")}/updateDeadline?id=${id}`,
+        method: "PUT",
+        body: { id, start: startDate, end: endDate },
+      }),
+      invalidatesTags: ["OrderManagement"],
+    }),
+    getOrderById: builder.query({
+      query: ({ id }) => {
+        return `${localStorage.getItem("api_endpoint")}/getOrderById?id=${id}`;
+      },
+      providesTags: ["OrderManagement"],
+    }),
+    createRawMaterialsByOrder: builder.mutation({
+      query: ({ orderId, items }) => ({
+        url: `${localStorage.getItem("api_endpoint")}/createRawMaterialsByOrder`,
+        method: "POST",
+        body: { orderId, items },
+      }),
+      invalidatesTags: ["OrderManagement"],
+    }),
+    createDeadlineByOrder: builder.mutation({
+      query: ({ orderId, items }) => ({
+        url: `${localStorage.getItem("api_endpoint")}/createDeadlineByOrder`,
+        method: "POST",
+        body: { orderId, items },
+      }),
+      invalidatesTags: ["OrderManagement"],
+    }),
+    updateOrderStatus: builder.mutation({
+      query: ({ id, status }) => ({
+        url: `${localStorage.getItem("api_endpoint")}/updateOrderStatus?id=${id}&status=${status}`,
+        method: "PUT",
+      }),
+      invalidatesTags: ["OrderManagement"],
+    }),
   }),
 });
 
-export const { useGetAllOrdersQuery } = orderManagementApi;
+export const { 
+  useGetAllOrdersQuery, 
+  useUpdateOrderDeadlineMutation, 
+  useGetOrderByIdQuery,
+  useCreateRawMaterialsByOrderMutation,
+  useCreateDeadlineByOrderMutation,
+  useUpdateOrderStatusMutation
+} = orderManagementApi;

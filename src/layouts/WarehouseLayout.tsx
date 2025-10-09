@@ -3,7 +3,6 @@ import { Outlet } from "react-router-dom";
 import { Box } from "@mui/material";
 import RoleBasedSidebar from "../components/Layout/RoleBasedSideBar";
 import Header from "../components/Layout/Header";
-import CustomToast from "../components/UI/CustomToast";
 
 const WarehouseLayout: React.FC = () => {
   return (
@@ -12,7 +11,6 @@ const WarehouseLayout: React.FC = () => {
 
       <Box flex={1} display="flex" flexDirection="column">
         <Header />
-        <CustomToast />
         <Box p={2}>
           <Outlet />
         </Box>
