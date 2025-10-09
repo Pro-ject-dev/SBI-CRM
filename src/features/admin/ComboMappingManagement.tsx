@@ -92,6 +92,8 @@ const ComboMappingManagement = () => {
     // { isLoading: deleteLoading }
   ] = useDeleteComboByIdMutation();
 
+  const [comboDeleted, setComboDeleted] = useState<Boolean>(false);
+
   const { data: comboOptionData } = useGetComboQuery("");
 
   const [getCategoryOptions] = useLazyGetCategoryByComboQuery();
@@ -182,6 +184,7 @@ const ComboMappingManagement = () => {
       } catch (error) {
         console.error("Error fetching product data");
       }
+      setComboDeleted(false);
     };
     fetchData();
   }, [
@@ -193,12 +196,13 @@ const ComboMappingManagement = () => {
     comboSelector.filterData.grade,
     comboSelector.filterData.catId,
     comboSelector.filterData.comboId,
+    comboDeleted === true,
   ]);
 
   const handleDeleteRow = async (ids: number[]) => {
     try {
-      if (ids) {
-        const deleteData = await deleteCombo({ ids });
+      if (id) {
+        const deleteData = await deleteCombo({ id });
         if (deleteData.error) {
           dispatch(
             addToast({ message: "Failed to Deleting Product!", type: "error" })
@@ -210,6 +214,7 @@ const ComboMappingManagement = () => {
               type: "success",
             })
           );
+          setComboDeleted(true);
         }
         setSelectedRows([]);
         return deleteData;
@@ -454,7 +459,7 @@ const ComboMappingManagement = () => {
           <Button
             color="error"
             sx={{ minWidth: 0, padding: 0 }}
-            onClick={() => handleDeleteRow(params.row.id)}
+            onClick={() => handleDeleteRow([params.row.id])}
           >
             <Delete />
           </Button>
