@@ -85,6 +85,8 @@ const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({ open, handleClose, 
           <Grid item xs={12} md={6}><Typography variant="body2" color="text.secondary">Email</Typography><Typography>{lead.email}</Typography></Grid>
           <Grid item xs={12} md={6}><Typography variant="body2" color="text.secondary">Phone Number</Typography><Typography>{lead.phoneNumber}</Typography></Grid>
           <Grid item xs={12} md={6}><Typography variant="body2" color="text.secondary">Module / Requirement</Typography><Typography>{lead.module}</Typography></Grid>
+          <Grid item xs={12}><Typography variant="body2" color="text.secondary">Feedback</Typography><Typography>{lead.feedback || 'N/A'}</Typography></Grid>
+          <Grid item xs={12}><Typography variant="body2" color="text.secondary">Next Follow-up</Typography><Typography>{lead.followup || 'N/A'}</Typography></Grid>
         </Grid>
         <Divider sx={{ my: 3 }} />
         {renderEstimationContent()}

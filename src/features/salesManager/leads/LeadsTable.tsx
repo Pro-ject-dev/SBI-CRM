@@ -23,6 +23,8 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ leads, onEdit, onDelete, onConv
             <TableCell>Email & Phone</TableCell>
             <TableCell>Module</TableCell>
             <TableCell>Source</TableCell>
+            <TableCell>Feedback</TableCell>
+            <TableCell>Follow-up</TableCell>
             <TableCell>Date</TableCell>
             <TableCell align="center">Actions</TableCell>
           </TableRow>
@@ -38,6 +40,8 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ leads, onEdit, onDelete, onConv
                 </TableCell>
                 <TableCell>{lead.module}</TableCell>
                 <TableCell>{lead.source}</TableCell>
+                <TableCell>{lead.feedback || 'N/A'}</TableCell>
+                <TableCell>{lead.followup || 'N/A'}</TableCell>
                 {/* --- DEFENSIVE RENDERING FIX --- */}
                 {/* Check if lead.date is valid before trying to format it */}
                 <TableCell>{lead.date ? new Date(lead.date).toLocaleDateString() : 'N/A'}</TableCell>
@@ -61,7 +65,7 @@ const LeadsTable: React.FC<LeadsTableProps> = ({ leads, onEdit, onDelete, onConv
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={6} align="center">
+              <TableCell colSpan={8} align="center">
                 <Typography color="text.secondary" p={3}>No leads found. Add one to get started!</Typography>
               </TableCell>
             </TableRow>

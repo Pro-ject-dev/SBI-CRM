@@ -5,12 +5,15 @@ export interface LeadData {
   id: number; name: string; date: string; email: string; phoneNumber: string;
   module: string; source: string; isOrder: string; status: string;
   createdAt: string; updatedAt: string;
+  feedback: string;
+  followup: string;
 }
 export interface LeadFormData {
-  name: string; email: string; date: string; module: string;
+  name: string; email:string; date: string; module: string;
   phoneNumber: string; source: string;
+  feedback: string;
+  followup: string;
 }
-
 // --- Estimation Data Structures (Now the single source of truth) ---
 export interface EstimationProductAddon {
   id: number; productId: string; name: string; prodCode: string; size: string;
