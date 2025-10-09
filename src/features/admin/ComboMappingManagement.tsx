@@ -199,7 +199,7 @@ const ComboMappingManagement = () => {
     comboDeleted === true,
   ]);
 
-  const handleDeleteRow = async (ids: number[]) => {
+  const handleDeleteRow = async (id: number[]) => {
     try {
       if (id) {
         const deleteData = await deleteCombo({ id });

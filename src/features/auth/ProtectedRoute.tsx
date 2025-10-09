@@ -1,33 +1,42 @@
 import type { JSX } from "react";
 import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
+import { Box, CircularProgress } from "@mui/material";
 import type { RootState } from "../../app/store";
 
 interface ProtectedRouteProps {
-  children: JSX.Element;
-  allowedRoles: string[];
+	children: JSX.Element;
+	allowedRoles: string[];
 }
 
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
-  // Get role from Redux store instead of localStorage
-  const { role } = useSelector((state: RootState) => state.auth);
-  
-  console.log("ProtectedRoute - Current role:", role);
-  console.log("ProtectedRoute - Allowed roles:", allowedRoles);
-  console.log("ProtectedRoute - Role check result:", role && allowedRoles.includes(role));
+	// Get role from Redux store instead of localStorage
+	const { role, isInitialized } = useSelector((state: RootState) => state.auth as any);
+	
+	if (!isInitialized) {
+		// Show loading spinner instead of null to prevent layout unmounting
+		return (
+			<Box 
+				display="flex" 
+				justifyContent="center" 
+				alignItems="center" 
+				minHeight="100vh"
+				sx={{ backgroundColor: '#f5f5f5' }}
+			>
+				<CircularProgress />
+			</Box>
+		);
+	}
 
-  if (!role) {
-    console.log("ProtectedRoute - No role found, redirecting to login");
-    return <Navigate to="/login" replace />;
-  }
+	if (!role) {
+		return <Navigate to="/login" replace />;
+	}
 
-  if (!allowedRoles.includes(role)) {
-    console.log("ProtectedRoute - Role not allowed, redirecting to unauthorized");
-    return <Navigate to="/unauthorized" replace />;
-  }
-  
-  console.log("ProtectedRoute - Access granted");
-  return children;
+	if (!allowedRoles.includes(role)) {
+		return <Navigate to="/unauthorized" replace />;
+	}
+	
+	return children;
 };
 
 export default ProtectedRoute;
