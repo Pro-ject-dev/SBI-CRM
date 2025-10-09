@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  Box, Button, CssBaseline, Grid, Stack, Step, StepLabel, Stepper,
+  Box, Button, Grid, Stack, Step, StepLabel, Stepper,
   Typography, Alert, CircularProgress, Dialog, DialogActions, DialogContent,
   DialogContentText, DialogTitle
 } from "@mui/material";
@@ -55,7 +55,7 @@ export default function EstimationLayout(props: { disableCustomTheme?: boolean }
 
   const {
     standardProducts, customProducts, customerInfo, bankInfo, termsInfo,
-    gstPercent, discountPercent, pdfTemplateType, leadId, editingEstimationId,
+    gstPercent, discountAmount, pdfTemplateType, leadId, editingEstimationId,
     referenceNumber, status, error: submissionError
   } = useAppSelector((state) => state.estimation);
 
@@ -84,8 +84,8 @@ export default function EstimationLayout(props: { disableCustomTheme?: boolean }
   const handleCustomerInfoChange = React.useCallback((info: CustomerInfo) => dispatch(setCustomerInfo(info)), [dispatch]);
   const handleBankInfoChange = React.useCallback((info: BankDetails) => dispatch(setBankInfo(info)), [dispatch]);
   const handleTermInfoChange = React.useCallback((info: TermsDetails) => dispatch(setTermsInfo(info)), [dispatch]);
-  const handleAmountsUpdate = React.useCallback((gst: number | null, disc: number | null) => dispatch(setAmounts({ gstPercent: gst, discountPercent: disc })), [dispatch]);
-  const handlePdfTemplateTypeChange = React.useCallback((type: 'proforma' | 'estimation') => dispatch(setPdfTemplateType(type)), [dispatch]);
+  const handleAmountsUpdate = React.useCallback((gst: number | null, discAmt: number | null) => dispatch(setAmounts({ gstPercent: gst, discountAmount: discAmt })), [dispatch]);
+  const handlePdfTemplateTypeChange = React.useCallback((type: 'proforma' | 'quotation') => dispatch(setPdfTemplateType(type)), [dispatch]);
   
   const handleBadgeTextUpdate = React.useCallback((productType: 'standard' | 'custom', mainProductId: string, text: string, addOnId?: string) => {
     const list = productType === 'standard' ? standardProducts : customProducts;
@@ -132,7 +132,7 @@ export default function EstimationLayout(props: { disableCustomTheme?: boolean }
   const handleCancelGenerateReport = () => setShowConfirmDialog(false);
   
   const handleConfirmGenerateReport = async () => {
-    const mapOverviewToQuotationData = (overview: any, referenceNumber: string, templateType: 'proforma' | 'estimation'): QuotationData => {
+    const mapOverviewToQuotationData = (overview: any, referenceNumber: string, templateType: 'proforma' | 'quotation'): QuotationData => {
         let itemsTotalAmount = 0;
         let slNoCounter = 1;
         
@@ -141,8 +141,8 @@ export default function EstimationLayout(props: { disableCustomTheme?: boolean }
           ...overview.products.map((p: StandardFormData) => { const total = p.totalAmount + (p.addOnsProducts?.reduce((sum, ad) => sum + ad.totalAmount, 0) || 0); itemsTotalAmount += total; return { id: p.id, slNo: slNoCounter++, productName: p.productName, productCode: p.code || "N/A", size: "N/A", specification: p.remark || "", category: p.productCategory, combo: p.productCombo, quantity: parseFloat(p.quantity) || 0, total: p.totalAmount, unitPrice: p.ratePerQuantity, customBadgeText: p.customBadgeText, addOnsProducts: mapAddOns(p.addOnsProducts), }; }),
           ...overview.customProducts.map((c: CustomProductData) => { const total = c.totalAmount + (c.addOnsProducts?.reduce((sum, ad) => sum + ad.totalAmount, 0) || 0); itemsTotalAmount += total; return { id: c.baseProductId, slNo: slNoCounter++, productName: c.productName, productCode: c.code || "N/A", size: c.size, specification: c.remark || "", category: c.productCategory, combo: c.productCombo, quantity: c.quantity, total: c.totalAmount, unitPrice: c.ratePerKg, customBadgeText: c.customBadgeText, addOnsProducts: mapAddOns(c.addOnsProducts), }; }),
         ];
-        const discountPercentVal = overview.discountPercent || 0;
-        const calculatedDiscountAmount = itemsTotalAmount * (discountPercentVal / 100);
+
+        const calculatedDiscountAmount = overview.discountAmount || 0;
         const amountAfterDiscount = itemsTotalAmount - calculatedDiscountAmount;
         const gstPercentVal = overview.gstPercent || 0;
         const calculatedGstAmount = amountAfterDiscount * (gstPercentVal / 100);
@@ -157,24 +157,35 @@ export default function EstimationLayout(props: { disableCustomTheme?: boolean }
           ...companyDetails, 
           customerName: customer ? `${customer.firstName} ${customer.lastName}`.trim() : "N/A", 
           customerLocation: customer ? `${customer.address1}${customer.address2 ? ", " + customer.address2 : ""}, ${customer.city}, ${customer.state} ${customer.zip}` : "N/A",
-          customerAddress1: customer?.address1 || '', customerAddress2: customer?.address2 || '',
-          customerCity: customer?.city || '', customerState: customer?.state || '',
-          customerZip: customer?.zip || '', customerCountry: customer?.country || '',
+          customerAddress1: customer?.address1 || '', 
+          customerAddress2: customer?.address2 || '',
+          customerCity: customer?.city || '', 
+          customerState: customer?.state || '',
+          customerZip: customer?.zip || '', 
+          customerCountry: customer?.country || '',
           customerEmail: '',
           customerGST: customer?.gst || "N/A", 
-          customerPhone: customer?.phone || "N/A", refNo: referenceNumber, 
-          date: new Date().toLocaleDateString("en-GB"), items: combinedItemsForPdf, 
-          totalBeforeDiscount: itemsTotalAmount, discount: calculatedDiscountAmount, 
-          totalAfterDiscount: amountAfterDiscount, cgst: calculatedGstAmount / 2, 
-          sgst: calculatedGstAmount / 2, grandTotal: grandTotal, 
-          bankDetails: mappedBankDetails, termsAndConditions: termsAndConditionsPDF, 
+          customerPhone: customer?.phone || "N/A", 
+          refNo: referenceNumber, 
+          date: new Date().toLocaleDateString("en-GB"), 
+          items: combinedItemsForPdf, 
+          totalBeforeDiscount: itemsTotalAmount, 
+          discount: calculatedDiscountAmount,
+          totalAfterDiscount: amountAfterDiscount, 
+          cgst: calculatedGstAmount / 2, 
+          sgst: calculatedGstAmount / 2, 
+          grandTotal: grandTotal, 
+          bankDetails: mappedBankDetails, 
+          termsAndConditions: termsAndConditionsPDF, 
           templateType: templateType, 
         } as QuotationData;
     };
 
     const buildFinalPayload = (data: QuotationData, currentLeadId: number | null, estId: number | null) => {
         const today = new Date().toISOString().split('T')[0];
-
+        const discountPercentageForApi = data.totalBeforeDiscount > 0
+            ? (data.discount / data.totalBeforeDiscount) * 100
+            : 0;
         const mapAddonsForApi = (addons?: QuotationItem[]) => {
           if (!addons) return [];
           return addons.map(addon => {
@@ -204,15 +215,15 @@ export default function EstimationLayout(props: { disableCustomTheme?: boolean }
                 bankId: data.bankDetails.id,
                 termId: data.termsAndConditions?.[0]?.id,
                 referenceNumber: data.refNo, orderDate: today,
-                documentType: data.templateType === 'proforma' ? 'Proforma Invoice' : 'Estimation',
+                documentType: data.templateType === 'proforma' ? 'Proforma Invoice' : 'Quotation',
                 customerName: data.customerName, customerPhone: data.customerPhone,
                 customerGstin: data.customerGST, customerEmail: data.customerEmail,
                 customerAddress1: data.customerAddress1, customerAddress2: data.customerAddress2,
                 customerCity: data.customerCity, customerState: data.customerState,
                 customerZip: data.customerZip, customerCountry: data.customerCountry,
                 subtotal: String(data.totalBeforeDiscount),
-                discount: String(discountPercent || 0),
-                discountAmount: String(data.discount),
+                discount: String(discountPercentageForApi), // The calculated percentage
+                discountAmount: String(data.discount),      // The fixed amount
                 totalAfterDiscount: String(data.totalAfterDiscount),
                 taxCgst: String(data.cgst), taxSgst: String(data.sgst),
                 taxTotal: String(data.cgst + data.sgst), grandTotal: String(data.grandTotal),
@@ -250,14 +261,14 @@ export default function EstimationLayout(props: { disableCustomTheme?: boolean }
     };
 
     const refNo = referenceNumber || generateRefNo();
-    const overviewDataForPdf = { products: standardProducts, customProducts, customerInfo, bankInfo, termsInfo, gstPercent, discountPercent };
+    const overviewDataForPdf = { products: standardProducts, customProducts, customerInfo, bankInfo, termsInfo, gstPercent, discountAmount };
     const quotationPayload = mapOverviewToQuotationData(overviewDataForPdf, refNo, pdfTemplateType);
     
     try {
       const pdfDoc = QuotationPDFGenerator(quotationPayload);
       if (!pdfDoc) throw new Error("Failed to generate PDF document.");
       
-      const fileName = `${pdfTemplateType === "proforma" ? "Proforma Invoice" : "Estimation"}-${refNo}.pdf`;
+      const fileName = `${pdfTemplateType === "proforma" ? "Proforma Invoice" : "Quotation"}-${refNo}.pdf`;
       pdfDoc.save(fileName);
       
       const finalApiPayload = buildFinalPayload(quotationPayload, leadId, editingEstimationId);
@@ -280,7 +291,20 @@ export default function EstimationLayout(props: { disableCustomTheme?: boolean }
       case 1: return <CustomerInfoPage onInfoChange={handleCustomerInfoChange} savedData={customerInfo} />;
       case 2: return <BankForm onBankInfoChange={handleBankInfoChange} savedData={bankInfo} />;
       case 3: return <TermsAndCondPage onTermsInfoChange={handleTermInfoChange} savedData={termsInfo} />;
-      case 4: return <OverviewPage products={standardProducts} customProducts={customProducts} customerInfo={customerInfo} bankInfo={bankInfo} termsInfo={termsInfo} initialGstPercent={gstPercent} initialDiscountPercent={discountPercent} onAmountsUpdate={handleAmountsUpdate} pricingMode={"normal"} onPricingModeChange={() => {}} pdfTemplateType={pdfTemplateType} onPdfTemplateTypeChange={handlePdfTemplateTypeChange} onBadgeTextUpdate={handleBadgeTextUpdate} />;
+      case 4: return <OverviewPage 
+                        products={standardProducts} 
+                        customProducts={customProducts} 
+                        customerInfo={customerInfo} 
+                        bankInfo={bankInfo} 
+                        termsInfo={termsInfo} 
+                        initialGstPercent={gstPercent} 
+                        initialDiscountAmount={discountAmount} // Changed from initialDiscountPercent
+                        onAmountsUpdate={handleAmountsUpdate} 
+                        pricingMode={"normal"} 
+                        onPricingModeChange={() => {}} 
+                        pdfTemplateType={pdfTemplateType} 
+                        onPdfTemplateTypeChange={handlePdfTemplateTypeChange} 
+                        onBadgeTextUpdate={handleBadgeTextUpdate} />;
       default: throw new Error("Unknown step");
     }
   }

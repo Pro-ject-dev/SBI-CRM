@@ -113,7 +113,7 @@ const mapEstimationToState = (estimationData: Estimation) => {
         standardProducts, customProducts, customerInfo, bankInfo, termsInfo,
         gstPercent: isNaN(gstPercent) ? 18 : gstPercent,
         discountPercent: parseFloat(estimationData.discount) || 0,
-        pdfTemplateType: estimationData.documentType === "Proforma Invoice" ? "proforma" : "estimation" as 'proforma' | 'estimation',
+        pdfTemplateType: estimationData.documentType === "Proforma Invoice" ? "proforma" : "quotation" as 'proforma' | 'quotation',
         leadId: parseInt(estimationData.leadId, 10),
         editingEstimationId: estimationData.id,
         referenceNumber: estimationData.referenceNumber,
@@ -123,13 +123,13 @@ const mapEstimationToState = (estimationData: Estimation) => {
 interface EstimationState {
   standardProducts: StandardFormData[]; customProducts: CustomProductData[];
   customerInfo: CustomerInfo | null; bankInfo: BankDetails | null; termsInfo: TermsDetails | null;
-  gstPercent: number; discountPercent: number; pdfTemplateType: 'proforma' | 'estimation';
+  gstPercent: number; discountAmount: number | null; pdfTemplateType: 'proforma' | 'quotation';
   leadId: number | null; editingEstimationId: number | null; referenceNumber: string | null;
   status: 'idle' | 'loading' | 'succeeded' | 'failed'; error: string | null;
 }
 const initialState: EstimationState = {
   standardProducts: [], customProducts: [], customerInfo: null, bankInfo: null,
-  termsInfo: null, gstPercent: 18, discountPercent: 0, pdfTemplateType: 'proforma',
+  termsInfo: null, gstPercent: 18,  discountAmount: 0, pdfTemplateType: 'proforma',
   leadId: null, editingEstimationId: null, referenceNumber: null,
   status: 'idle', error: null,
 };
@@ -184,11 +184,11 @@ const estimationSlice = createSlice({
     setCustomerInfo: (state, action: PayloadAction<CustomerInfo>) => { state.customerInfo = action.payload; },
     setBankInfo: (state, action: PayloadAction<BankDetails>) => { state.bankInfo = action.payload; },
     setTermsInfo: (state, action: PayloadAction<TermsDetails>) => { state.termsInfo = action.payload; },
-    setAmounts: (state, action: PayloadAction<{ gstPercent: number | null, discountPercent: number | null }>) => {
+    setAmounts: (state, action: PayloadAction<{ gstPercent: number | null, discountAmount: number | null }>) => {
       if (action.payload.gstPercent !== null) state.gstPercent = action.payload.gstPercent;
-      if (action.payload.discountPercent !== null) state.discountPercent = action.payload.discountPercent;
+      if (action.payload.discountAmount !== null) state.discountAmount = action.payload.discountAmount;
     },
-    setPdfTemplateType: (state, action: PayloadAction<'proforma' | 'estimation'>) => { state.pdfTemplateType = action.payload; },
+    setPdfTemplateType: (state, action: PayloadAction<'proforma' | 'quotation'>) => { state.pdfTemplateType = action.payload; },
     resetEstimationState: (state) => initialState,
   },
   extraReducers: (builder) => {
