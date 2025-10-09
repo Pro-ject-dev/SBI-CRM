@@ -76,13 +76,13 @@ export interface QuotationData {
   // Bank & Terms
   bankDetails: BankDetailsPDF;
   termsAndConditions?: { term: string; details: string; id?: string }[];
-  templateType: "proforma" | "estimation";
+  templateType: "proforma" | "quotation";
 }
 
 export const QuotationPDFGenerator = (data: QuotationData): jsPDF | null => {
   try {
     const documentTitle =
-      data.templateType === "proforma" ? "Proforma Invoice" : "Estimation";
+      data.templateType === "proforma" ? "Proforma Invoice" : "Quotation";
     const doc = new jsPDF({ unit: "mm", format: "a4" });
     doc.setProperties({
       title: `${documentTitle} - ${data.refNo}`,
@@ -308,8 +308,8 @@ export const QuotationPDFGenerator = (data: QuotationData): jsPDF | null => {
 
       const mainProductDetails = [mainItem.productName];
       if (mainItem.productCode) mainProductDetails.push(`Code: ${mainItem.productCode}`);
-      if (mainItem.category) mainProductDetails.push(`Category: ${mainItem.category}`);
-      if (mainItem.combo) mainProductDetails.push(`Combo: ${mainItem.combo}`);
+      //if (mainItem.category) mainProductDetails.push(`Category: ${mainItem.category}`);
+      //if (mainItem.combo) mainProductDetails.push(`Combo: ${mainItem.combo}`);
       if (mainItem.specification) mainProductDetails.push(`Spec: ${mainItem.specification}`);
 
       tableRowsData.push([
@@ -534,7 +534,7 @@ export const QuotationPDFGenerator = (data: QuotationData): jsPDF | null => {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     const bankDetailsList = [
-      `Name of the Unit: ${data.bankDetails.unitName || "N/A"}`,
+      //`Name of the Unit: ${data.bankDetails.unitName || "N/A"}`,
       `Name of the Bank: ${data.bankDetails.bankName}`,
       `Name of the Branch: ${data.bankDetails.branchName || "N/A"}`,
       `Account No: ${data.bankDetails.accountNo}`,

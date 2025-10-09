@@ -24,7 +24,12 @@ const LeadGenerationForm: React.FC<LeadGenerationFormProps> = ({ open, handleClo
   const dispatch = useAppDispatch();
   const { selectedLead, status, error: reduxError } = useAppSelector((state) => state.leads);
 
-  const [formData, setFormData] = useState<LeadFormData>({ name: '', email: '', date: '', module: '', phoneNumber: '', source: '' });
+  const initialFormState: LeadFormData = {
+    name: '', email: '', date: '', module: '', phoneNumber: '', source: '',
+    feedback: '', followup: ''
+  };
+
+  const [formData, setFormData] = useState<LeadFormData>({ name: '', email: '', date: '', module: '', phoneNumber: '', source: '', feedback: '', followup: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   
@@ -45,10 +50,10 @@ const LeadGenerationForm: React.FC<LeadGenerationFormProps> = ({ open, handleClo
 
   useEffect(() => {
     if (isEditing && selectedLead) {
-      const { name, email, date, module, phoneNumber, source } = selectedLead;
-      setFormData({ name, email, date, module, phoneNumber, source });
+      const { name, email, date, module, phoneNumber, source, feedback, followup } = selectedLead;
+      setFormData({ name, email, date, module, phoneNumber, source, feedback: feedback || '', followup: followup || '' });
     } else if (!isEditing) {
-      setFormData({ name: '', email: '', date: '', module: '', phoneNumber: '', source: '' });
+      setFormData(initialFormState);
     }
   }, [selectedLead, isEditing]);
 
@@ -128,6 +133,12 @@ const LeadGenerationForm: React.FC<LeadGenerationFormProps> = ({ open, handleClo
                 </Grid>
                 <Grid item xs={12} md={6}>
                     <TextField fullWidth required name="date" type="date" label="Date" value={formData.date} onChange={handleChange} InputLabelProps={{ shrink: true }} />
+                </Grid>
+                <Grid item xs={12}>
+                    <TextField fullWidth required label="Feedback" name="feedback" value={formData.feedback} onChange={handleChange} multiline rows={2} />
+                </Grid>
+                <Grid item xs={12}>
+                    <TextField fullWidth required label="Next Follow-up" name="followup" value={formData.followup} onChange={handleChange} multiline rows={2} />
                 </Grid>
             </Grid>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>

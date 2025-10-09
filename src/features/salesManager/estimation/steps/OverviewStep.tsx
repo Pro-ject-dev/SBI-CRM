@@ -17,7 +17,7 @@ import ArticleIcon from '@mui/icons-material/Article';
 import AddCommentIcon from '@mui/icons-material/AddComment';
 import type { StandardFormData, CustomProductData, CustomerInfo, BankDetails, TermsDetails, ProductListData } from '../estimation.types';
 
-type PdfTemplateType = "proforma" | "estimation";
+type PdfTemplateType = "proforma" | "quotation";
 
 interface OverviewPageProps {
     products?: StandardFormData[];
@@ -27,8 +27,8 @@ interface OverviewPageProps {
     termsInfo?: TermsDetails | null;
     orderId?: string | number;
     initialGstPercent?: number | null;
-    initialDiscountPercent?: number | null;
-    onAmountsUpdate: (gstPercent: number | null, discountPercent: number | null) => void;
+    initialDiscountAmount?: number | null;
+    onAmountsUpdate: (gstPercent: number | null, discountAmount: number | null) => void;
     pricingMode: 'normal' | 'vip';
     onPricingModeChange: (mode: 'normal' | 'vip') => void;
     pdfTemplateType: PdfTemplateType;
@@ -175,14 +175,14 @@ export default function OverviewStep({
     customProducts = [],
     customerInfo = null, bankInfo = null, termsInfo = null,
     orderId = Math.floor(100000 + Math.random() * 900000).toString(),
-    initialGstPercent, initialDiscountPercent, onAmountsUpdate,
+    initialGstPercent, initialDiscountAmount, onAmountsUpdate,
     pricingMode,
     pdfTemplateType, onPdfTemplateTypeChange,
     onBadgeTextUpdate
 }: OverviewPageProps) {
 
     const [gstInput, setGstInput] = useState<string>(initialGstPercent?.toString() ?? '18');
-    const [discountInput, setDiscountInput] = useState<string>(initialDiscountPercent?.toString() ?? '0');
+    const [discountAmountInput, setDiscountAmountInput] = useState<string>(initialDiscountAmount?.toString() ?? '0');
     
     const itemsTotalAmount = useMemo(() => {
         const calculateTotal = (items: (StandardFormData | CustomProductData)[]) =>
@@ -193,30 +193,49 @@ export default function OverviewStep({
         return calculateTotal(standardProducts) + calculateTotal(customProducts);
     }, [standardProducts, customProducts]);
 
-    const { parsedGstPercent, parsedDiscountPercent, calculatedDiscountValue, amountAfterDiscount, calculatedGstValue, finalPayableAmount } = useMemo(() => {
+    const {
+        parsedGstPercent,
+        parsedDiscountAmount,
+        calculatedGstValue,
+        amountAfterDiscount,
+        finalPayableAmount,
+        isDiscountInvalid,
+    } = useMemo(() => {
         const gst = parseFloat(gstInput);
-        const discount = parseFloat(discountInput);
+        const discountAmt = parseFloat(discountAmountInput);
+
         const currentParsedGst = !isNaN(gst) && gst >= 0 ? gst : null;
-        const currentParsedDiscount = !isNaN(discount) && discount >= 0 ? discount : 0;
-        const discVal = itemsTotalAmount * (currentParsedDiscount / 100);
-        const amtAfterDiscount = itemsTotalAmount - discVal;
+        const currentParsedDiscountAmt = !isNaN(discountAmt) && discountAmt >= 0 ? discountAmt : 0;
+        
+        // Validation: Discount can't be more than the total.
+        const discountIsInvalid = currentParsedDiscountAmt > itemsTotalAmount;
+
+        const amtAfterDiscount = itemsTotalAmount - currentParsedDiscountAmt;
         const gstVal = currentParsedGst !== null ? amtAfterDiscount * (currentParsedGst / 100) : 0;
         const finalTotal = amtAfterDiscount + gstVal;
-        return { parsedGstPercent: currentParsedGst, parsedDiscountPercent: currentParsedDiscount, calculatedDiscountValue: discVal, amountAfterDiscount: amtAfterDiscount, calculatedGstValue: gstVal, finalPayableAmount: finalTotal };
-    }, [gstInput, discountInput, itemsTotalAmount]);
+
+        return {
+            parsedGstPercent: currentParsedGst,
+            parsedDiscountAmount: currentParsedDiscountAmt,
+            amountAfterDiscount: amtAfterDiscount,
+            calculatedGstValue: gstVal,
+            finalPayableAmount: finalTotal,
+            isDiscountInvalid: discountIsInvalid,
+        };
+    }, [gstInput, discountAmountInput, itemsTotalAmount]);
 
     useEffect(() => {
-        onAmountsUpdate(parsedGstPercent, parsedDiscountPercent);
-    }, [parsedGstPercent, parsedDiscountPercent, onAmountsUpdate]);
+        onAmountsUpdate(parsedGstPercent, isDiscountInvalid ? null : parsedDiscountAmount);
+    }, [parsedGstPercent, parsedDiscountAmount, isDiscountInvalid, onAmountsUpdate]);
     
     const handleGstInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
         if (value === '' || /^\d*\.?\d*$/.test(value)) setGstInput(value);
     };
 
-    const handleDiscountInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleDiscountAmountInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
-        if (value === '' || /^\d*\.?\d*$/.test(value)) setDiscountInput(value);
+        if (value === '' || /^\d*\.?\d*$/.test(value)) setDiscountAmountInput(value);
     };
 
     return (
@@ -277,7 +296,7 @@ export default function OverviewStep({
                     <Divider sx={{ mb: 2 }} />
                     <RadioGroup row value={pdfTemplateType} onChange={(e) => onPdfTemplateTypeChange(e.target.value as PdfTemplateType)} name="pdf-template-group">
                         <FormControlLabel value="proforma" control={<Radio />} label="Proforma Invoice Template" />
-                        <FormControlLabel value="estimation" control={<Radio />} label="Estimation PDF Template" />
+                        <FormControlLabel value="quotation" control={<Radio />} label="Quotation PDF Template" />
                     </RadioGroup>
                 </CardContent>
             </Card>
@@ -288,10 +307,25 @@ export default function OverviewStep({
                     <Divider sx={{ mb: 2 }} />
                     <MuiGrid container spacing={3} alignItems="flex-start">
                         <MuiGrid item xs={12} md={6}><TextField label="GST (%)" type="text" inputMode="decimal" value={gstInput} onChange={handleGstInputChange} required fullWidth error={gstInput !== '' && (parsedGstPercent === null || parsedGstPercent <= 0)} helperText={gstInput !== '' && (parsedGstPercent === null || parsedGstPercent <= 0) ? "GST must be a positive number." : "Required for order placement."} /></MuiGrid>
-                        <MuiGrid item xs={12} md={6}><TextField label="Discount (%)" type="text" inputMode="decimal" value={discountInput} onChange={handleDiscountInputChange} fullWidth error={discountInput !== '' && (parsedDiscountPercent < 0)} helperText={discountInput !== '' && (parsedDiscountPercent < 0) ? "Discount cannot be negative." : "Optional (e.g., 5 for 5%)"} /></MuiGrid>
+                        {/* <MuiGrid item xs={12} md={6}><TextField label="Discount (%)" type="text" inputMode="decimal" value={discountInput} onChange={handleDiscountInputChange} fullWidth error={discountInput !== '' && (parsedDiscountPercent < 0)} helperText={discountInput !== '' && (parsedDiscountPercent < 0) ? "Discount cannot be negative." : "Optional (e.g., 5 for 5%)"} /></MuiGrid> */}
+                        <MuiGrid item xs={12} md={6}>
+                            <TextField
+                                label="Discount Amount (₹)"
+                                type="text"
+                                inputMode="decimal"
+                                value={discountAmountInput}
+                                onChange={handleDiscountAmountInputChange}
+                                fullWidth
+                                error={isDiscountInvalid}
+                                helperText={isDiscountInvalid ? `Discount cannot exceed subtotal of ${formatCurrency(itemsTotalAmount)}` : "Optional fixed discount amount."}
+                            />
+                        </MuiGrid>
                         <MuiGrid item xs={12} md={12}><Stack spacing={0.5} sx={{ textAlign: 'right', pt: 1 }}>
                             <Typography variant="body1">Subtotal: {formatCurrency(itemsTotalAmount)}</Typography>
-                            <Typography variant="body1" color={calculatedDiscountValue > 0 ? "error.main" : "text.secondary"}>Discount ({parsedDiscountPercent || 0}%): - {formatCurrency(calculatedDiscountValue)}</Typography>
+                            {/* <Typography variant="body1" color={calculatedDiscountValue > 0 ? "error.main" : "text.secondary"}>Discount ({parsedDiscountPercent || 0}%): - {formatCurrency(calculatedDiscountValue)}</Typography> */}
+                            <Typography variant="body1" color={parsedDiscountAmount > 0 ? "error.main" : "text.secondary"}>
+                                    Discount: - {formatCurrency(parsedDiscountAmount)}
+                            </Typography>
                             <Typography variant="subtitle1" sx={{borderTop: '1px dashed grey', pt: 1, mt:1}}>Amount After Discount: {formatCurrency(amountAfterDiscount)}</Typography>
                             <Typography variant="body1" color="text.secondary">GST ({parsedGstPercent || 0}%): + {formatCurrency(calculatedGstValue)}</Typography>
                             <Divider sx={{ my: 1 }}/><Typography variant="h5" component="p" sx={{ fontWeight: 'bold' }}>Total Payable: {formatCurrency(finalPayableAmount)}</Typography>
