@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { RawMaterial } from "../../types/warehouse";
+import type { RawMaterial, RawMaterialLog } from "../../types/warehouse";
 
 export const rawMaterialsApi = createApi({
   reducerPath: "rawMaterialsApi",
@@ -15,11 +15,16 @@ export const rawMaterialsApi = createApi({
   }),
   tagTypes: ["RawMaterials"],
   endpoints: (builder) => ({
-    getRawMaterials: builder.query<{ data: RawMaterial[] }, { search?: string; category?: string } | void>({
+    getRawMaterials: builder.query<
+      { data: RawMaterial[] },
+      { search?: string; category?: string } | void
+    >({
       query: (paramsObj) => {
         const params = new URLSearchParams();
-        if (paramsObj && 'search' in paramsObj && paramsObj.search) params.append('search', paramsObj.search);
-        if (paramsObj && 'category' in paramsObj && paramsObj.category) params.append('category', paramsObj.category);
+        if (paramsObj && "search" in paramsObj && paramsObj.search)
+          params.append("search", paramsObj.search);
+        if (paramsObj && "category" in paramsObj && paramsObj.category)
+          params.append("category", paramsObj.category);
         return `${localStorage.getItem("api_endpoint")}/getAllRawMaterials?${params.toString()}`;
       },
       providesTags: ["RawMaterials"],
@@ -30,25 +35,35 @@ export const rawMaterialsApi = createApi({
       },
       providesTags: ["RawMaterials"],
     }),
-    getRawMaterialByBarcode: builder.query<{ data: RawMaterial }, { barcode: string }>({
+    getRawMaterialByBarcode: builder.query<
+      { data: RawMaterial },
+      { barcode: string }
+    >({
       query: ({ barcode }) => {
         return `${localStorage.getItem("api_endpoint")}/getRawMaterialByBarcode?barcode=${barcode}`;
       },
       providesTags: ["RawMaterials"],
     }),
-    getRawMaterialByName: builder.query<{ data: RawMaterial }, { name: string }>({
+    getRawMaterialByName: builder.query<
+      { data: RawMaterial },
+      { name: string }
+    >({
       query: ({ name }) => {
         return `${localStorage.getItem("api_endpoint")}/getRawMaterialByName?name=${name}`;
       },
       providesTags: ["RawMaterials"],
     }),
-    getRawMaterialsByNames: builder.query<{
-      length: number;
-      find(arg0: (s: any) => boolean): unknown; data: RawMaterial[] 
-}, { names: string[] }>({
+    getRawMaterialsByNames: builder.query<
+      {
+        length: number;
+        find(arg0: (s: any) => boolean): unknown;
+        data: RawMaterial[];
+      },
+      { names: string[] }
+    >({
       query: ({ names }) => {
         const params = new URLSearchParams();
-        names.forEach(name => params.append('names[]', name));
+        names.forEach((name) => params.append("names[]", name));
         return `${localStorage.getItem("api_endpoint")}/getRawMaterialsByNames?${params.toString()}`;
       },
       providesTags: ["RawMaterials"],
@@ -61,10 +76,13 @@ export const rawMaterialsApi = createApi({
       }),
       invalidatesTags: ["RawMaterials"],
     }),
-    updateRawMaterial: builder.mutation<any, { id: string; [key: string]: any }>({
+    updateRawMaterial: builder.mutation<
+      any,
+      { id: string; [key: string]: any }
+    >({
       query: ({ id, ...payload }) => ({
         url: `${localStorage.getItem(
-          "api_endpoint"
+          "api_endpoint",
         )}/updateRawMaterial?id=${id}`,
         method: "PUT",
         body: payload,
@@ -74,7 +92,7 @@ export const rawMaterialsApi = createApi({
     deleteRawMaterial: builder.mutation<any, { id: string }>({
       query: ({ id }) => ({
         url: `${localStorage.getItem(
-          "api_endpoint"
+          "api_endpoint",
         )}/deleteRawMaterial?id=${id}`,
         method: "DELETE",
       }),
@@ -94,6 +112,20 @@ export const rawMaterialsApi = createApi({
       }),
       invalidatesTags: ["RawMaterials"],
     }),
+    getRawMaterialsLog: builder.query<
+      { success: boolean; data: RawMaterialLog[] },
+      { dateFrom?: string; dateTo?: string } | void
+    >({
+      query: (paramsObj) => {
+        const params = new URLSearchParams();
+        if (paramsObj && "dateFrom" in paramsObj && paramsObj.dateFrom)
+          params.append("dateFrom", paramsObj.dateFrom);
+        if (paramsObj && "dateTo" in paramsObj && paramsObj.dateTo)
+          params.append("dateTo", paramsObj.dateTo);
+        return `${localStorage.getItem("api_endpoint")}/getRawMaterialsLog?${params.toString()}`;
+      },
+      providesTags: ["RawMaterials"],
+    }),
   }),
 });
 
@@ -103,10 +135,11 @@ export const {
   useLazyGetRawMaterialByIdQuery,
   useLazyGetRawMaterialByBarcodeQuery,
   useGetRawMaterialByNameQuery,
-  useGetRawMaterialsByNamesQuery, 
+  useGetRawMaterialsByNamesQuery,
   useAddRawMaterialMutation,
   useUpdateRawMaterialMutation,
   useDeleteRawMaterialMutation,
   useGetLowStockAlertsQuery,
   useUpdateStockMutation,
+  useGetRawMaterialsLogQuery,
 } = rawMaterialsApi;

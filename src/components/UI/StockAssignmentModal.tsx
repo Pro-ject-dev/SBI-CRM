@@ -10,20 +10,16 @@ import {
   Divider,
   Chip,
   Alert,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Paper,
   Stack,
 } from "@mui/material";
 import { Close, Warning, ShoppingCart, Assignment } from "@mui/icons-material";
 import { useAssignStockMutation } from "../../app/api/stockAssignmentApi";
-import { rawMaterialsApi } from "../../app/api/rawMaterialsApi"; 
-import { useDispatch } from "react-redux";
-import type { AppDispatch } from "../../app/store";
+import { rawMaterialsApi } from "../../app/api/rawMaterialsApi";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "../../app/store";
 import { addToast } from "../../app/slices/toastSlice";
-import { useGetOrderByIdQuery } from '../../app/api/orderManagementApi';
+import { useGetOrderByIdQuery } from "../../app/api/orderManagementApi";
 
 interface StockAssignmentItem {
   productId: string;
@@ -59,15 +55,6 @@ interface StockAssignmentModalProps {
   orderNumber?: string;
 }
 
-// Test data for assigned by dropdown (replace with API call in future)
-const TEST_USERS = [
-  { id: 1, name: "John Doe", role: "Warehouse Manager" },
-  { id: 2, name: "Jane Smith", role: "Inventory Supervisor" },
-  { id: 3, name: "Mike Johnson", role: "Stock Controller" },
-  { id: 4, name: "Sarah Wilson", role: "Operations Manager" },
-  { id: 5, name: "David Brown", role: "Warehouse Assistant" },
-];
-
 const StockAssignmentModal = ({
   open,
   onClose,
@@ -75,14 +62,15 @@ const StockAssignmentModal = ({
   orderNumber,
 }: StockAssignmentModalProps) => {
   const dispatch: AppDispatch = useDispatch();
-  const { data: orderDetailsData, isLoading: isOrderLoading } = useGetOrderByIdQuery({ id: orderId! }, { skip: !orderId || !open });
+  const { userName } = useSelector((state: RootState) => state.auth);
+  const { data: orderDetailsData, isLoading: isOrderLoading } =
+    useGetOrderByIdQuery({ id: orderId! }, { skip: !orderId || !open });
   const [assignStock] = useAssignStockMutation();
 
   const [assignments, setAssignments] = useState<StockAssignmentItem[]>([]);
   const [stockData, setStockData] = useState<any[]>([]);
   const [stockLoading, setStockLoading] = useState(false);
   const [notes, setNotes] = useState("");
-  const [assignedBy, setAssignedBy] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Extract raw materials from order data
@@ -106,14 +94,17 @@ const StockAssignmentModal = ({
           try {
             // Use the RTK Query endpoint directly with proper typing
             const result = await (dispatch as any)(
-              rawMaterialsApi.endpoints.getRawMaterialByName.initiate({ 
-                name: material.rawMaterial 
-              })
+              rawMaterialsApi.endpoints.getRawMaterialByName.initiate({
+                name: material.rawMaterial,
+              }),
             ).unwrap();
-            
+
             return result;
           } catch (error) {
-            console.error(`Error fetching stock for ${material.rawMaterial}:`, error);
+            console.error(
+              `Error fetching stock for ${material.rawMaterial}:`,
+              error,
+            );
             return { success: false, data: null };
           }
         });
@@ -121,7 +112,7 @@ const StockAssignmentModal = ({
         const results = await Promise.all(stockPromises);
         setStockData(results);
       } catch (error) {
-        console.error('Error fetching stock data:', error);
+        console.error("Error fetching stock data:", error);
         setStockData([]);
       } finally {
         setStockLoading(false);
@@ -135,25 +126,24 @@ const StockAssignmentModal = ({
   useEffect(() => {
     if (open && rawMaterials.length > 0) {
       const initialAssignments = rawMaterials.map((mat: any) => ({
-        productId: mat.productId || mat.id || '',
+        productId: mat.productId || mat.id || "",
         rawMaterialId: mat.id,
         rawMaterialName: mat.rawMaterial,
         availableStock: 0,
-        unit: '',
-        quantityAssigned: mat.qty || '',
-        requestedQuantity: mat.qty || '',
+        unit: "",
+        quantityAssigned: mat.qty || "",
+        requestedQuantity: mat.qty || "",
         stockExists: false,
         needsPurchase: false,
       }));
-      
+
       setAssignments(initialAssignments);
     }
-    
+
     if (!open) {
       setAssignments([]);
       setStockData([]);
       setNotes("");
-      setAssignedBy("");
       setErrors({});
     }
   }, [rawMaterials, open]);
@@ -163,12 +153,13 @@ const StockAssignmentModal = ({
     if (stockData.length > 0 && assignments.length > 0) {
       const updatedAssignments = assignments.map((assignment, index) => {
         const stockResult = stockData[index];
-        
+
         if (stockResult && stockResult.success && stockResult.data) {
           const availableStock = stockResult.data.currentStock || 0;
-          const unit = stockResult.data.unit || '';
-          const needsPurchase = availableStock < Number(assignment.requestedQuantity);
-          
+          const unit = stockResult.data.unit || "";
+          const needsPurchase =
+            availableStock < Number(assignment.requestedQuantity);
+
           return {
             ...assignment,
             availableStock,
@@ -178,65 +169,71 @@ const StockAssignmentModal = ({
             rawMaterialId: stockResult.data.id || assignment.rawMaterialId,
           };
         }
-        
+
         return {
           ...assignment,
           needsPurchase: true,
           stockExists: false,
         };
       });
-      
+
       setAssignments(updatedAssignments);
     }
   }, [stockData, assignments.length]);
 
-  const handleAssignmentChange = useCallback((index: number, field: string, value: string) => {
-    setAssignments(prevAssignments => {
-      const newAssignments = [...prevAssignments];
-      newAssignments[index] = {
-        ...newAssignments[index],
-        [field]: value,
-      };
-      
-      // Check if quantity exceeds available stock
-      if (field === "quantityAssigned") {
-        const assignment = newAssignments[index];
-        assignment.needsPurchase = !assignment.stockExists || Number(value) > assignment.availableStock;
-      }
-      
-      return newAssignments;
-    });
-    
-    // Clear errors for this field
-    const errorKey = `${index}-${field}`;
-    setErrors(prevErrors => {
-      if (prevErrors[errorKey]) {
-        const newErrors = { ...prevErrors };
-        delete newErrors[errorKey];
-        return newErrors;
-      }
-      return prevErrors;
-    });
-  }, []);
+  const handleAssignmentChange = useCallback(
+    (index: number, field: string, value: string) => {
+      setAssignments((prevAssignments) => {
+        const newAssignments = [...prevAssignments];
+        newAssignments[index] = {
+          ...newAssignments[index],
+          [field]: value,
+        };
+
+        // Check if quantity exceeds available stock
+        if (field === "quantityAssigned") {
+          const assignment = newAssignments[index];
+          assignment.needsPurchase =
+            !assignment.stockExists ||
+            Number(value) > assignment.availableStock;
+        }
+
+        return newAssignments;
+      });
+
+      // Clear errors for this field
+      const errorKey = `${index}-${field}`;
+      setErrors((prevErrors) => {
+        if (prevErrors[errorKey]) {
+          const newErrors = { ...prevErrors };
+          delete newErrors[errorKey];
+          return newErrors;
+        }
+        return prevErrors;
+      });
+    },
+    [],
+  );
 
   const handleQuantityChange = useCallback((index: number, value: string) => {
-    setAssignments(prevAssignments => {
+    setAssignments((prevAssignments) => {
       const newAssignments = [...prevAssignments];
       newAssignments[index] = {
         ...newAssignments[index],
         quantityAssigned: value,
       };
-      
+
       // Check if quantity exceeds available stock
       const assignment = newAssignments[index];
-      assignment.needsPurchase = !assignment.stockExists || Number(value) > assignment.availableStock;
-      
+      assignment.needsPurchase =
+        !assignment.stockExists || Number(value) > assignment.availableStock;
+
       return newAssignments;
     });
-    
+
     // Clear errors for this field
     const errorKey = `${index}-quantity`;
-    setErrors(prevErrors => {
+    setErrors((prevErrors) => {
       if (prevErrors[errorKey]) {
         const newErrors = { ...prevErrors };
         delete newErrors[errorKey];
@@ -248,45 +245,51 @@ const StockAssignmentModal = ({
 
   const validateForm = useCallback(() => {
     const newErrors: Record<string, string> = {};
-    
-    // Validate assigned by
-    if (!assignedBy) {
-      newErrors['assignedBy'] = "Please select who is assigning the stock";
-    }
-    
+
+    // Validate assignments
     assignments.forEach((assignment, index) => {
-      if (!assignment.quantityAssigned || Number(assignment.quantityAssigned) <= 0) {
+      if (
+        !assignment.quantityAssigned ||
+        Number(assignment.quantityAssigned) <= 0
+      ) {
         newErrors[`${index}-quantity`] = "Valid quantity is required";
       }
-      
-      if (assignment.stockExists && Number(assignment.quantityAssigned) > assignment.availableStock) {
+
+      if (
+        assignment.stockExists &&
+        Number(assignment.quantityAssigned) > assignment.availableStock
+      ) {
         newErrors[`${index}-quantity`] = "Quantity exceeds available stock";
       }
     });
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [assignments, assignedBy]);
+  }, [assignments]);
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
     // Check if any materials need purchase
-    const materialsToPurchase = assignments.filter(assignment => assignment.needsPurchase);
-    
+    const materialsToPurchase = assignments.filter(
+      (assignment) => assignment.needsPurchase,
+    );
+
     if (materialsToPurchase.length > 0) {
-      const purchaseList = materialsToPurchase.map(mat => mat.rawMaterialName).join(', ');
+      const purchaseList = materialsToPurchase
+        .map((mat) => mat.rawMaterialName)
+        .join(", ");
       const confirmProceed = window.confirm(
-        `The following materials need to be purchased: ${purchaseList}. Do you want to proceed with partial assignment?`
+        `The following materials need to be purchased: ${purchaseList}. Do you want to proceed with partial assignment?`,
       );
-      
+
       if (!confirmProceed) return;
     }
 
     try {
       // Only assign stock for materials that exist and have sufficient quantity
-      const validAssignments = assignments.filter(assignment => 
-        assignment.stockExists && !assignment.needsPurchase
+      const validAssignments = assignments.filter(
+        (assignment) => assignment.stockExists && !assignment.needsPurchase,
       );
 
       if (validAssignments.length > 0) {
@@ -297,9 +300,9 @@ const StockAssignmentModal = ({
           rawMaterial: assignment.rawMaterialName,
           rawMaterialId: Number(assignment.rawMaterialId),
           quantityAssigned: Number(assignment.quantityAssigned),
-          assignedBy: assignedBy,
-          assignedDate: new Date().toISOString().split('T')[0],
-          notes: notes || "Stock assignment from order processing"
+          assignedBy: userName || "System",
+          assignedDate: new Date().toISOString().split("T")[0],
+          notes: notes || "Stock assignment from order processing",
         }));
 
         // Call the RTK Query mutation
@@ -310,16 +313,17 @@ const StockAssignmentModal = ({
       if (materialsToPurchase.length > 0) {
         message += `. ${materialsToPurchase.length} material(s) require purchase.`;
       }
-      
+
       dispatch(addToast({ message, type: "success" }));
       handleClose();
     } catch (error: any) {
-      console.error('Stock assignment error:', error);
+      console.error("Stock assignment error:", error);
       dispatch(
-        addToast({ 
-          message: error?.data?.message || error?.message || "Failed to assign stock", 
-          type: "error" 
-        })
+        addToast({
+          message:
+            error?.data?.message || error?.message || "Failed to assign stock",
+          type: "error",
+        }),
       );
     }
   };
@@ -328,7 +332,6 @@ const StockAssignmentModal = ({
     setAssignments([]);
     setStockData([]);
     setNotes("");
-    setAssignedBy("");
     setErrors({});
     onClose();
   }, [onClose]);
@@ -358,13 +361,13 @@ const StockAssignmentModal = ({
               </Typography>
             </Box>
           </Box>
-          <IconButton 
+          <IconButton
             onClick={handleClose}
-            sx={{ 
+            sx={{
               color: "inherit",
-              "&:hover": { 
-                backgroundColor: "rgba(255, 255, 255, 0.1)" 
-              } 
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+              },
             }}
           >
             <Close />
@@ -378,62 +381,32 @@ const StockAssignmentModal = ({
             <Typography variant="h6" sx={{ mb: 3, fontWeight: "600" }}>
               Assignment Details
             </Typography>
-            <Paper 
-              elevation={0} 
-              sx={{ 
-                p: 3, 
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
                 border: 1,
                 borderColor: "divider",
-                borderRadius: 2,
-                bgcolor: "background.default"
+                borderRadius: 1,
+                bgcolor: "grey.50",
               }}
             >
-              <FormControl fullWidth error={!!errors['assignedBy']}>
-                <InputLabel id="assigned-by-label">Assigned By *</InputLabel>
-                <Select
-                  labelId="assigned-by-label"
-                  value={assignedBy}
-                  onChange={(e) => {
-                    setAssignedBy(e.target.value);
-                    // Clear error when user selects
-                    if (errors['assignedBy']) {
-                      const newErrors = { ...errors };
-                      delete newErrors['assignedBy'];
-                      setErrors(newErrors);
-                    }
-                  }}
-                  label="Assigned By *"
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                    }
-                  }}
-                >
-                  {TEST_USERS.map((user) => (
-                    <MenuItem key={user.id} value={user.name}>
-                      <Box>
-                        <Typography variant="body2">{user.name}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {user.role}
-                        </Typography>
-                      </Box>
-                    </MenuItem>
-                  ))}
-                </Select>
-                {errors['assignedBy'] && (
-                  <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 2 }}>
-                    {errors['assignedBy']}
-                  </Typography>
-                )}
-              </FormControl>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Assigned By
+              </Typography>
+              <Typography variant="body1" fontWeight={500}>
+                {userName || "Current User"}
+              </Typography>
             </Paper>
           </Box>
 
           <Divider sx={{ my: 4 }} />
 
           {isOrderLoading || stockLoading ? (
-            <Box sx={{ textAlign: 'center', py: 3 }}>
-              <Typography>Loading order details and stock information...</Typography>
+            <Box sx={{ textAlign: "center", py: 3 }}>
+              <Typography>
+                Loading order details and stock information...
+              </Typography>
             </Box>
           ) : assignments.length === 0 ? (
             <Alert severity="info" sx={{ mb: 3 }}>
@@ -447,19 +420,26 @@ const StockAssignmentModal = ({
                   Requested Raw Materials ({assignments.length} items)
                 </Typography>
                 {assignments.map((assignment, index) => (
-                  <Paper 
-                    key={`${assignment.rawMaterialId}-${index}`} 
+                  <Paper
+                    key={`${assignment.rawMaterialId}-${index}`}
                     elevation={0}
-                    sx={{ 
-                      mb: 3, 
-                      p: 3, 
-                      border: 1, 
-                      borderColor: "divider", 
+                    sx={{
+                      mb: 3,
+                      p: 3,
+                      border: 1,
+                      borderColor: "divider",
                       borderRadius: 2,
-                      bgcolor: "background.default"
+                      bgcolor: "background.default",
                     }}
                   >
-                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        mb: 2,
+                      }}
+                    >
                       <Box>
                         <Typography variant="subtitle2" fontWeight="600">
                           {assignment.rawMaterialName}
@@ -492,7 +472,12 @@ const StockAssignmentModal = ({
 
                     <Grid container spacing={3}>
                       <Grid item xs={12} md={3}>
-                        <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                        <Typography
+                          variant="subtitle2"
+                          display="block"
+                          gutterBottom
+                          sx={{ fontWeight: "600" }}
+                        >
                           Requested Quantity
                         </Typography>
                         <Typography variant="body2">
@@ -500,7 +485,12 @@ const StockAssignmentModal = ({
                         </Typography>
                       </Grid>
                       <Grid item xs={12} md={3}>
-                        <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                        <Typography
+                          variant="subtitle2"
+                          display="block"
+                          gutterBottom
+                          sx={{ fontWeight: "600" }}
+                        >
                           Available Stock
                         </Typography>
                         <Typography variant="body2">
@@ -508,7 +498,12 @@ const StockAssignmentModal = ({
                         </Typography>
                       </Grid>
                       <Grid item xs={12} md={3}>
-                        <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                        <Typography
+                          variant="subtitle2"
+                          display="block"
+                          gutterBottom
+                          sx={{ fontWeight: "600" }}
+                        >
                           Quantity to Assign *
                         </Typography>
                         <TextField
@@ -516,19 +511,26 @@ const StockAssignmentModal = ({
                           size="medium"
                           type="number"
                           value={assignment.quantityAssigned}
-                          onChange={(e) => handleQuantityChange(index, e.target.value)}
+                          onChange={(e) =>
+                            handleQuantityChange(index, e.target.value)
+                          }
                           error={!!errors[`${index}-quantity`]}
                           helperText={errors[`${index}-quantity`]}
                           placeholder="0"
                           sx={{
                             "& .MuiOutlinedInput-root": {
                               borderRadius: 2,
-                            }
+                            },
                           }}
                         />
                       </Grid>
                       <Grid item xs={12} md={3}>
-                        <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                        <Typography
+                          variant="subtitle2"
+                          display="block"
+                          gutterBottom
+                          sx={{ fontWeight: "600" }}
+                        >
                           Status
                         </Typography>
                         <Box sx={{ mt: 1 }}>
@@ -565,14 +567,14 @@ const StockAssignmentModal = ({
                 <Typography variant="h6" sx={{ mb: 3, fontWeight: "600" }}>
                   Additional Notes
                 </Typography>
-                <Paper 
-                  elevation={0} 
-                  sx={{ 
-                    p: 3, 
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 3,
                     border: 1,
                     borderColor: "divider",
                     borderRadius: 2,
-                    bgcolor: "background.default"
+                    bgcolor: "background.default",
                   }}
                 >
                   <TextField
@@ -585,7 +587,7 @@ const StockAssignmentModal = ({
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         borderRadius: 2,
-                      }
+                      },
                     }}
                   />
                 </Paper>
@@ -610,29 +612,29 @@ const StockAssignmentModal = ({
             * Required fields
           </Typography>
           <Stack direction="row" spacing={2}>
-            <Button 
+            <Button
               onClick={handleClose}
               variant="outlined"
-              sx={{ 
+              sx={{
                 borderRadius: 2,
                 px: 3,
                 py: 1.5,
                 textTransform: "none",
-                fontWeight: "600"
+                fontWeight: "600",
               }}
             >
               Cancel
             </Button>
-            <Button 
-              variant="contained" 
+            <Button
+              variant="contained"
               onClick={handleSubmit}
               startIcon={<Assignment />}
-              sx={{ 
+              sx={{
                 borderRadius: 2,
                 px: 3,
                 py: 1.5,
                 textTransform: "none",
-                fontWeight: "600"
+                fontWeight: "600",
               }}
             >
               Assign Stock

@@ -82,6 +82,7 @@ const LoginPage = () => {
         localStorage.setItem("authToken", idToken);
         localStorage.setItem("role", role);
         localStorage.setItem("roleDisplayName", roleDisplayName);
+        localStorage.setItem("userName", userName);
         localStorage.setItem("api_endpoint", `/api/${role}`);
 
         console.log("Credentials stored, navigating to dashboard for role:", role);
@@ -168,8 +169,9 @@ const LoginPage = () => {
           {/* Illustration */}
           <div className="flex items-center justify-center">
             <img
-              src="https://www.go.ooo/img/bg-img/Login.jpg"
+              src="https://photos.app.goo.gl/VsFhptp5eUHU9guK6"
               alt="Login Illustration"
+              
               className="max-h-[68rem] w-auto rounded-xl shadow-2xl border border-white/20 bg-white/10 backdrop-blur"
             />
           </div>

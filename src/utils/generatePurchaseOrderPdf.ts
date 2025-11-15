@@ -65,11 +65,17 @@ export function generatePurchaseOrderPdf(
     };
   }
 ): Blob {
-  const doc = new jsPDF();
+  try {
+    const doc = new jsPDF();
 
   // Header section - STATIC SRI BRAMHA INDUSTRIES
-  if (Logo) {
-    doc.addImage(Logo, "PNG", 15, 2, 30, 30);
+  try {
+    if (Logo) {
+      doc.addImage(Logo, "PNG", 15, 2, 30, 30);
+    }
+  } catch (error) {
+    console.warn("Failed to load logo image:", error);
+    // Continue without logo
   }
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
@@ -172,7 +178,7 @@ export function generatePurchaseOrderPdf(
   doc.setFontSize(9);
   doc.text("We are pleased to place an order for the following items as per specification, terms & conditions.", 12, 165);
 
-  // Items table - DYNAMIC VALUES with FIXED column widths
+  // Items table - FIXED column widths to fit page (total must be ≤ 190 units with margins)
   const startY = 175;
   const headers = [
     "Sl. No",
@@ -221,7 +227,6 @@ export function generatePurchaseOrderPdf(
       cellPadding: 1.5,
       lineColor: [0, 0, 0],
       lineWidth: 0.3,
-      overflow: "linebreak",
       valign: "middle",
     },
     headStyles: {
@@ -236,17 +241,18 @@ export function generatePurchaseOrderPdf(
       valign: "top",
     },
     columnStyles: {
-      0: { cellWidth: 12, halign: "center" }, // Sl. No
-      1: { cellWidth: 40, overflow: 'linebreak' }, // Item Description
-      2: { cellWidth: 35, overflow: 'linebreak' }, // Spec/Make
-      3: { cellWidth: 12, halign: "center" }, // GST
-      4: { cellWidth: 12, halign: "center" }, // UOM
-      5: { cellWidth: 12, halign: "center" }, // Qty
-      6: { cellWidth: 18, halign: "center" }, // Delivery
-      7: { cellWidth: 22, halign: "right" }, // Unit Price
-      8: { cellWidth: 27, halign: "right" }, // Total Value
+      0: { cellWidth: 10, halign: "center" },  // Sl. No
+      1: { cellWidth: 36 },                     // Item Description - reduced
+      2: { cellWidth: 28 },                     // Spec/Make - reduced
+      3: { cellWidth: 9, halign: "center" },   // GST - reduced
+      4: { cellWidth: 9, halign: "center" },   // UOM - reduced
+      5: { cellWidth: 9, halign: "center" },   // Qty - reduced
+      6: { cellWidth: 15, halign: "center" },  // Delivery - reduced
+      7: { cellWidth: 22, halign: "right" },   // Unit Price
+      8: { cellWidth: 28, halign: "right" },   // Total Value - reduced
     },
     margin: { left: 10, right: 10 },
+    tableWidth: 'wrap',
   });
 
   const afterItemsY = (doc as any).lastAutoTable?.finalY ?? startY + 30;
@@ -279,7 +285,7 @@ export function generatePurchaseOrderPdf(
     }
   });
 
-  // Totals section - DYNAMIC VALUES
+  // Totals section - DYNAMIC VALUES (fixed width calculation)
   const basicValue = Number(order.items?.reduce((s, it: any) => s + Number(it.totalPrice || 0), 0) || order.totalAmount || 0);
   const cgstPct = opts?.taxes?.cgstPct ?? Number((order as any)?.cgst || 9);
   const sgstPct = opts?.taxes?.sgstPct ?? Number((order as any)?.sgst || 9);
@@ -302,15 +308,15 @@ export function generatePurchaseOrderPdf(
       fontSize: 9, 
       cellPadding: 2, 
       lineColor: [0, 0, 0], 
-      lineWidth: 0.3,
-      overflow: 'hidden'
+      lineWidth: 0.3
     },
     bodyStyles: { halign: "right" },
     columnStyles: { 
-      0: { halign: "left", cellWidth: 30 }, 
-      1: { halign: "right", cellWidth: 25 } 
+      0: { halign: "left", cellWidth: 26 }, 
+      1: { halign: "right", cellWidth: 24 } 
     },
-    margin: { left: 135 },
+    margin: { left: 150, right: 10 },
+    tableWidth: 50,
     willDrawCell: (data) => {
       if (data.row.index === data.table.body.length - 1) {
         doc.setFont("helvetica", "bold");
@@ -374,7 +380,7 @@ export function generatePurchaseOrderPdf(
   }
 
   // Save the PDF
-  const fileName = `PO_${order.id}_${new Date().toISOString().split("T")[0]}`;
+  const fileName = `PO_${order.id}_${new Date().toISOString().split("T")[0]}.pdf`;
   try {
     const pageHeight = (doc as any).internal?.pageSize?.getHeight
       ? (doc as any).internal.pageSize.getHeight()
@@ -386,7 +392,22 @@ export function generatePurchaseOrderPdf(
     doc.setTextColor(0);
   } catch {}
   
-  // Return the PDF as a blob instead of saving it
+  // Return the PDF as a blob
   const pdfBlob = doc.output('blob');
+  
+  // Trigger download
+  const url = URL.createObjectURL(pdfBlob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  
   return pdfBlob;
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    throw new Error(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }

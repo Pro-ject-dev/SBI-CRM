@@ -7,6 +7,7 @@ import {
   Category as CategoryIcon, // For Raw Materials
   Assignment as AssignmentIcon, // For Leads (or another suitable icon)
   HelpOutline as HelpOutlineIcon,
+  History as HistoryIcon, // For Raw Materials Log
 } from "@mui/icons-material";
 
 import WarehouseIcon from "@mui/icons-material/Warehouse";
@@ -49,6 +50,12 @@ export const adminMenuItems: SideBar[] = [
     label: "Raw Materials",
     icon: CategoryIcon,
     path: "/admin/raw-materials",
+  },
+  {
+    id: "rawmaterialslog",
+    label: "Raw Materials Log",
+    icon: HistoryIcon,
+    path: "/admin/raw-materials-log",
   },
   {
     id: "employees",

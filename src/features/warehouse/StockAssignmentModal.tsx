@@ -10,18 +10,16 @@ import {
   Divider,
   Chip,
   Alert,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  Paper,
+  Stack,
 } from "@mui/material";
-import { Close, Warning, ShoppingCart } from "@mui/icons-material";
+import { Close, Warning, ShoppingCart, Assignment } from "@mui/icons-material";
 import { useAssignStockMutation } from "../../app/api/stockAssignmentApi";
-import { rawMaterialsApi } from "../../app/api/rawMaterialsApi"; 
-import { useDispatch } from "react-redux";
-import type { AppDispatch } from "../../app/store";
+import { rawMaterialsApi } from "../../app/api/rawMaterialsApi";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "../../app/store";
 import { addToast } from "../../app/slices/toastSlice";
-import { useGetOrderByIdQuery } from '../../app/api/orderManagementApi';
+import { useGetOrderByIdQuery } from "../../app/api/orderManagementApi";
 
 interface StockAssignmentItem {
   productId: string;
@@ -56,9 +54,6 @@ interface StockAssignmentModalProps {
   onClose: () => void;
   orderId?: string;
   orderNumber?: string;
-  users: { id: number; name: string; role: string }[];
-  assignedBy: string;
-  onAssignedByChange: (value: string) => void;
 }
 
 const StockAssignmentModal = ({
@@ -66,12 +61,11 @@ const StockAssignmentModal = ({
   onClose,
   orderId,
   orderNumber,
-  users,
-  assignedBy,
-  onAssignedByChange,
 }: StockAssignmentModalProps) => {
   const dispatch: AppDispatch = useDispatch();
-  const { data: orderDetailsData, isLoading: isOrderLoading } = useGetOrderByIdQuery({ id: orderId! }, { skip: !orderId || !open });
+  const { userName } = useSelector((state: RootState) => state.auth);
+  const { data: orderDetailsData, isLoading: isOrderLoading } =
+    useGetOrderByIdQuery({ id: orderId! }, { skip: !orderId || !open });
   const [assignStock] = useAssignStockMutation();
 
   const [assignments, setAssignments] = useState<StockAssignmentItem[]>([]);
@@ -101,14 +95,17 @@ const StockAssignmentModal = ({
           try {
             // Use the RTK Query endpoint directly with proper typing
             const result = await (dispatch as any)(
-              rawMaterialsApi.endpoints.getRawMaterialByName.initiate({ 
-                name: material.rawMaterial 
-              })
+              rawMaterialsApi.endpoints.getRawMaterialByName.initiate({
+                name: material.rawMaterial,
+              }),
             ).unwrap();
-            
+
             return result;
           } catch (error) {
-            console.error(`Error fetching stock for ${material.rawMaterial}:`, error);
+            console.error(
+              `Error fetching stock for ${material.rawMaterial}:`,
+              error,
+            );
             return { success: false, data: null };
           }
         });
@@ -116,7 +113,7 @@ const StockAssignmentModal = ({
         const results = await Promise.all(stockPromises);
         setStockData(results);
       } catch (error) {
-        console.error('Error fetching stock data:', error);
+        console.error("Error fetching stock data:", error);
         setStockData([]);
       } finally {
         setStockLoading(false);
@@ -130,20 +127,20 @@ const StockAssignmentModal = ({
   useEffect(() => {
     if (open && rawMaterials.length > 0) {
       const initialAssignments = rawMaterials.map((mat: any) => ({
-        productId: mat.productId || mat.id || '',
+        productId: mat.productId || mat.id || "",
         rawMaterialId: mat.id,
         rawMaterialName: mat.rawMaterial,
         availableStock: 0,
-        unit: '',
-        quantityAssigned: mat.qty || '',
-        requestedQuantity: mat.qty || '',
+        unit: "",
+        quantityAssigned: mat.qty || "",
+        requestedQuantity: mat.qty || "",
         stockExists: false,
         needsPurchase: false,
       }));
-      
+
       setAssignments(initialAssignments);
     }
-    
+
     if (!open) {
       setAssignments([]);
       setStockData([]);
@@ -157,12 +154,13 @@ const StockAssignmentModal = ({
     if (stockData.length > 0 && assignments.length > 0) {
       const updatedAssignments = assignments.map((assignment, index) => {
         const stockResult = stockData[index];
-        
+
         if (stockResult && stockResult.success && stockResult.data) {
           const availableStock = stockResult.data.currentStock || 0;
-          const unit = stockResult.data.unit || '';
-          const needsPurchase = availableStock < Number(assignment.requestedQuantity);
-          
+          const unit = stockResult.data.unit || "";
+          const needsPurchase =
+            availableStock < Number(assignment.requestedQuantity);
+
           return {
             ...assignment,
             availableStock,
@@ -172,88 +170,97 @@ const StockAssignmentModal = ({
             rawMaterialId: stockResult.data.id || assignment.rawMaterialId,
           };
         }
-        
+
         return {
           ...assignment,
           needsPurchase: true,
           stockExists: false,
         };
       });
-      
+
       setAssignments(updatedAssignments);
     }
   }, [stockData, assignments.length]);
 
-  const handleAssignmentChange = useCallback((index: number, field: string, value: string) => {
-    setAssignments(prevAssignments => {
-      const newAssignments = [...prevAssignments];
-      newAssignments[index] = {
-        ...newAssignments[index],
-        [field]: value,
-      };
-      
-      // Check if quantity exceeds available stock
-      if (field === "quantityAssigned") {
-        const assignment = newAssignments[index];
-        assignment.needsPurchase = !assignment.stockExists || Number(value) > assignment.availableStock;
-      }
-      
-      return newAssignments;
-    });
-    
-    // Clear errors for this field
-    const errorKey = `${index}-${field}`;
-    setErrors(prevErrors => {
-      if (prevErrors[errorKey]) {
-        const newErrors = { ...prevErrors };
-        delete newErrors[errorKey];
-        return newErrors;
-      }
-      return prevErrors;
-    });
-  }, []);
+  const handleAssignmentChange = useCallback(
+    (index: number, field: string, value: string) => {
+      setAssignments((prevAssignments) => {
+        const newAssignments = [...prevAssignments];
+        newAssignments[index] = {
+          ...newAssignments[index],
+          [field]: value,
+        };
+
+        // Check if quantity exceeds available stock
+        if (field === "quantityAssigned") {
+          const assignment = newAssignments[index];
+          assignment.needsPurchase =
+            !assignment.stockExists ||
+            Number(value) > assignment.availableStock;
+        }
+
+        return newAssignments;
+      });
+
+      // Clear errors for this field
+      const errorKey = `${index}-${field}`;
+      setErrors((prevErrors) => {
+        if (prevErrors[errorKey]) {
+          const newErrors = { ...prevErrors };
+          delete newErrors[errorKey];
+          return newErrors;
+        }
+        return prevErrors;
+      });
+    },
+    [],
+  );
 
   const validateForm = useCallback(() => {
     const newErrors: Record<string, string> = {};
-    
-    // Validate assigned by
-    if (!assignedBy) {
-      newErrors['assignedBy'] = "Please select who is assigning the stock";
-    }
-    
+
+    // Validate assignments
     assignments.forEach((assignment, index) => {
-      if (!assignment.quantityAssigned || Number(assignment.quantityAssigned) <= 0) {
-        newErrors[`${index}-quantityAssigned`] = "Valid quantity is required";
+      if (
+        !assignment.quantityAssigned ||
+        Number(assignment.quantityAssigned) <= 0
+      ) {
+        newErrors[`quantity_${index}`] = "Please enter a valid quantity";
       }
-      
-      if (assignment.stockExists && Number(assignment.quantityAssigned) > assignment.availableStock) {
-        newErrors[`${index}-quantityAssigned`] = "Quantity exceeds available stock";
+
+      if (Number(assignment.quantityAssigned) > assignment.availableStock) {
+        newErrors[`quantity_${index}`] =
+          `Cannot assign more than available stock (${assignment.availableStock})`;
       }
     });
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [assignments, assignedBy]);
+  }, [assignments]);
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
     // Check if any materials need purchase
-    const materialsToPurchase = assignments.filter(assignment => assignment.needsPurchase);
-    
+    const materialsToPurchase = assignments.filter(
+      (assignment) => assignment.needsPurchase,
+    );
+
     if (materialsToPurchase.length > 0) {
-      const purchaseList = materialsToPurchase.map(mat => mat.rawMaterialName).join(', ');
+      const purchaseList = materialsToPurchase
+        .map((mat) => mat.rawMaterialName)
+        .join(", ");
       const confirmProceed = window.confirm(
-        `The following materials need to be purchased: ${purchaseList}. Do you want to proceed with partial assignment?`
+        `The following materials need to be purchased: ${purchaseList}. Do you want to proceed with partial assignment?`,
       );
-      
+
       if (!confirmProceed) return;
     }
 
     try {
       // Only assign stock for materials that exist and have sufficient quantity
-      const validAssignments = assignments.filter(assignment => 
-        assignment.stockExists && !assignment.needsPurchase
+      const validAssignments = assignments.filter(
+        (assignment) => assignment.stockExists && !assignment.needsPurchase,
       );
 
       if (validAssignments.length > 0) {
@@ -264,9 +271,9 @@ const StockAssignmentModal = ({
           rawMaterial: assignment.rawMaterialName,
           rawMaterialId: Number(assignment.rawMaterialId),
           quantityAssigned: Number(assignment.quantityAssigned),
-          assignedBy: assignedBy,
-          assignedDate: new Date().toISOString().split('T')[0],
-          notes: notes || "Stock assignment from order processing"
+          assignedBy: userName || "System",
+          assignedDate: new Date().toISOString().split("T")[0],
+          notes: notes || "Stock assignment from order processing",
         }));
 
         // Call the RTK Query mutation
@@ -277,16 +284,17 @@ const StockAssignmentModal = ({
       if (materialsToPurchase.length > 0) {
         message += `. ${materialsToPurchase.length} material(s) require purchase.`;
       }
-      
+
       dispatch(addToast({ message, type: "success" }));
       handleClose();
     } catch (error: any) {
-      console.error('Stock assignment error:', error);
+      console.error("Stock assignment error:", error);
       dispatch(
-        addToast({ 
-          message: error?.data?.message || error?.message || "Failed to assign stock", 
-          type: "error" 
-        })
+        addToast({
+          message:
+            error?.data?.message || error?.message || "Failed to assign stock",
+          type: "error",
+        }),
       );
     }
   };
@@ -325,38 +333,32 @@ const StockAssignmentModal = ({
         <Box sx={{ p: 3 }}>
           {/* Assigned By Dropdown */}
           <Box sx={{ mb: 3 }}>
-            <FormControl fullWidth error={!!errors['assignedBy']}>
-              <InputLabel id="assigned-by-label">Assigned By *</InputLabel>
-              <Select
-                labelId="assigned-by-label"
-                value={assignedBy}
-                onChange={(e) => onAssignedByChange(e.target.value)}
-                label="Assigned By *"
-              >
-                {users.map((user) => (
-                  <MenuItem key={user.id} value={user.name}>
-                    <Box>
-                      <Typography variant="body2">{user.name}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {user.role}
-                      </Typography>
-                    </Box>
-                  </MenuItem>
-                ))}
-              </Select>
-              {errors['assignedBy'] && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 2 }}>
-                  {errors['assignedBy']}
-                </Typography>
-              )}
-            </FormControl>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 1,
+                bgcolor: "grey.50",
+              }}
+            >
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Assigned By
+              </Typography>
+              <Typography variant="body1" fontWeight={500}>
+                {userName || "Current User"}
+              </Typography>
+            </Paper>
           </Box>
 
           <Divider sx={{ my: 3 }} />
 
           {isOrderLoading || stockLoading ? (
-            <Box sx={{ textAlign: 'center', py: 3 }}>
-              <Typography>Loading order details and stock information...</Typography>
+            <Box sx={{ textAlign: "center", py: 3 }}>
+              <Typography>
+                Loading order details and stock information...
+              </Typography>
             </Box>
           ) : assignments.length === 0 ? (
             <Alert severity="info" sx={{ mb: 3 }}>
@@ -368,8 +370,24 @@ const StockAssignmentModal = ({
                 Requested Raw Materials ({assignments.length} items)
               </Typography>
               {assignments.map((assignment, index) => (
-                <Box key={`${assignment.rawMaterialId}-${index}`} sx={{ mb: 3, p: 2, border: 1, borderColor: "divider", borderRadius: 1 }}>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                <Box
+                  key={`${assignment.rawMaterialId}-${index}`}
+                  sx={{
+                    mb: 3,
+                    p: 2,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mb: 2,
+                    }}
+                  >
                     <Box>
                       <Typography variant="subtitle2" fontWeight="bold">
                         {assignment.rawMaterialName}
@@ -397,20 +415,28 @@ const StockAssignmentModal = ({
                       )}
                     </Box>
                   </Box>
-                  
+
                   <Grid container spacing={2}>
                     <Grid item xs={12} md={6}>
-                      <Typography variant="caption" display="block" gutterBottom>
+                      <Typography
+                        variant="caption"
+                        display="block"
+                        gutterBottom
+                      >
                         Requested Quantity
                       </Typography>
-                      <Chip 
-                        label={`${assignment.requestedQuantity} ${assignment.unit || 'units'}`} 
-                        color="info" 
+                      <Chip
+                        label={`${assignment.requestedQuantity} ${assignment.unit || "units"}`}
+                        color="info"
                         sx={{ minWidth: 100 }}
                       />
                     </Grid>
                     <Grid item xs={12} md={6}>
-                      <Typography variant="caption" display="block" gutterBottom>
+                      <Typography
+                        variant="caption"
+                        display="block"
+                        gutterBottom
+                      >
                         Quantity to Issue
                       </Typography>
                       <TextField
@@ -418,7 +444,13 @@ const StockAssignmentModal = ({
                         size="small"
                         type="number"
                         value={assignment.quantityAssigned}
-                        onChange={(e) => handleAssignmentChange(index, "quantityAssigned", e.target.value)}
+                        onChange={(e) =>
+                          handleAssignmentChange(
+                            index,
+                            "quantityAssigned",
+                            e.target.value,
+                          )
+                        }
                         error={!!errors[`${index}-quantityAssigned`]}
                         helperText={errors[`${index}-quantityAssigned`]}
                         disabled={!assignment.stockExists}
@@ -433,29 +465,31 @@ const StockAssignmentModal = ({
                       />
                     </Grid>
                   </Grid>
-                  
-                  <Box sx={{ mt: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
+
+                  <Box
+                    sx={{ mt: 2, display: "flex", gap: 1, flexWrap: "wrap" }}
+                  >
                     {assignment.stockExists ? (
                       <Chip
-                        label={`Available: ${assignment.availableStock} ${assignment.unit || 'units'}`}
-                        color={assignment.availableStock >= Number(assignment.requestedQuantity) ? "success" : "warning"}
+                        label={`Available: ${assignment.availableStock} ${assignment.unit || "units"}`}
+                        color={
+                          assignment.availableStock >=
+                          Number(assignment.requestedQuantity)
+                            ? "success"
+                            : "warning"
+                        }
                         size="small"
                       />
                     ) : (
-                      <Chip
-                        label="Not in Stock"
-                        color="error"
-                        size="small"
-                      />
+                      <Chip label="Not in Stock" color="error" size="small" />
                     )}
                   </Box>
-                  
+
                   {assignment.needsPurchase && (
                     <Alert severity="warning" sx={{ mt: 2 }}>
-                      {!assignment.stockExists 
+                      {!assignment.stockExists
                         ? "This material is not available in stock and needs to be purchased."
-                        : `Insufficient stock available. Only ${assignment.availableStock} ${assignment.unit || 'units'} available, but ${assignment.requestedQuantity} ${assignment.unit || 'units'} requested. Purchase required for remaining quantity.`
-                      }
+                        : `Insufficient stock available. Only ${assignment.availableStock} ${assignment.unit || "units"} available, but ${assignment.requestedQuantity} ${assignment.unit || "units"} requested. Purchase required for remaining quantity.`}
                     </Alert>
                   )}
                 </Box>
@@ -493,10 +527,10 @@ const StockAssignmentModal = ({
           <Button onClick={handleClose} disabled={stockLoading}>
             Cancel
           </Button>
-          <Button 
-            variant="contained" 
-            onClick={handleSubmit} 
-            disabled={assignments.length === 0 || stockLoading || !assignedBy}
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            disabled={assignments.length === 0 || stockLoading}
           >
             {stockLoading ? "Loading..." : "Assign Available Stock"}
           </Button>

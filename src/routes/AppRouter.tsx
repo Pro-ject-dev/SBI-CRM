@@ -13,15 +13,16 @@ const AppRouter = () => {
   const dispatch = useDispatch();
   const authState = useSelector((state: RootState) => state.auth);
   
-  // Restore authentication state from localStorage on app initialization
-  useEffect(() => {
-    dispatch(restoreCredentials());
-  }, [dispatch]);
+
   
   useEffect(() => {
     console.log("AppRouter - Current auth state:", authState);
     console.log("AppRouter - Current location:", window.location.pathname);
   }, [authState]);
+
+  if (!authState.isInitialized) {
+    return <div>Loading...</div>; // Or a spinner component
+  }
 
   return (
     <Routes>

@@ -43,7 +43,7 @@ export const addonsProductApi = createApi({
         grade: string;
       }) => {
         return `${localStorage.getItem(
-          "api_endpoint"
+          "api_endpoint",
         )}/GetAddonsByFilter?page=${
           page + 1
         }&size=${size}&name=${productName}&startDate=${startDate}&endDate=${endDate}&grade=${grade}`;

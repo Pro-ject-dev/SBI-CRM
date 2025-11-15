@@ -10,7 +10,7 @@ export interface RawMaterial {
   unitPrice: number;
   vendorId?: number;
   vendor?: Vendor;
-  status: '1' | '0';
+  status: "1" | "0";
   createdAt: string;
   updatedAt: string;
 }
@@ -36,7 +36,7 @@ export interface Vendor {
   address: string;
   gstNumber?: string;
   paymentTerms: string;
-  status: '1' | '0';
+  status: "1" | "0";
   createdAt: string;
   updatedAt: string;
 }
@@ -51,32 +51,31 @@ export interface VendorFormData {
   paymentTerms: string;
 }
 
-
 export interface PurchaseOrderItem {
   id?: number;
-  purchaseId?: string;         // Added - from API response
-  rawMaterialId: string;       // Changed to string to match API
+  purchaseId?: string; // Added - from API response
+  rawMaterialId: string; // Changed to string to match API
   rawMaterial?: RawMaterial | string;
   gst: string; // Can be string or object
   deliveryDate: string;
-  quantity: string;            // Changed to string to match API
-  unitPrice: string;           // Changed to string to match API  
-  totalPrice: string;          // Changed to string to match API
+  quantity: string; // Changed to string to match API
+  unitPrice: string; // Changed to string to match API
+  totalPrice: string; // Changed to string to match API
   status: string;
-  createdAt?: string;          // Added
-  updatedAt?: string;          // Added
+  createdAt?: string; // Added
+  updatedAt?: string; // Added
 }
 
 export interface PurchaseOrder {
   id: number;
-  orderNumber?: string;        // Made optional since API doesn't return it
-  vendorId: string;            // Changed to string to match API
-  vendor?: Vendor | string;  
-  vendorAddress?: Vendor | string;    // Can be string or object
+  orderNumber?: string; // Made optional since API doesn't return it
+  vendorId: string; // Changed to string to match API
+  vendor?: Vendor | string;
+  vendorAddress?: Vendor | string; // Can be string or object
   items: PurchaseOrderItem[];
-  totalAmount: string;         // Changed to string to match API
+  totalAmount: string; // Changed to string to match API
   status: "1" | "0";
-  orderStatus: 'Pending' | 'Approved' | 'Rejected' | 'Completed'; // Capitalized to match API
+  orderStatus: "Pending" | "Approved" | "Rejected" | "Completed"; // Capitalized to match API
   requestedBy: string;
   requestedDate: string;
   deliveryDate: string;
@@ -94,7 +93,6 @@ export interface PurchaseOrder {
   updatedAt: string;
 }
 
-
 export interface PurchaseOrderFormData {
   vendorId: string;
   items: {
@@ -104,7 +102,6 @@ export interface PurchaseOrderFormData {
   }[];
   notes: string;
 }
-
 
 export interface StockAssignment {
   id: number;
@@ -131,9 +128,22 @@ export interface StockAlert {
   id: number;
   rawMaterialId: number;
   rawMaterial?: RawMaterial;
-  alertType: 'low_stock' | 'out_of_stock';
+  alertType: "low_stock" | "out_of_stock";
   currentStock: number;
   minimumStock: number;
   isRead: boolean;
   createdAt: string;
+}
+
+// Raw Material Log Types
+export interface RawMaterialLog {
+  id: number;
+  date: string;
+  orderId: string | null;
+  rawMaterial: string;
+  qty: string;
+  type: "0" | "1"; // 0: stock in, 1: stock out
+  status: "0" | "1";
+  createdAt: string;
+  updatedAt: string;
 }

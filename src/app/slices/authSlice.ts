@@ -39,11 +39,13 @@ const authSlice = createSlice({
 		const storedToken = localStorage.getItem("authToken");
 		const storedRole = localStorage.getItem("role");
 		const storedRoleDisplayName = localStorage.getItem("roleDisplayName");
+		const storedUserName = localStorage.getItem("userName");
 		
 		if (storedToken && storedRole) {
 			state.idToken = storedToken;
 			state.role = storedRole as UserRole;
 			state.roleDisplayName = storedRoleDisplayName;
+			state.userName = storedUserName;
 			state.refreshToken = storedToken; // Using same token as refresh for now
 		}
 		state.isInitialized = true;

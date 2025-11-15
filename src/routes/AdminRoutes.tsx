@@ -10,7 +10,7 @@ import LeadManagement from "../features/admin/LeadManagement";
 import OrderManagement from "../features/admin/OrderManagement";
 import EmployeeManagement from "../features/admin/EmployeeManagement";
 import HelpSupport from "../pages/HelpSupport";
-
+import RawMaterialsLog from "../features/admin/RawMaterialsLog";
 
 const AdminRoutes = () => (
   <>
@@ -29,10 +29,13 @@ const AdminRoutes = () => (
       <Route path="master-form" element={<MasterForm />} />
       <Route path="product-management" element={<ProductManagement />} />
       <Route path="view-products" element={<ProductManagement />} />
-      <Route path="purchase-orders-approval" element={<PurchaseOrdersApproval />} />
+      <Route
+        path="purchase-orders-approval"
+        element={<PurchaseOrdersApproval />}
+      />
       <Route path="raw-materials" element={<RawMaterialsManagement />} />
+      <Route path="raw-materials-log" element={<RawMaterialsLog />} />
       <Route path="help" element={<HelpSupport />} />
-
     </Route>
   </>
 );

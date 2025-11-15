@@ -11,17 +11,13 @@ import type {
   OrderManagementDataDto,
 } from "../../types/orderManagement";
 
-// Replace with actual user data from your application state or API
-const TEST_USERS = [
-  { id: 1, name: "Warehouse User 1", role: "Warehouse Manager" },
-  { id: 2, name: "Warehouse User 2", role: "Inventory Supervisor" },
-];
-
 const WarehouseOrdersManagement = () => {
   const [orderData, setOrderData] = useState<OrderManagementColumnData[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<{ id: string; number: string } | null>(null);
-  const [assignedBy, setAssignedBy] = useState("");
+  const [selectedOrder, setSelectedOrder] = useState<{
+    id: string;
+    number: string;
+  } | null>(null);
 
   const { data: allOrders, isLoading } = useGetAllOrdersQuery("");
 
@@ -32,7 +28,10 @@ const WarehouseOrdersManagement = () => {
       const warehouseOrders = allOrders
         .filter((order: OrderManagementDataDto) => {
           console.log("Order Status:", order.orderStatus);
-          return String(order.orderStatus) === "1" || String(order.orderStatus) === "2";
+          return (
+            String(order.orderStatus) === "1" ||
+            String(order.orderStatus) === "2"
+          );
         })
         .map((obj: OrderManagementDataDto) => ({
           id: obj.id,
@@ -55,7 +54,6 @@ const WarehouseOrdersManagement = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedOrder(null);
-    setAssignedBy("");
   };
 
   const columns: GridColDef[] = [
@@ -144,9 +142,6 @@ const WarehouseOrdersManagement = () => {
           onClose={handleCloseModal}
           orderId={selectedOrder.id}
           orderNumber={selectedOrder.number}
-          users={TEST_USERS}
-          assignedBy={assignedBy}
-          onAssignedByChange={setAssignedBy}
         />
       )}
     </>
@@ -154,4 +149,3 @@ const WarehouseOrdersManagement = () => {
 };
 
 export default WarehouseOrdersManagement;
-
