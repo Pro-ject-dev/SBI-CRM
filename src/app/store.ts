@@ -19,6 +19,7 @@ import { purchaseOrdersApi } from "./api/purchaseOrdersApi";
 import { stockAssignmentApi } from "./api/stockAssignmentApi";
 import { leadsApi } from "./api/leadsApi";
 import { employeeApi } from "./api/employeeApi";
+import { consumableMaterialsApi } from "./api/consumableMaterialsApi";
 import ordersReducer from "./slices/ordersSlice";
 import leadsReducer from "./slices/leadsSlice";
 import estimationReducer from "./slices/estimationSlice";
@@ -48,6 +49,7 @@ export const store = configureStore({
     [stockAssignmentApi.reducerPath]: stockAssignmentApi.reducer,
     [leadsApi.reducerPath]: leadsApi.reducer,
     [employeeApi.reducerPath]: employeeApi.reducer,
+    [consumableMaterialsApi.reducerPath]: consumableMaterialsApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -64,10 +66,10 @@ export const store = configureStore({
       purchaseOrdersApi.middleware,
       stockAssignmentApi.middleware,
       leadsApi.middleware,
-      employeeApi.middleware
-    )
+      employeeApi.middleware,
+      consumableMaterialsApi.middleware,
+    ),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
-

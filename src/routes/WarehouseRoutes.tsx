@@ -4,6 +4,8 @@ import WarehouseDashboard from "../features/warehouse/WarehouseDashboard";
 import WarehouseLayout from "../layouts/WarehouseLayout";
 import WarehouseRawMaterials from "../pages/warehouse/WarehouseRawMaterials";
 import WarehouseVendors from "../pages/warehouse/WarehouseVendors";
+import WarehouseConsumableMaterials from "../pages/warehouse/WarehouseConsumableMaterials";
+import WarehouseConsumableRequestsApproval from "../pages/warehouse/WarehouseConsumableRequestsApproval";
 // import WarehousePurchaseOrders from "../pages/warehouse/WarehousePurchaseOrders";
 import PurchaseOrdersManagement from "../features/warehouse/PurchaseOrdersManagement";
 import WarehouseOrdersManagement from "../features/warehouse/WarehouseOrdersManagement";
@@ -24,6 +26,14 @@ const WarehouseRoutes = () => (
       <Route path="raw-materials/form" element={<WarehouseRawMaterials />} />
       <Route path="vendors" element={<WarehouseVendors />} />
       <Route path="vendors/form" element={<WarehouseVendors />} />
+      <Route
+        path="consumable-materials"
+        element={<WarehouseConsumableMaterials />}
+      />
+      <Route
+        path="consumable-requests"
+        element={<WarehouseConsumableRequestsApproval />}
+      />
       {/* Old purchase-orders and stock-assignment routes commented out */}
       {/* <Route path="purchase-orders" element={<WarehousePurchaseOrders />} /> */}
       {/* <Route path="purchase-orders/form" element={<WarehousePurchaseOrders />} /> */}
