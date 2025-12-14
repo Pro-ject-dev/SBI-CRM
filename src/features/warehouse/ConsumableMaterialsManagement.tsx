@@ -14,8 +14,13 @@ import {
   Tabs,
   Tab,
   Badge,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { useEffect, useState } from "react";
+import Barcode from "react-barcode";
 import {
   Delete,
   Edit,
@@ -43,10 +48,15 @@ import ConsumableMaterialModal from "../../components/UI/ConsumableMaterialModal
 const ConsumableBarcodeModal = ({ open, onClose, material }: any) => {
   if (!open) return null;
   return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Barcode Modal</DialogTitle>
-      <DialogContent>
-        <Typography>Barcode modal will be implemented here</Typography>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Material Barcode</DialogTitle>
+      <DialogContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4 }}>
+        {material?.barcode ? (
+          <Barcode value={material.barcode} />
+        ) : (
+          <Typography>No barcode available</Typography>
+        )}
+        <Typography variant="h6" sx={{ mt: 2 }}>{material?.materialName}</Typography>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Close</Button>
@@ -159,10 +169,13 @@ const ConsumableMaterialsManagement = () => {
   };
 
 
-  const getStockStatus = (current: number, minimum: number) => {
-    if (current === 0) {
+  const getStockStatus = (current: number | string, minimum: number | string) => {
+    const currentNum = Number(current);
+    const minNum = Number(minimum);
+
+    if (currentNum === 0) {
       return <Chip label="Out of Stock" color="error" size="small" />;
-    } else if (current <= minimum) {
+    } else if (currentNum <= minNum) {
       return <Chip label="Low Stock" color="warning" size="small" />;
     } else {
       return <Chip label="In Stock" color="success" size="small" />;
@@ -201,7 +214,7 @@ const ConsumableMaterialsManagement = () => {
       align: "center",
       renderCell: (params) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {params.row.currentStock <= params.row.minimumStock && (
+          {Number(params.row.currentStock) <= Number(params.row.minimumStock) && (
             <Warning color="warning" fontSize="small" />
           )}
           {params.row.currentStock} {params.row.unit}
@@ -215,7 +228,7 @@ const ConsumableMaterialsManagement = () => {
       minWidth: 150,
       headerAlign: "center",
       align: "center",
-      renderCell: (params) => `${params.row.minimumStock} ${params.row.unit}`,
+      renderCell: (params) => `${params.row.minimumStock} ${params.row.unit || ""}`,
     },
 
     {
@@ -258,7 +271,7 @@ const ConsumableMaterialsManagement = () => {
       headerAlign: "center",
       align: "center",
       renderCell: (params: any) => (
-        <Box sx={{ display: "flex", gap: 1 }}>
+        <Box sx={{ display: "flex", gap: 1, justifyContent: "center", alignItems: "center", width: "100%", height: "100%" }}>
           <Button
             color="primary"
             sx={{ p: "0px", m: "0px" }}
@@ -272,16 +285,6 @@ const ConsumableMaterialsManagement = () => {
             onClick={() => handleDeleteRow(params.row.id)}
           >
             <Delete />
-          </Button>
-          <Button
-            color="info"
-            sx={{ p: "0px", m: "0px" }}
-            onClick={() => {
-              setSelectedMaterial(params.row);
-              setUsageReportModalOpen(true);
-            }}
-          >
-            <TrendingUp />
           </Button>
         </Box>
       ),
@@ -319,6 +322,7 @@ const ConsumableMaterialsManagement = () => {
             gap: 2,
             flexDirection: { xs: "column", sm: "row" },
             alignItems: { xs: "stretch", sm: "center" },
+            flexGrow: 1,
           }}
         >
           <TextField
@@ -326,14 +330,27 @@ const ConsumableMaterialsManagement = () => {
             placeholder="Search materials..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{ flexGrow: 1 }}
+            sx={{}}
           />
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Stock Status</InputLabel>
+            <Select
+              value={statusFilter}
+              label="Stock Status"
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <MenuItem value="">All Status</MenuItem>
+              <MenuItem value="In Stock">In Stock</MenuItem>
+              <MenuItem value="Low Stock">Low Stock</MenuItem>
+              <MenuItem value="Out of Stock">Out of Stock</MenuItem>
+            </Select>
+          </FormControl>
           <TextField
             size="small"
             placeholder="Scan barcode..."
             value={barcodeSearchTerm}
             onChange={(e) => setBarcodeSearchTerm(e.target.value)}
-            sx={{ flexGrow: 1 }}
+            sx={{}}
           />
         </Box>
         <Box sx={{ display: "flex", gap: 2 }}>

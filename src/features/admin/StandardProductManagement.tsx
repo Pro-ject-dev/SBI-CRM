@@ -35,7 +35,7 @@ const StandardProductManagement = () => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
   const standardSelector = useSelector((state: RootState) => state.standard);
-  const [selectedRows, setSelectedRows] = useState<Array<number>>([]);
+  const [selectedRows, setSelectedRows] = useState<Array<string | number>>([]);
   const headers = {
     sno: "S. No",
     productName: "Product Name",
@@ -48,6 +48,9 @@ const StandardProductManagement = () => {
     minCost: "Minimum Cost",
     maxCost: "Maximum Cost",
   };
+  // ... (omitted unrelated lines)
+
+
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [filterAnchor, setFilterAnchor] = useState<HTMLButtonElement | null>(
     null
@@ -136,10 +139,34 @@ const StandardProductManagement = () => {
           endDate: standardSelector.filterData.endDate,
           grade: standardSelector.filterData.grade,
         });
-        setProductData(response?.data.data);
+        // Flatten data: If a product has variants, create a row for each variant.
+        const flattenedData: any[] = [];
+        response?.data.data.forEach((prod: any) => {
+          if (prod.variants && prod.variants.length > 0) {
+            prod.variants.forEach((v: any) => {
+              flattenedData.push({
+                ...prod,
+                ...v, // Override product defaults with variant details (length, rate, costs, etc.)
+                id: `${prod.id}_${v.id}`, // Unique ID for DataGrid
+                originalProductId: prod.id,
+                isVariant: true,
+                // Ensure we keep the product name
+                productName: prod.productName
+              });
+            });
+          } else {
+            flattenedData.push({
+              ...prod,
+              originalProductId: prod.id,
+              isVariant: false
+            });
+          }
+        });
+
+        setProductData(flattenedData);
 
         setFileData(
-          response?.data.data.map((obj: Record<string, any>, index: number) => {
+          flattenedData.map((obj: Record<string, any>, index: number) => {
             const filtered: Record<string, any> = { sno: String(index + 1) };
             Object.keys(headers).forEach((key) => {
               if (key !== "sno") {
@@ -156,10 +183,19 @@ const StandardProductManagement = () => {
     fetchData();
   }, [standardSelector, data]);
 
-  const handleDeleteRow = async (ids: number[]) => {
+  const handleDeleteRow = async (ids: Array<string | number>) => {
     try {
-      if (ids) {
-        const deleteData = await deleteStandard({ ids });
+      if (ids && ids.length > 0) {
+        // Extract originalProductIds if passed directly or via selection
+        // If passed from button click (single item), it might be [originalId]
+        // If passed from multiselect, it's [compositeId1, compositeId2]
+
+        const originalIds = [...new Set(ids.map(id => {
+          const row = productData.find((p: any) => p.id === id);
+          return row ? row.originalProductId : Number(id); // Fallback if direct number passed
+        }))];
+
+        const deleteData = await deleteStandard({ ids: originalIds });
         if (deleteData.error) {
           dispatch(
             addToast({ message: "Failed to Deleting Product!", type: "error" })
@@ -250,7 +286,11 @@ const StandardProductManagement = () => {
       }) => ReturnType<typeof updateProductCost>
     ) => {
       try {
-        const payload = { ids: selectedRows, percentage: Number(value) };
+        const originalIds = [...new Set(selectedRows.map(id => {
+          const row = productData.find((p: any) => p.id === id);
+          return row ? row.originalProductId : Number(id);
+        }))];
+        const payload = { ids: originalIds, percentage: Number(value) };
         await updateProductPrice(payload).unwrap();
         setModalData((prev) => ({
           ...prev,
@@ -258,9 +298,8 @@ const StandardProductManagement = () => {
         }));
         dispatch(
           addToast({
-            message: `Update ${
-              key.charAt(0).toUpperCase() + key.slice(1)
-            } Successfully`,
+            message: `Update ${key.charAt(0).toUpperCase() + key.slice(1)
+              } Successfully`,
             type: "success",
           })
         );
@@ -271,9 +310,8 @@ const StandardProductManagement = () => {
         }));
         dispatch(
           addToast({
-            message: `Failed to Update ${
-              key.charAt(0).toUpperCase() + key.slice(1)
-            }!`,
+            message: `Failed to Update ${key.charAt(0).toUpperCase() + key.slice(1)
+              }!`,
             type: "error",
           })
         );
@@ -564,7 +602,7 @@ const StandardProductManagement = () => {
           <Button
             color="primary"
             sx={{ minWidth: 0, padding: 0 }}
-            onClick={() => handleEditRow(params.row.id)}
+            onClick={() => handleEditRow(params.row.originalProductId)}
           >
             <Edit />
           </Button>
@@ -730,6 +768,7 @@ const StandardProductManagement = () => {
         detail="Update Product Price"
         fields={modalInput.price}
         handleModalChange={handleModalChange}
+        showPriceHelper={true}
         handleClose={() => {
           if (!productCostLoading) {
             setModalData((prev) => ({

@@ -298,7 +298,7 @@ const ConsumableRequestDetailsModal = ({
                           <Box>
                             <Typography variant="body2" fontWeight="medium">
                               {typeof item.consumableMaterial === "object"
-                                ? item.consumableMaterial?.name
+                                ? item.consumableMaterial?.materialName
                                 : item.consumableMaterialId}
                             </Typography>
                             {typeof item.consumableMaterial === "object" &&

@@ -4,7 +4,7 @@ import { PurchaseOrder } from "../../types/warehouse";
 export const purchaseOrdersApi = createApi({
 	reducerPath: "purchaseOrdersApi",
 	baseQuery: fetchBaseQuery({
-		baseUrl: import.meta.env.VITE_LIVE_SERVER_BASE_URL,
+		baseUrl: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
 		prepareHeaders: (headers) => {
 			const accessToken = localStorage.getItem("authToken");
 			if (accessToken) {
@@ -16,17 +16,17 @@ export const purchaseOrdersApi = createApi({
 
 	tagTypes: ["PurchaseOrders", "Vendors", "RawMaterials"],
 	endpoints: (builder) => ({
-		getPurchaseOrders: builder.query<PurchaseOrder[], { 
-			status?: string; 
-			search?: string; 
-			startDate?: string; 
-			endDate?: string; 
+		getPurchaseOrders: builder.query<PurchaseOrder[], {
+			status?: string;
+			search?: string;
+			startDate?: string;
+			endDate?: string;
 		} | void>({
-			query: (args?: { 
-				status?: string; 
-				search?: string; 
-				startDate?: string; 
-				endDate?: string; 
+			query: (args?: {
+				status?: string;
+				search?: string;
+				startDate?: string;
+				endDate?: string;
 			}) => {
 				const { status, search, startDate, endDate } = args || {};
 				const params = new URLSearchParams();
@@ -39,10 +39,10 @@ export const purchaseOrdersApi = createApi({
 			},
 			transformResponse: (response: any): PurchaseOrder[] => {
 				console.log("API transformResponse received:", response);
-				
+
 				// Handle both array and object responses
 				const orders = Array.isArray(response) ? response : response.data || [];
-				
+
 				return orders.map((order: any) => ({
 					...order,
 					// Normalize the data types if needed
@@ -63,7 +63,7 @@ export const purchaseOrdersApi = createApi({
 			},
 			providesTags: ["PurchaseOrders"],
 		}),
-		
+
 		getPurchaseOrderById: builder.query<PurchaseOrder, { id: string }>({
 			query: ({ id }: { id: string }) => {
 				return `${localStorage.getItem("api_endpoint")}/getPurchaseOrderById?id=${id}`;
@@ -87,7 +87,7 @@ export const purchaseOrdersApi = createApi({
 			},
 			providesTags: ["PurchaseOrders"],
 		}),
-		
+
 		createPurchaseOrder: builder.mutation({
 			query: (payload) => ({
 				url: `${localStorage.getItem("api_endpoint")}/addPurchaseOrders`,
@@ -96,7 +96,7 @@ export const purchaseOrdersApi = createApi({
 			}),
 			invalidatesTags: ["PurchaseOrders", "Vendors", "RawMaterials"],
 		}),
-		
+
 		updatePurchaseOrderStatus: builder.mutation({
 			query: ({ id, status, pdfBlob }: { id: string; status: string; pdfBlob?: Blob }) => {
 				const base = `${localStorage.getItem("api_endpoint")}/updatePurchaseOrderStatus`;

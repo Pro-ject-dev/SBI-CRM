@@ -52,6 +52,12 @@ export const adminMenuItems: SideBar[] = [
     path: "/admin/raw-materials",
   },
   {
+    id: "consumablematerialslog",
+    label: "Consumable Log",
+    icon: HistoryIcon,
+    path: "/admin/consumable-materials-log",
+  },
+  {
     id: "rawmaterialslog",
     label: "Raw Materials Log",
     icon: HistoryIcon,

@@ -7,8 +7,8 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 
 // --- THIS IS THE CORRECTED IMPORT BLOCK ---
-import type { 
-  MultiProductFormData, SelectedIdsState, ComboItem, 
+import type {
+  MultiProductFormData, SelectedIdsState, ComboItem,
   CategoryItem, ProductItem, StandardFormData, ProductItemWithPrice
 } from '../estimation.types'; // Adjust path if your structure is different
 
@@ -32,12 +32,12 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
     productCombo: '', productCategory: '', productName: [],
     quantity: '1', remark: '', totalAmount: 0, productDetails: []
   });
-  
+
   const [selectedProductDetails, setSelectedProductDetails] = useState<ProductItemWithPrice[]>([]);
   const [selectedIds, setSelectedIds] = useState<SelectedIdsState>({
     comboId: null, categoryId: null, productIds: []
   });
-  
+
   const [duplicateAlert, setDuplicateAlert] = useState<string | null>(null);
   const token = localStorage.getItem("authToken");
 
@@ -58,31 +58,33 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
       setDuplicateAlert(null);
 
       if (comboList.length === 0) {
-        fetch('https://sbiapi.ssengineeringworks.online/api/admin/getCombos', {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+        fetch(`${baseUrl}/api/admin/getCombos`, {
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
         })
-        .then(res => res.json())
-        .then(data => { if (data.status && Array.isArray(data.data)) { setComboList(data.data); }})
-        .catch(err => console.error('Error fetching combos:', err));
+          .then(res => res.json())
+          .then(data => { if (data.status && Array.isArray(data.data)) { setComboList(data.data); } })
+          .catch(err => console.error('Error fetching combos:', err));
       }
     }
   }, [open, comboList.length, token]);
 
   useEffect(() => {
     if (selectedIds.comboId) {
-      fetch(`https://sbiapi.ssengineeringworks.online/api/admin/getCategorybyCombo?comboId=${selectedIds.comboId}`, {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+      fetch(`${baseUrl}/api/admin/getCategorybyCombo?comboId=${selectedIds.comboId}`, {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
       })
-      .then(res => res.json())
-      .then(data => {
-        if (data.status && Array.isArray(data.data)) { setAvailableCategories(data.data); } 
-        else { setAvailableCategories([]); }
-        setFormData(prev => ({ ...prev, productCategory: '', productName: []}));
-        setSelectedProductDetails([]);
-        setSelectedIds(prev => ({ ...prev, categoryId: null, productIds: [] }));
-        setAvailableProducts([]);
-      })
-      .catch(err => { console.error('Error fetching categories:', err); setAvailableCategories([]); });
+        .then(res => res.json())
+        .then(data => {
+          if (data.status && Array.isArray(data.data)) { setAvailableCategories(data.data); }
+          else { setAvailableCategories([]); }
+          setFormData(prev => ({ ...prev, productCategory: '', productName: [] }));
+          setSelectedProductDetails([]);
+          setSelectedIds(prev => ({ ...prev, categoryId: null, productIds: [] }));
+          setAvailableProducts([]);
+        })
+        .catch(err => { console.error('Error fetching categories:', err); setAvailableCategories([]); });
     } else {
       setAvailableCategories([]);
       setFormData(prev => ({ ...prev, productCategory: '', productName: [] }));
@@ -93,35 +95,36 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
   }, [selectedIds.comboId, token]);
 
   useEffect(() => {
-    if (selectedIds.comboId && selectedIds.categoryId) {
-      fetch('https://sbiapi.ssengineeringworks.online/api/admin/getProductbyCombo&Category?isStandard=1', {
+    if (selectedIds.comboId) {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+      fetch(`${baseUrl}/api/admin/getProductbyCombo&Category?isStandard=1`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ comboId: selectedIds.comboId, catId: selectedIds.categoryId })
       })
-      .then(res => res.json())
-      .then(response => {
-        if (response.status && Array.isArray(response.data)) {
-          const parsedProducts: ProductItem[] = response.data.map((p: any) => ({
-            ...p,
-            ratePerQuantity: parseFloat(p.ratePerQuantity) || 0,
-          }));
-          setAvailableProducts(parsedProducts);
-        } else { setAvailableProducts([]); }
-        setFormData(prev => ({ ...prev, productName: []}));
-        setSelectedProductDetails([]);
-        setSelectedIds(prev => ({ ...prev, productIds: [] }));
-      })
-      .catch(err => {
-        console.error('Error fetching products:', err);
-        setAvailableProducts([]);
-        setFormData(prev => ({ ...prev, productName: []}));
-        setSelectedProductDetails([]);
-        setSelectedIds(prev => ({ ...prev, productIds: [] }));
-      });
+        .then(res => res.json())
+        .then(response => {
+          if (response.status && Array.isArray(response.data)) {
+            const parsedProducts: ProductItem[] = response.data.map((p: any) => ({
+              ...p,
+              ratePerQuantity: parseFloat(p.ratePerQuantity) || 0,
+              variants: p.variants || []
+            }));
+            setAvailableProducts(parsedProducts);
+          } else { setAvailableProducts([]); }
+          // Only clear product selection if the combo changed or if we want to reset on category change.
+          // For now, let's keep it simple: if the list reloads, we clear selection to avoid stale data.
+          setFormData(prev => ({ ...prev, productName: [] }));
+          setSelectedProductDetails([]);
+          setSelectedIds(prev => ({ ...prev, productIds: [] }));
+        })
+        .catch(err => {
+          console.error('Error fetching products:', err);
+          setAvailableProducts([]);
+        });
     } else {
       setAvailableProducts([]);
-      setFormData(prev => ({ ...prev, productName: []}));
+      setFormData(prev => ({ ...prev, productName: [] }));
       setSelectedProductDetails([]);
       setSelectedIds(prev => ({ ...prev, productIds: [] }));
     }
@@ -143,21 +146,71 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
 
   const handleProductChange = (event: SelectChangeEvent<string[]>) => {
     const selectedProductNames = event.target.value as string[];
+
+    // We need to match names back to product objects.
+    // If a product has variants, we initially pick the first one (or none if we want to force selection)
+    // For now, let's pick the first variant if available to populate defaults.
+
     const newProductDetails = selectedProductNames.map(name => {
       const existing = selectedProductDetails.find(p => p.productName === name);
       if (existing) return existing;
+
       const productData = availableProducts.find(p => p.productName === name);
-      return productData ? { ...productData, setPrice: '' } : null;
+      if (!productData) return null;
+
+      let initialVariantId = undefined;
+      let initialRate = productData.ratePerQuantity || 0;
+      let initialMin = productData.minCost || '0';
+      let initialMax = productData.maxCost || '0';
+
+      // Auto-select first variant if exists
+      if (productData.variants && productData.variants.length > 0) {
+        const v = productData.variants[0];
+        initialVariantId = v.id;
+        initialRate = parseFloat(v.ratePerQuantity);
+        initialMin = v.minCost;
+        initialMax = v.maxCost;
+      }
+
+      return {
+        ...productData,
+        ratePerQuantity: initialRate,
+        minCost: initialMin,
+        maxCost: initialMax,
+        setPrice: '',
+        selectedVariantId: initialVariantId
+      };
     }).filter((p): p is ProductItemWithPrice => p !== null);
 
     setSelectedProductDetails(newProductDetails);
     setFormData(prev => ({ ...prev, productName: selectedProductNames }));
     setSelectedIds(prev => ({ ...prev, productIds: newProductDetails.map(p => p.id) }));
   };
-  
+
+  const handleVariantChange = (productId: number, variantId: number) => {
+    setSelectedProductDetails(prevDetails =>
+      prevDetails.map(p => {
+        if (p.id !== productId) return p;
+
+        // Find the variant
+        const variant = p.variants?.find((v: any) => v.id === variantId);
+        if (!variant) return p;
+
+        return {
+          ...p,
+          selectedVariantId: variantId,
+          ratePerQuantity: parseFloat(variant.ratePerQuantity),
+          minCost: variant.minCost,
+          maxCost: variant.maxCost,
+          setPrice: '' // Reset set price on variant change
+        };
+      })
+    );
+  };
+
   const handlePriceChange = (productId: number, value: string) => {
-    setSelectedProductDetails(prevDetails => 
-        prevDetails.map(p => p.id === productId ? { ...p, setPrice: value } : p)
+    setSelectedProductDetails(prevDetails =>
+      prevDetails.map(p => p.id === productId ? { ...p, setPrice: value } : p)
     );
   };
 
@@ -176,9 +229,14 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
   const isSubmissionDisabled = useMemo(() => {
     if (selectedProductDetails.length === 0) return true;
     return selectedProductDetails.some(p => {
-        const setPrice = parseFloat(String(p.setPrice));
-        const minCost = parseFloat(p.minCost || '0');
-        return !isNaN(setPrice) && setPrice < minCost && setPrice !== 0;
+      const setPrice = parseFloat(String(p.setPrice));
+      const minCost = parseFloat(p.minCost || '0');
+      // Validate min cost
+      if (!isNaN(setPrice) && setPrice < minCost && setPrice !== 0) return true;
+      // Validate variant selection if variants exist
+      if (p.variants && p.variants.length > 0 && !p.selectedVariantId) return true;
+
+      return false;
     });
   }, [selectedProductDetails]);
 
@@ -189,26 +247,40 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
     const productsToAdd: ProductItemWithPrice[] = [];
     const duplicateProductNames: string[] = [];
     selectedProductDetails.forEach(item => {
+      // NOTE: We might strictly check duplication by ID.
+      // With variants, it's technically possible to add Same Product -> Variant A and Same Product -> Variant B.
+      // But the current system relies on top-level `productIds`. 
+      // For now, we enforce uniqueness by Product ID to avoid complexity.
       if (existingProductIds.has(item.id.toString())) {
         duplicateProductNames.push(item.productName);
       } else {
         productsToAdd.push(item);
       }
     });
+
     if (duplicateProductNames.length > 0) {
       let message = `Product(s) "${duplicateProductNames.join(', ')}" already exist(s) and will not be added again.`;
       setDuplicateAlert(message);
     }
     if (productsToAdd.length === 0) {
-      if(duplicateProductNames.length === selectedProductDetails.length) { /* All were duplicates */ } 
+      if (duplicateProductNames.length === selectedProductDetails.length) { /* All were duplicates */ }
       else { setDuplicateAlert("Please select at least one new product to add."); }
       return;
     }
+
     const finalProductDetails = productsToAdd.map(p => {
-        const setPriceNum = parseFloat(String(p.setPrice));
-        const finalPrice = !isNaN(setPriceNum) && setPriceNum > 0 ? setPriceNum : p.ratePerQuantity;
-        return { ...p, ratePerQuantity: finalPrice };
+      const setPriceNum = parseFloat(String(p.setPrice));
+      const finalPrice = !isNaN(setPriceNum) && setPriceNum > 0 ? setPriceNum : p.ratePerQuantity; // Use currently active rate (variant or base)
+      return {
+        ...p,
+        ratePerQuantity: finalPrice,
+        // If we selected a variant, maybe append its name to the product name or remark?
+        // Or rely on the backend/logic downstream to use the rate.
+        // Let's append Variant Dimensions to remark for clarity if needed, or rely on base.
+        selectedVariantId: p.selectedVariantId
+      };
     });
+
     const submissionData: MultiProductFormData = {
       ...formData,
       productName: finalProductDetails.map(p => p.productName),
@@ -220,7 +292,7 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
     onSubmit(submissionData);
   };
 
-  const onModalClose = () => { 
+  const onModalClose = () => {
     setDuplicateAlert(null);
     handleClose();
   };
@@ -254,7 +326,7 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
             <Grid item xs={12} md={6}>
               <FormControl fullWidth required>
                 <InputLabel id="product-label">Product Name</InputLabel>
-                <Select<string[]> labelId="product-label" multiple value={formData.productName} onChange={handleProductChange} label="Product Name" disabled={!formData.productCategory || availableProducts.length === 0}
+                <Select<string[]> labelId="product-label" multiple value={formData.productName} onChange={handleProductChange} label="Product Name" disabled={!formData.productCombo || availableProducts.length === 0}
                   renderValue={(selected) => (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                       {selected.map((name) => (<Chip key={name} label={name} onDelete={() => handleDeleteProduct(name)} onMouseDown={(e) => e.stopPropagation()} />))}
@@ -271,35 +343,55 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
           </Grid>
 
           {selectedProductDetails.length > 0 && (
-              <Box mt={3}>
-                <Divider sx={{ mb: 2 }} />
-                <Typography variant="subtitle1" gutterBottom>Product Pricing (Optional)</Typography>
-                {selectedProductDetails.map(p => {
-                    const minCost = parseFloat(p.minCost || '0');
-                    const maxCost = parseFloat(p.maxCost || '0');
-                    const setPrice = parseFloat(String(p.setPrice));
-                    const isInvalid = !isNaN(setPrice) && setPrice < minCost && setPrice !== 0;
-                    const isWarning = !isNaN(setPrice) && setPrice > maxCost;
-                    return (
-                        <Box key={p.id} mb={3} p={2} border={1} borderColor="grey.300" borderRadius={1}>
-                            <Grid container spacing={2}>
-                                <Grid item xs={12} md={6}><TextField label="Rate Per Quantity" value={p.ratePerQuantity || 'N/A'} fullWidth InputProps={{ readOnly: true }} /></Grid>
-                                <Grid item xs={12} md={6}><TextField label="Min Cost" value={p.minCost || 'N/A'} fullWidth InputProps={{ readOnly: true }} /></Grid>
-                                <Grid item xs={12} md={6}><TextField label="Max Cost" value={p.maxCost || 'N/A'} fullWidth InputProps={{ readOnly: true }} /></Grid>
-                                <Grid item xs={12} md={6}>
-                                    <TextField 
-                                        label="Set Price" type="number" value={p.setPrice}
-                                        onChange={(e) => handlePriceChange(p.id, e.target.value)}
-                                        fullWidth error={isInvalid} inputProps={{ min: 0 }}
-                                    />
-                                    {isInvalid && <FormHelperText error>Price cannot be below Min Cost.</FormHelperText>}
-                                    {isWarning && <FormHelperText sx={{color: 'orange'}}>Price is above Max Cost.</FormHelperText>}
-                                </Grid>
-                            </Grid>
-                        </Box>
-                    );
-                })}
-              </Box>
+            <Box mt={3}>
+              <Divider sx={{ mb: 2 }} />
+              <Typography variant="subtitle1" gutterBottom>Product Configuration & Pricing</Typography>
+              {selectedProductDetails.map(p => {
+                const minCost = parseFloat(p.minCost || '0');
+                const maxCost = parseFloat(p.maxCost || '0');
+                const setPrice = parseFloat(String(p.setPrice));
+                const isInvalid = !isNaN(setPrice) && setPrice < minCost && setPrice !== 0;
+                const isWarning = !isNaN(setPrice) && setPrice > maxCost;
+                const hasVariants = p.variants && p.variants.length > 0;
+
+                return (
+                  <Box key={p.id} mb={3} p={2} border={1} borderColor="grey.300" borderRadius={1}>
+                    <Grid container spacing={2}>
+                      {hasVariants && (
+                        <Grid item xs={12}>
+                          <FormControl fullWidth size="small">
+                            <InputLabel>Select Variant (Size)</InputLabel>
+                            <Select
+                              value={p.selectedVariantId || ''}
+                              label="Select Variant (Size)"
+                              onChange={(e) => handleVariantChange(p.id, Number(e.target.value))}
+                            >
+                              {p.variants?.map((v: any) => (
+                                <MenuItem key={v.id} value={v.id}>
+                                  {v.length}x{v.width}x{v.height || '-'} (Thick: {v.thickness}) - Rate: {v.ratePerQuantity}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                      )}
+                      <Grid item xs={12} md={6}><TextField label="Rate Per Quantity" value={p.ratePerQuantity || 'N/A'} fullWidth InputProps={{ readOnly: true }} /></Grid>
+                      <Grid item xs={12} md={6}><TextField label="Min Cost" value={p.minCost || 'N/A'} fullWidth InputProps={{ readOnly: true }} /></Grid>
+                      <Grid item xs={12} md={6}><TextField label="Max Cost" value={p.maxCost || 'N/A'} fullWidth InputProps={{ readOnly: true }} /></Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          label="Set Price" type="number" value={p.setPrice}
+                          onChange={(e) => handlePriceChange(p.id, e.target.value)}
+                          fullWidth error={isInvalid} inputProps={{ min: 0 }}
+                        />
+                        {isInvalid && <FormHelperText error>Price cannot be below Min Cost.</FormHelperText>}
+                        {isWarning && <FormHelperText sx={{ color: 'orange' }}>Price is above Max Cost.</FormHelperText>}
+                      </Grid>
+                    </Grid>
+                  </Box>
+                );
+              })}
+            </Box>
           )}
 
           <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 4 }}>

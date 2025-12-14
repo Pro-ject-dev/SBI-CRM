@@ -281,6 +281,7 @@ const ConsumableRequestModal = ({
     const requestData: ConsumableRequestFormData = {
       ...formData,
       department: "General", // Default value since field is removed
+      requestedBy: userName || "Unknown", // Add requestedBy from auth store
 
       items: validItems.map((item) => ({
         consumableMaterialId: item.consumableMaterialId,

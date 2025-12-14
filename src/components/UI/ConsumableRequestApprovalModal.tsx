@@ -63,7 +63,7 @@ const ConsumableRequestApprovalModal = ({
           itemId: item.id || 0,
           materialName:
             typeof item.consumableMaterial === "object"
-              ? item.consumableMaterial?.name || "Unknown Material"
+              ? item.consumableMaterial?.materialName || "Unknown Material"
               : "Unknown Material",
           requestedQuantity: item.requestedQuantity,
           availableStock:
@@ -156,8 +156,8 @@ const ConsumableRequestApprovalModal = ({
     (sum, approval) =>
       sum +
       approval.requestedQuantity *
-        (request.items.find((item) => item.id === approval.itemId)?.unitPrice ||
-          0),
+      (request.items.find((item) => item.id === approval.itemId)?.unitPrice ||
+        0),
     0,
   );
 
@@ -165,8 +165,8 @@ const ConsumableRequestApprovalModal = ({
     (sum, approval) =>
       sum +
       approval.approvedQuantity *
-        (request.items.find((item) => item.id === approval.itemId)?.unitPrice ||
-          0),
+      (request.items.find((item) => item.id === approval.itemId)?.unitPrice ||
+        0),
     0,
   );
 

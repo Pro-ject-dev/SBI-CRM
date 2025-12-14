@@ -63,7 +63,7 @@ const ConsumableRequestFulfillmentModal = ({
           itemId: item.id || 0,
           materialName:
             typeof item.consumableMaterial === "object"
-              ? item.consumableMaterial?.name || "Unknown Material"
+              ? item.consumableMaterial?.materialName || "Unknown Material"
               : "Unknown Material",
           approvedQuantity: item.approvedQuantity || 0,
           fulfilledQuantity: item.approvedQuantity || 0,
@@ -148,8 +148,8 @@ const ConsumableRequestFulfillmentModal = ({
     (sum, fulfillment) =>
       sum +
       fulfillment.approvedQuantity *
-        (request.items.find((item) => item.id === fulfillment.itemId)
-          ?.unitPrice || 0),
+      (request.items.find((item) => item.id === fulfillment.itemId)
+        ?.unitPrice || 0),
     0,
   );
 
@@ -157,8 +157,8 @@ const ConsumableRequestFulfillmentModal = ({
     (sum, fulfillment) =>
       sum +
       fulfillment.fulfilledQuantity *
-        (request.items.find((item) => item.id === fulfillment.itemId)
-          ?.unitPrice || 0),
+      (request.items.find((item) => item.id === fulfillment.itemId)
+        ?.unitPrice || 0),
     0,
   );
 

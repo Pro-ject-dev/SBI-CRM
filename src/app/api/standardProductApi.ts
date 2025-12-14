@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const standardProductApi = createApi({
   reducerPath: "standardProductApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_LIVE_SERVER_BASE_URL,
+    baseUrl: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
     prepareHeaders: (headers) => {
       const accessToken = localStorage.getItem("authToken");
       if (accessToken) {
@@ -16,9 +16,8 @@ export const standardProductApi = createApi({
   endpoints: (builder) => ({
     getStandard: builder.query({
       query: ({ isStandard }: { isStandard?: string }) => {
-        return `${localStorage.getItem("api_endpoint")}/getProduct${
-          isStandard ? `?isStandard=${isStandard}` : ""
-        }`;
+        return `${localStorage.getItem("api_endpoint")}/getProduct${isStandard ? `?isStandard=${isStandard}` : ""
+          }`;
       },
       providesTags: ["Standard"],
     }),
@@ -50,9 +49,8 @@ export const standardProductApi = createApi({
       }) => {
         return `${localStorage.getItem(
           "api_endpoint"
-        )}/GetProductsByFilter?isStandard=${isStandard}&page=${
-          page + 1
-        }&size=${size}&productName=${productName}&startDate=${startDate}&endDate=${endDate}&grade=${grade}`;
+        )}/GetProductsByFilter?isStandard=${isStandard}&page=${page + 1
+          }&size=${size}&productName=${productName}&startDate=${startDate}&endDate=${endDate}&grade=${grade}`;
       },
       providesTags: ["Standard"],
     }),

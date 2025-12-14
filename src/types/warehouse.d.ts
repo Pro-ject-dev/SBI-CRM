@@ -218,6 +218,7 @@ export interface ConsumableRequestItem {
 
 export interface ConsumableRequestFormData {
   department?: string;
+  requestedBy?: string; // Added to support request creation
   priority: "Low" | "Medium" | "High" | "Urgent";
   requiredDate: string;
   notes: string;

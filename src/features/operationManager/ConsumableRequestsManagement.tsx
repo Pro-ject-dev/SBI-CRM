@@ -266,7 +266,7 @@ const ConsumableRequestsManagement = () => {
       headerAlign: "center",
       align: "center",
       renderCell: (params) => (
-        <Box sx={{ display: "flex", gap: 0.5 }}>
+        <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center", alignItems: "center", width: "100%", height: "100%" }}>
           <Tooltip title="View Details">
             <IconButton
               size="small"
@@ -277,32 +277,9 @@ const ConsumableRequestsManagement = () => {
             </IconButton>
           </Tooltip>
 
-          {params.row.status === "Pending" && (
-            <>
-              <Tooltip title="Edit Request">
-                <IconButton
-                  size="small"
-                  onClick={() => handleEditRequest(params.row)}
-                  color="primary"
-                >
-                  <Edit fontSize="small" />
-                </IconButton>
-              </Tooltip>
 
-              <Tooltip title="Delete Request">
-                <IconButton
-                  size="small"
-                  onClick={() =>
-                    handleDeleteRequest(params.row.id, params.row.status)
-                  }
-                  color="error"
-                >
-                  <Delete fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </>
-          )}
-        </Box>
+          {/* Edit and Delete buttons removed as per user request */}
+        </Box >
       ),
     },
   ];

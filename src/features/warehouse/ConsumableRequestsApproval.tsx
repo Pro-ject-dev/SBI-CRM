@@ -57,14 +57,55 @@ import {
   useFulfillConsumableRequestMutation,
 } from "../../app/api/consumableMaterialsApi";
 import type { ConsumableRequest } from "../../types/warehouse";
-// Temporary placeholder components - these will be created
+// ------------------ MODAL COMPONENTS ------------------
+
 const ConsumableRequestDetailsModal = ({ open, onClose, request }: any) => {
-  if (!open) return null;
+  if (!open || !request) return null;
+
   return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Request Details</DialogTitle>
-      <DialogContent>
-        <Typography>Request details modal will be implemented here</Typography>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle>
+        Request Details: {request.requestNumber || "N/A"}
+        <Typography variant="caption" display="block" color="text.secondary">
+          Status: {request.status} | Date: {new Date(request.requestDate).toLocaleDateString()}
+        </Typography>
+      </DialogTitle>
+      <DialogContent dividers>
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Grid item xs={6}>
+            <Typography variant="subtitle2">Requested By</Typography>
+            <Typography variant="body2">{request.requestedBy || "Unknown"}</Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="subtitle2">Required Date</Typography>
+            <Typography variant="body2">{new Date(request.requiredDate).toLocaleDateString()}</Typography>
+          </Grid>
+          {request.notes && (
+            <Grid item xs={12}>
+              <Typography variant="subtitle2">Notes</Typography>
+              <Typography variant="body2">{request.notes}</Typography>
+            </Grid>
+          )}
+        </Grid>
+
+        <Typography variant="h6" gutterBottom>Requested Items</Typography>
+        <Paper variant="outlined">
+          <List dense>
+            {request.items?.map((item: any, index: number) => (
+              <ListItem key={index} divider={index !== request.items.length - 1}>
+                <ListItemText
+                  primary={item.consumableMaterial?.name || item.materialName}
+                  secondary={`Qty: ${item.requestedQuantity} | Status: ${item.status}`}
+                />
+              </ListItem>
+            ))}
+            {(!request.items || request.items.length === 0) && (
+              <ListItem>
+                <ListItemText primary="No items found in this request." />
+              </ListItem>
+            )}
+          </List>
+        </Paper>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Close</Button>
@@ -77,19 +118,24 @@ const ConsumableRequestApprovalModal = ({
   open,
   onClose,
   request,
-  onSuccess,
+  onConfirm,
 }: any) => {
   if (!open) return null;
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Approve Request</DialogTitle>
+      <DialogTitle>Approve Request?</DialogTitle>
       <DialogContent>
-        <Typography>Request approval modal will be implemented here</Typography>
+        <Typography>
+          Are you sure you want to approve request <strong>{request?.requestNumber}</strong>?
+        </Typography>
+        <Alert severity="info" sx={{ mt: 2 }}>
+          This will change the status to "Approved". Stock will not be deducted until fulfillment.
+        </Alert>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={onSuccess} variant="contained">
-          Approve
+        <Button onClick={() => onConfirm(request)} variant="contained" color="success">
+          Approve Request
         </Button>
       </DialogActions>
     </Dialog>
@@ -100,21 +146,24 @@ const ConsumableRequestFulfillmentModal = ({
   open,
   onClose,
   request,
-  onSuccess,
+  onConfirm,
 }: any) => {
   if (!open) return null;
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Fulfill Request</DialogTitle>
+      <DialogTitle>Fulfill Request?</DialogTitle>
       <DialogContent>
         <Typography>
-          Request fulfillment modal will be implemented here
+          Are you sure you want to fulfill request <strong>{request?.requestNumber}</strong>?
         </Typography>
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          This will deduct items from stock immediately.
+        </Alert>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={onSuccess} variant="contained">
-          Fulfill
+        <Button onClick={() => onConfirm(request)} variant="contained" color="primary">
+          Confirm Fulfillment
         </Button>
       </DialogActions>
     </Dialog>
@@ -149,7 +198,6 @@ const ConsumableRequestsApproval = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
-  const [departmentFilter, setDepartmentFilter] = useState("");
   const [tabValue, setTabValue] = useState(0);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [approvalModalOpen, setApprovalModalOpen] = useState(false);
@@ -183,7 +231,6 @@ const ConsumableRequestsApproval = () => {
     search: searchTerm,
     status: getStatusForTab(tabValue),
     priority: priorityFilter,
-    department: departmentFilter,
   });
 
   const [approveRequest] = useApproveConsumableRequestMutation();
@@ -204,10 +251,55 @@ const ConsumableRequestsApproval = () => {
     setApprovalModalOpen(true);
   };
 
+  const handleConfirmApprove = async (request: ConsumableRequest) => {
+    try {
+      await approveRequest({ id: request.id.toString(), approvals: [] }).unwrap(); // Sending empty approvals array as backend logic seems generic
+      dispatch(
+        addToast({
+          message: "Request approved successfully",
+          type: "success",
+        }),
+      );
+      setApprovalModalOpen(false);
+      setSelectedRequest(null);
+      refetch();
+    } catch (error) {
+      dispatch(
+        addToast({
+          message: "Failed to approve request",
+          type: "error",
+        }),
+      );
+    }
+  };
+
   const handleFulfillRequest = (request: ConsumableRequest) => {
     setSelectedRequest(request);
     setFulfillmentModalOpen(true);
   };
+
+  const handleConfirmFulfill = async (request: ConsumableRequest) => {
+    try {
+      await fulfillRequest({ id: request.id.toString(), fulfillments: [] }).unwrap();
+      dispatch(
+        addToast({
+          message: "Request fulfilled successfully",
+          type: "success",
+        }),
+      );
+      setFulfillmentModalOpen(false);
+      setSelectedRequest(null);
+      refetch();
+    } catch (error) {
+      dispatch(
+        addToast({
+          message: "Failed to fulfill request",
+          type: "error",
+        }),
+      );
+    }
+  };
+
 
   const handleRejectRequest = (request: ConsumableRequest) => {
     setSelectedRequest(request);
@@ -301,7 +393,7 @@ const ConsumableRequestsApproval = () => {
       align: "center",
     },
     {
-      field: "requestedByName",
+      field: "requestedBy",
       headerName: "Requested By",
       flex: 1,
       minWidth: 150,
@@ -310,21 +402,7 @@ const ConsumableRequestsApproval = () => {
       renderCell: (params) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Person fontSize="small" color="action" />
-          {params.row.requestedByName || "Unknown"}
-        </Box>
-      ),
-    },
-    {
-      field: "department",
-      headerName: "Department",
-      flex: 1,
-      minWidth: 120,
-      headerAlign: "center",
-      align: "center",
-      renderCell: (params) => (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Category fontSize="small" color="action" />
-          {params.row.department}
+          {params.row.requestedBy || "Unknown"}
         </Box>
       ),
     },
@@ -403,16 +481,6 @@ const ConsumableRequestsApproval = () => {
       ),
     },
     {
-      field: "totalEstimatedCost",
-      headerName: "Estimated Cost",
-      flex: 1,
-      minWidth: 130,
-      headerAlign: "center",
-      align: "center",
-      renderCell: (params) =>
-        `₹${params.row.totalEstimatedCost?.toLocaleString() || 0}`,
-    },
-    {
       field: "itemsCount",
       headerName: "Items",
       flex: 0.5,
@@ -438,7 +506,7 @@ const ConsumableRequestsApproval = () => {
         const status = params.row.status;
 
         return (
-          <Box sx={{ display: "flex", gap: 0.5 }}>
+          <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center", alignItems: "center", width: "100%", height: "100%" }}>
             <Tooltip title="View Details">
               <IconButton
                 size="small"
@@ -688,22 +756,6 @@ const ConsumableRequestsApproval = () => {
               <MenuItem value="Urgent">Urgent</MenuItem>
             </Select>
           </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel>Department</InputLabel>
-            <Select
-              value={departmentFilter}
-              label="Department"
-              onChange={(e) => setDepartmentFilter(e.target.value)}
-            >
-              <MenuItem value="">All</MenuItem>
-              <MenuItem value="Production">Production</MenuItem>
-              <MenuItem value="Quality Control">Quality Control</MenuItem>
-              <MenuItem value="Maintenance">Maintenance</MenuItem>
-              <MenuItem value="Assembly">Assembly</MenuItem>
-              <MenuItem value="Packaging">Packaging</MenuItem>
-            </Select>
-          </FormControl>
         </Box>
       </Box>
 
@@ -746,11 +798,7 @@ const ConsumableRequestsApproval = () => {
           setSelectedRequest(null);
         }}
         request={selectedRequest}
-        onSuccess={() => {
-          refetch();
-          setApprovalModalOpen(false);
-          setSelectedRequest(null);
-        }}
+        onConfirm={handleConfirmApprove}
       />
 
       <ConsumableRequestFulfillmentModal
@@ -760,11 +808,7 @@ const ConsumableRequestsApproval = () => {
           setSelectedRequest(null);
         }}
         request={selectedRequest}
-        onSuccess={() => {
-          refetch();
-          setFulfillmentModalOpen(false);
-          setSelectedRequest(null);
-        }}
+        onConfirm={handleConfirmFulfill}
       />
 
       {/* Rejection Modal */}

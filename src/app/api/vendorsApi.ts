@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const vendorsApi = createApi({
   reducerPath: "vendorsApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_LIVE_SERVER_BASE_URL,
+    baseUrl: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
     prepareHeaders: (headers) => {
       const accessToken = localStorage.getItem("authToken");
       if (accessToken) {
@@ -39,7 +39,7 @@ export const vendorsApi = createApi({
     updateVendor: builder.mutation({
       query: ({ id, ...payload }) => ({
         url: `${localStorage.getItem(
-          "api_endpoint"          
+          "api_endpoint"
         )}/updateVendor?id=${id}`,
         method: "PUT",
         body: payload,

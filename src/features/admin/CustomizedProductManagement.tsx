@@ -264,9 +264,8 @@ const CustomizedProductManagement = () => {
         }));
         dispatch(
           addToast({
-            message: `Update ${
-              key.charAt(0).toUpperCase() + key.slice(1)
-            } Successfully`,
+            message: `Update ${key.charAt(0).toUpperCase() + key.slice(1)
+              } Successfully`,
             type: "success",
           })
         );
@@ -277,9 +276,8 @@ const CustomizedProductManagement = () => {
         }));
         dispatch(
           addToast({
-            message: `Failed to Update ${
-              key.charAt(0).toUpperCase() + key.slice(1)
-            }!`,
+            message: `Failed to Update ${key.charAt(0).toUpperCase() + key.slice(1)
+              }!`,
             type: "error",
           })
         );
@@ -741,6 +739,7 @@ const CustomizedProductManagement = () => {
         detail="Update Product Price"
         fields={modalInput.price}
         handleModalChange={handleModalChange}
+        showPriceHelper={true}
         handleClose={() => {
           if (!productCostLoading) {
             setModalData((prev) => ({

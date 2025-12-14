@@ -4,7 +4,7 @@ import type { RawMaterial, RawMaterialLog } from "../../types/warehouse";
 export const rawMaterialsApi = createApi({
   reducerPath: "rawMaterialsApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_LIVE_SERVER_BASE_URL,
+    baseUrl: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
     prepareHeaders: (headers) => {
       const accessToken = localStorage.getItem("authToken");
       if (accessToken) {
@@ -78,7 +78,7 @@ export const rawMaterialsApi = createApi({
     }),
     updateRawMaterial: builder.mutation<
       any,
-      { id: string; [key: string]: any }
+      { id: string;[key: string]: any }
     >({
       query: ({ id, ...payload }) => ({
         url: `${localStorage.getItem(

@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const orderManagementApi = createApi({
   reducerPath: "orderManagementApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_LIVE_SERVER_BASE_URL,
+    baseUrl: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
     prepareHeaders: (headers) => {
       const accessToken = localStorage.getItem("authToken");
       if (accessToken) {
@@ -60,9 +60,9 @@ export const orderManagementApi = createApi({
   }),
 });
 
-export const { 
-  useGetAllOrdersQuery, 
-  useUpdateOrderDeadlineMutation, 
+export const {
+  useGetAllOrdersQuery,
+  useUpdateOrderDeadlineMutation,
   useGetOrderByIdQuery,
   useCreateRawMaterialsByOrderMutation,
   useCreateDeadlineByOrderMutation,

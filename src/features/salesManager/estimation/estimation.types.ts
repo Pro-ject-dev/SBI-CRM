@@ -95,6 +95,7 @@ export interface MultiProductFormData {
 
 export interface ProductItemWithPrice extends ProductItem {
   setPrice?: number | string;
+  selectedVariantId?: number;
 }
 
 
@@ -129,8 +130,8 @@ export interface BankDetails {
 }
 
 export interface TermsUnit {
- id: string;
- title: string;
+  id: string;
+  title: string;
 }
 
 export interface TermsDetails {
@@ -165,6 +166,19 @@ export interface ProductItem {
   gst?: string;
   minCost?: string;
   maxCost?: string;
+  variants?: any[]; // Using any[] for now to avoid circular dependency hell, or define Variant interface here
+}
+
+export interface Variant {
+  id: number;
+  productId: number;
+  length: string;
+  width: string;
+  height: string;
+  thickness: string;
+  ratePerQuantity: string;
+  minCost: string;
+  maxCost: string;
 }
 
 export interface SelectedIdsState {

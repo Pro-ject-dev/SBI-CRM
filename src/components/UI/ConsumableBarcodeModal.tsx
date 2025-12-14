@@ -27,7 +27,7 @@ const ConsumableBarcodeModal = ({ open, onClose, material }: ConsumableBarcodeMo
 
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
-    documentTitle: `Barcode-${material?.name || 'Unknown'}`,
+    documentTitle: `Barcode-${material?.materialName || 'Unknown'}`,
   });
 
   const handleDownload = () => {

@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const addonsProductApi = createApi({
   reducerPath: "addonsProductApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_LIVE_SERVER_BASE_URL,
+    baseUrl: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
     prepareHeaders: (headers) => {
       const accessToken = localStorage.getItem("authToken");
       if (accessToken) {
@@ -44,9 +44,8 @@ export const addonsProductApi = createApi({
       }) => {
         return `${localStorage.getItem(
           "api_endpoint",
-        )}/GetAddonsByFilter?page=${
-          page + 1
-        }&size=${size}&name=${productName}&startDate=${startDate}&endDate=${endDate}&grade=${grade}`;
+        )}/GetAddonsByFilter?page=${page + 1
+          }&size=${size}&name=${productName}&startDate=${startDate}&endDate=${endDate}&grade=${grade}`;
       },
       providesTags: ["Addons"],
     }),

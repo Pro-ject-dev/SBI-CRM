@@ -27,17 +27,23 @@ const RawMaterialsLog = () => {
   const { data, isLoading, refetch } = useGetRawMaterialsLogQuery(
     startDate && endDate
       ? {
-          dateFrom: dayjs(startDate)
-            .startOf("day")
-            .format("YYYY-MM-DD HH:mm:ss"),
-          dateTo: dayjs(endDate).endOf("day").format("YYYY-MM-DD HH:mm:ss"),
-        }
+        dateFrom: dayjs(startDate)
+          .startOf("day")
+          .format("YYYY-MM-DD HH:mm:ss"),
+        dateTo: dayjs(endDate).endOf("day").format("YYYY-MM-DD HH:mm:ss"),
+      }
       : undefined,
   );
 
   useEffect(() => {
     if (data?.data) {
-      setFilteredData(data.data);
+      // User requested to use createdAt for the Date column
+      // This fixes legacy data where 'date' was empty string
+      const mappedData = data.data.map((item) => ({
+        ...item,
+        date: item.createdAt,
+      }));
+      setFilteredData(mappedData);
     }
   }, [data]);
 
@@ -78,11 +84,9 @@ const RawMaterialsLog = () => {
   };
 
   const formatDate = (dateString: string) => {
-    try {
-      return dayjs(dateString).format("DD/MM/YYYY HH:mm");
-    } catch {
-      return dateString;
-    }
+    if (!dateString) return "-";
+    const date = dayjs(dateString);
+    return date.isValid() ? date.format("DD/MM/YYYY HH:mm") : "-";
   };
 
   const columns: GridColDef[] = [

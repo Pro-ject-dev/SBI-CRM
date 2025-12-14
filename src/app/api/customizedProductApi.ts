@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const customizedProductApi = createApi({
   reducerPath: "customizedProductApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_LIVE_SERVER_BASE_URL,
+    baseUrl: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
     prepareHeaders: (headers) => {
       const accessToken = localStorage.getItem("authToken");
       if (accessToken) {
@@ -50,9 +50,8 @@ export const customizedProductApi = createApi({
       }) => {
         return `${localStorage.getItem(
           "api_endpoint"
-        )}/GetProductsByFilter?isStandard=${isStandard}&page=${
-          page + 1
-        }&size=${size}&productName=${productName}&startDate=${startDate}&endDate=${endDate}&grade=${grade}`;
+        )}/GetProductsByFilter?isStandard=${isStandard}&page=${page + 1
+          }&size=${size}&productName=${productName}&startDate=${startDate}&endDate=${endDate}&grade=${grade}`;
       },
       providesTags: ["Customized"],
     }),

@@ -8,7 +8,7 @@ import type {
   ConsumableStockAlert,
 } from "../../types/warehouse";
 
-const BASE_URL = import.meta.env.VITE_LIVE_SERVER_BASE_URL || "http://localhost:3001";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000" || "http://localhost:3001";
 
 export const consumableMaterialsApi = createApi({
   reducerPath: "consumableMaterialsApi",
@@ -48,7 +48,10 @@ export const consumableMaterialsApi = createApi({
       { data: ConsumableMaterial },
       { barcode: string }
     >({
-      query: ({ barcode }) => `/consumable-materials/barcode/${barcode}`,
+      query: ({ barcode }) => ({
+        url: "/warehouse_manager/getConsumableMaterialByBarcode",
+        params: { barcode },
+      }),
       providesTags: ["ConsumableMaterial"],
     }),
 
@@ -115,7 +118,7 @@ export const consumableMaterialsApi = createApi({
       }
     >({
       query: (params) => ({
-        url: "/consumable-materials/requests",
+        url: "/warehouse_manager/getConsumableRequests",
         params,
       }),
       providesTags: ["ConsumableRequest"],
@@ -125,7 +128,10 @@ export const consumableMaterialsApi = createApi({
       { data: ConsumableRequest },
       { id: string }
     >({
-      query: ({ id }) => `/consumable-materials/requests/${id}`,
+      query: ({ id }) => ({
+        url: "/warehouse_manager/getConsumableRequestById",
+        params: { id },
+      }),
       providesTags: ["ConsumableRequest"],
     }),
 
@@ -134,7 +140,7 @@ export const consumableMaterialsApi = createApi({
       ConsumableRequestFormData
     >({
       query: (data) => ({
-        url: "/consumable-materials/requests",
+        url: "/warehouse_manager/addConsumableRequest",
         method: "POST",
         body: data,
       }),
@@ -146,8 +152,9 @@ export const consumableMaterialsApi = createApi({
       { id: string; data: Partial<ConsumableRequestFormData> }
     >({
       query: ({ id, data }) => ({
-        url: `/consumable-materials/requests/${id}`,
+        url: "/warehouse_manager/updateConsumableRequest",
         method: "PUT",
+        params: { id },
         body: data,
       }),
       invalidatesTags: ["ConsumableRequest"],
@@ -166,8 +173,9 @@ export const consumableMaterialsApi = createApi({
       }
     >({
       query: ({ id, ...data }) => ({
-        url: `/consumable-materials/requests/${id}/approve`,
+        url: "/warehouse_manager/approveConsumableRequest",
         method: "PUT",
+        params: { id },
         body: data,
       }),
       invalidatesTags: ["ConsumableRequest"],
@@ -178,8 +186,9 @@ export const consumableMaterialsApi = createApi({
       { id: string; rejectionReason: string }
     >({
       query: ({ id, rejectionReason }) => ({
-        url: `/consumable-materials/requests/${id}/reject`,
+        url: "/warehouse_manager/rejectConsumableRequest",
         method: "PUT",
+        params: { id },
         body: { rejectionReason },
       }),
       invalidatesTags: ["ConsumableRequest"],
@@ -198,8 +207,9 @@ export const consumableMaterialsApi = createApi({
       }
     >({
       query: ({ id, ...data }) => ({
-        url: `/consumable-materials/requests/${id}/fulfill`,
+        url: "/warehouse_manager/fulfillConsumableRequest",
         method: "PUT",
+        params: { id },
         body: data,
       }),
       invalidatesTags: ["ConsumableRequest", "ConsumableMaterial", "ConsumableStockLog"],
@@ -210,8 +220,9 @@ export const consumableMaterialsApi = createApi({
       { id: string }
     >({
       query: ({ id }) => ({
-        url: `/consumable-materials/requests/${id}`,
+        url: "/warehouse_manager/deleteConsumableRequest",
         method: "DELETE",
+        params: { id },
       }),
       invalidatesTags: ["ConsumableRequest"],
     }),
@@ -220,15 +231,12 @@ export const consumableMaterialsApi = createApi({
     getConsumableStockLogs: builder.query<
       { data: ConsumableStockLog[] },
       {
-        consumableMaterialId?: string;
-        requestId?: string;
-        type?: "stock_in" | "stock_out";
-        startDate?: string;
-        endDate?: string;
+        dateFrom?: string;
+        dateTo?: string;
       }
     >({
       query: (params) => ({
-        url: "/consumable-materials/stock-logs",
+        url: "/warehouse_manager/getConsumableStockLogs",
         params,
       }),
       providesTags: ["ConsumableStockLog"],

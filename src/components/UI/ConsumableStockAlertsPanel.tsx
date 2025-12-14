@@ -223,7 +223,7 @@ const ConsumableStockAlertsPanel = () => {
                             variant="subtitle1"
                             fontWeight={alert.isRead ? "normal" : "bold"}
                           >
-                            {alert.consumableMaterial?.name || "Unknown Material"}
+                            {alert.consumableMaterial?.materialName || "Unknown Material"}
                           </Typography>
                           <Chip
                             label={alert.alertType.replace('_', ' ').toUpperCase()}

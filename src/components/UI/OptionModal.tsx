@@ -48,6 +48,7 @@ interface OptionModalProps {
   handleClose: () => void;
   handleModalSubmit: () => void;
   loading: boolean;
+  showPriceHelper?: boolean;
 }
 
 const OptionModal: React.FC<OptionModalProps> = ({
@@ -58,6 +59,7 @@ const OptionModal: React.FC<OptionModalProps> = ({
   handleClose,
   handleModalSubmit,
   loading = false,
+  showPriceHelper = false,
 }) => {
   return (
     <Modal open={modalData.open} onClose={handleClose} keepMounted>
@@ -84,13 +86,13 @@ const OptionModal: React.FC<OptionModalProps> = ({
               </Typography>
             </Box>
           </Box>
-          <IconButton 
+          <IconButton
             onClick={handleClose}
-            sx={{ 
+            sx={{
               color: "inherit",
-              "&:hover": { 
-                backgroundColor: "rgba(255, 255, 255, 0.1)" 
-              } 
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.1)"
+              }
             }}
           >
             <Close />
@@ -99,10 +101,10 @@ const OptionModal: React.FC<OptionModalProps> = ({
 
         {/* Content */}
         <Box sx={{ p: 4 }}>
-          <Paper 
-            elevation={0} 
-            sx={{ 
-              p: 3, 
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
               border: 1,
               borderColor: "divider",
               borderRadius: 2,
@@ -119,25 +121,27 @@ const OptionModal: React.FC<OptionModalProps> = ({
                 >
                   {label}
                 </Typography>
-                
-                <Typography
-                  variant="body2"
-                  sx={{ 
-                    color: "text.secondary", 
-                    mb: 2,
-                    p: 2,
-                    bgcolor: "grey.50",
-                    borderRadius: 1,
-                    border: 1,
-                    borderColor: "divider"
-                  }}
-                >
-                  {Number(modalData.value) > 0
-                    ? `Increase Product Price by ${modalData.value}%`
-                    : Number(modalData.value) < 0
-                    ? `Decrease Product Price by ${Math.abs(Number(modalData.value))}%`
-                    : "No price adjustment"}
-                </Typography>
+
+                {showPriceHelper && (
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "text.secondary",
+                      mb: 2,
+                      p: 2,
+                      bgcolor: "grey.50",
+                      borderRadius: 1,
+                      border: 1,
+                      borderColor: "divider"
+                    }}
+                  >
+                    {Number(modalData.value) > 0
+                      ? `Increase Product Price by ${modalData.value}%`
+                      : Number(modalData.value) < 0
+                        ? `Decrease Product Price by ${Math.abs(Number(modalData.value))}%`
+                        : "No price adjustment"}
+                  </Typography>
+                )}
 
                 <TextField
                   fullWidth
@@ -180,10 +184,10 @@ const OptionModal: React.FC<OptionModalProps> = ({
             Enter positive values to increase, negative to decrease
           </Typography>
           <Stack direction="row" spacing={2}>
-            <Button 
+            <Button
               onClick={handleClose}
               variant="outlined"
-              sx={{ 
+              sx={{
                 borderRadius: 2,
                 px: 3,
                 py: 1.5,
@@ -198,7 +202,7 @@ const OptionModal: React.FC<OptionModalProps> = ({
               onClick={handleModalSubmit}
               disabled={modalData.disabled || false}
               startIcon={loading ? <CircularProgress size={20} /> : <Settings />}
-              sx={{ 
+              sx={{
                 borderRadius: 2,
                 px: 3,
                 py: 1.5,
