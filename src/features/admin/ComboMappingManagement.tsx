@@ -207,7 +207,7 @@ const ComboMappingManagement = () => {
     }
     return productData
       .map((row: any) => row.id)
-      .filter((id) => !selectedRows.ids.has(id));
+      .filter((id: string | number) => !selectedRows.ids.has(id));
   };
 
   const handleDeleteRow = async (id: number[]) => {
@@ -363,7 +363,7 @@ const ComboMappingManagement = () => {
       const currentIds = getSelectedIds();
       const selected = currentIds
         .map((id: string | number) => productData.find((obj: any) => obj.id === id))
-        .filter((item): item is ComboResponse => item !== undefined);
+        .filter((item: any): item is ComboResponse => item !== undefined);
       setFileData(
         selected?.map((obj: Record<string, any>, index: number) => {
           const filtered: Record<string, any> = { sno: String(index + 1) };
@@ -562,7 +562,7 @@ const ComboMappingManagement = () => {
                     backgroundColor: "#f9ebea",
                   },
                 }}
-                onClick={() => handleDeleteRow(getSelectedIds().map(id => Number(id)))}
+                onClick={() => handleDeleteRow(getSelectedIds().map((id: string | number) => Number(id)))}
                 title="Delete"
               >
                 <Delete />

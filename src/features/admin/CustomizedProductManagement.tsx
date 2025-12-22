@@ -150,7 +150,7 @@ const CustomizedProductManagement = () => {
     }
     return productData
       .map((row: any) => row.id)
-      .filter((id) => !selectedRows.ids.has(id));
+      .filter((id: string | number) => !selectedRows.ids.has(id));
   };
 
   const handleDeleteRow = (ids: Array<string | number>) => {
@@ -254,7 +254,7 @@ const CustomizedProductManagement = () => {
     ) => {
       try {
         const currentIds = getSelectedIds();
-        const payload = { ids: currentIds.map(id => Number(id)), percentage: Number(value) };
+        const payload = { ids: currentIds.map((id: string | number) => Number(id)), percentage: Number(value) };
         await updateProductPrice(payload).unwrap();
         setModalData((prev) => ({
           ...prev,
@@ -445,7 +445,7 @@ const CustomizedProductManagement = () => {
       const selected = currentIds
         .map((value: string | number) => productData.find((obj: any) => obj.id === value))
         .filter(
-          (item): item is StandardCustomizedResponse => item !== undefined
+          (item: any): item is StandardCustomizedResponse => item !== undefined
         );
       setFileData(
         selected?.map((obj: Record<string, any>, index: number) => {

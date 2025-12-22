@@ -168,7 +168,7 @@ const StandardProductManagement = () => {
     }
     return productData
       .map((row: any) => row.id)
-      .filter((id) => !selectedRows.ids.has(id));
+      .filter((id: string | number) => !selectedRows.ids.has(id));
   };
 
   const handleEditRow = (id: string | number) => {
@@ -508,7 +508,7 @@ const StandardProductManagement = () => {
       const selected = currentIds
         .map((id: string | number) => productData.find((obj: any) => obj.id === id))
         .filter(
-          (item): item is StandardCustomizedResponse => item !== undefined
+          (item: any): item is StandardCustomizedResponse => item !== undefined
         );
       setFileData(
         selected?.map((obj: Record<string, any>, index: number) => {
