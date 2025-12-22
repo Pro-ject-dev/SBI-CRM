@@ -30,18 +30,6 @@ export const warehouseMenuItems: SideBar[] = [
     path: "/warehouse/consumable-materials",
   },
   {
-    id: "vendors",
-    label: "Vendors",
-    icon: PeopleIcon,
-    path: "/warehouse/vendors",
-  },
-  {
-    id: "purchaseorders",
-    label: "Purchase Orders",
-    icon: ShoppingCartIcon,
-    path: "/warehouse/purchase-orders",
-  },
-  {
     id: "stockassignment",
     label: "Stock Assignment",
     icon: AssignmentIcon,

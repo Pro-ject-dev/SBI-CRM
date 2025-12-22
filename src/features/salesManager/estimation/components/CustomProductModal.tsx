@@ -62,7 +62,7 @@ const CustomProductModal: React.FC<CustomProductModalFormProps> = ({
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         })
           .then((res) => res.json())
-          .then((data) => { if (data.status && Array.isArray(data.data)) { setComboList(data.data); }})
+          .then((data) => { if (data.status && Array.isArray(data.data)) { setComboList(data.data); } })
           .catch((err) => { console.error("Error fetching combos:", err); setError("Failed to load combos."); })
           .finally(() => setIsLoading((prev) => ({ ...prev, combos: false })));
       }
@@ -77,7 +77,7 @@ const CustomProductModal: React.FC<CustomProductModalFormProps> = ({
       })
         .then((res) => res.json())
         .then((data) => {
-          if (data.status && Array.isArray(data.data)) { setAvailableCategories(data.data); } 
+          if (data.status && Array.isArray(data.data)) { setAvailableCategories(data.data); }
           else { setAvailableCategories([]); }
           setFormInputs((prev) => ({ ...prev, productCategory: "", productName: "", remark: "" }));
           setSelectedIds((prev) => ({ ...prev, categoryId: null, productId: null }));
@@ -153,7 +153,7 @@ const CustomProductModal: React.FC<CustomProductModalFormProps> = ({
     setFormInputs((prev) => ({ ...prev, productName: productName }));
     if (selectedApiProduct) {
       setSelectedIds((prev) => ({ ...prev, productId: selectedApiProduct.id }));
-      
+
       // --- FIX IS HERE: The `details` object is now correctly typed as ApiProductDetails ---
       const details: ApiProductDetails = {
         id: selectedApiProduct.id,
@@ -235,9 +235,9 @@ const CustomProductModal: React.FC<CustomProductModalFormProps> = ({
     }
 
     console.log("restData:::", restData);
-    
+
     console.log("Total Amount:::", total);
-    
+
     return { finalTotalAmount: parseFloat(total.toFixed(2)), isInvalid: invalid, isWarning: warning };
   }, [selectedProductDetails, formInputs]);
 
@@ -273,7 +273,7 @@ const CustomProductModal: React.FC<CustomProductModalFormProps> = ({
     const defaultRate = parseFloat(selectedProductDetails.ratePerKg || "0");
     const finalRatePerKg = !isNaN(setRateNum) && formInputs.setPrice.trim() !== "" ? setRateNum : defaultRate;
     console.log("Final Rate per.kg:::", finalRatePerKg);
-    
+
     const submittedData: CustomProductData = {
       id: `${selectedProductDetails.id}-${displayedSizeString.replace(/\s/g, "")}`,
       code: `SBI-CP-${String(selectedProductDetails.id).padStart(3, "0")}`,
@@ -327,10 +327,10 @@ const CustomProductModal: React.FC<CustomProductModalFormProps> = ({
           </Grid>
           <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 3 }}>
             <Button onClick={onModalClose}>Cancel</Button>
-            <Button type="submit" variant="contained" disabled={ isLoading.combos || isLoading.categories || isLoading.products || !selectedProductDetails || isInvalid }>Add Custom Product</Button>
+            <Button type="submit" variant="contained" disabled={isLoading.combos || isLoading.categories || isLoading.products || !selectedProductDetails || isInvalid}>Add Custom Product</Button>
           </Box>
         </form>
-        {selectedProductDetails && (<SizeChartPopover anchorEl={sizeChartAnchorEl} onClose={handleSizeChartClose} onSetSize={handleSetSizeFromPopover} initialLength={ formInputs.length || selectedProductDetails?.length || "" } initialWidth={ formInputs.width || selectedProductDetails?.width || "" } initialThickness={ formInputs.thickness || selectedProductDetails?.thickness || "" }/>)}
+        {selectedProductDetails && (<SizeChartPopover anchorEl={sizeChartAnchorEl} onClose={handleSizeChartClose} onSetSize={handleSetSizeFromPopover} initialLength={formInputs.length || selectedProductDetails?.length || ""} initialWidth={formInputs.width || selectedProductDetails?.width || ""} initialThickness={formInputs.thickness || selectedProductDetails?.thickness || ""} />)}
       </Box>
     </Modal>
   );

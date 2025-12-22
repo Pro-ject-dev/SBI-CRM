@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import AdminRoutes from "./AdminRoutes";
 import SalesManagerRoutes from "./SalesManagerRoutes";
 import WarehouseRoutes from "./WarehouseRoutes";
+import PurchaseManagerRoutes from "./PurchaseManagerRoutes";
 import LoginPage from "../pages/LoginPage";
 import OperationManagerRoutes from "./OperationManagerRoutes";
 import { restoreCredentials } from "../app/slices/authSlice";
@@ -12,9 +13,9 @@ import type { RootState } from "../app/store";
 const AppRouter = () => {
   const dispatch = useDispatch();
   const authState = useSelector((state: RootState) => state.auth);
-  
 
-  
+
+
   useEffect(() => {
     console.log("AppRouter - Current auth state:", authState);
     console.log("AppRouter - Current location:", window.location.pathname);
@@ -32,6 +33,7 @@ const AppRouter = () => {
       {SalesManagerRoutes()}
       {OperationManagerRoutes()}
       {WarehouseRoutes()}
+      {PurchaseManagerRoutes()}
 
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

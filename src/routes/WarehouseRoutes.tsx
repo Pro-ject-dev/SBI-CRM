@@ -24,8 +24,8 @@ const WarehouseRoutes = () => (
       <Route path="dashboard" element={<WarehouseDashboard />} />
       <Route path="raw-materials" element={<WarehouseRawMaterials />} />
       <Route path="raw-materials/form" element={<WarehouseRawMaterials />} />
-      <Route path="vendors" element={<WarehouseVendors />} />
-      <Route path="vendors/form" element={<WarehouseVendors />} />
+      {/* <Route path="vendors" element={<WarehouseVendors />} /> */}
+      {/* <Route path="vendors/form" element={<WarehouseVendors />} /> */}
       <Route
         path="consumable-materials"
         element={<WarehouseConsumableMaterials />}
@@ -39,7 +39,7 @@ const WarehouseRoutes = () => (
       {/* <Route path="purchase-orders/form" element={<WarehousePurchaseOrders />} /> */}
       {/* <Route path="stock-assignment" element={<WarehousePurchaseOrders />} /> */}
       {/* New separated routes: */}
-      <Route path="purchase-orders" element={<PurchaseOrdersManagement />} />
+      {/* <Route path="purchase-orders" element={<PurchaseOrdersManagement />} /> */}
       <Route path="stock-assignment" element={<WarehouseOrdersManagement />} />
       <Route path="help" element={<HelpSupport />} />
     </Route>

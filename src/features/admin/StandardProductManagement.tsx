@@ -1,18 +1,20 @@
-import { Box, Button, Container } from "@mui/material";
+import { Box, Button, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import {
   useDeleteStandardMutation,
   useGetStandardByFilterQuery,
   useLazyGetStandardByFilterQuery,
   useLazyGetStandardQuery,
+  useUpdateStandardMutation,
+  useDeleteStandardVariantMutation,
   useUpdateProductCostMutation,
 } from "../../app/api/standardProductApi";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import {
   DeleteSweepOutlined as Delete,
   DriveFileRenameOutline as Edit,
 } from "@mui/icons-material";
-import { DataTable } from "../../components/UI/DataTable";
-import type { GridColDef } from "@mui/x-data-grid";
+import { DataGrid } from "@mui/x-data-grid";
+import type { GridColDef, GridRowSelectionModel, GridPaginationModel } from "@mui/x-data-grid";
 import { useNavigate } from "react-router-dom";
 import { addToast } from "../../app/slices/toastSlice";
 import { useDispatch, useSelector } from "react-redux";
@@ -35,7 +37,7 @@ const StandardProductManagement = () => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
   const standardSelector = useSelector((state: RootState) => state.standard);
-  const [selectedRows, setSelectedRows] = useState<Array<string | number>>([]);
+  const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() });
   const headers = {
     sno: "S. No",
     productName: "Product Name",
@@ -52,6 +54,10 @@ const StandardProductManagement = () => {
 
 
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ open: boolean; ids: (string | number)[] }>({
+    open: false,
+    ids: [],
+  });
   const [filterAnchor, setFilterAnchor] = useState<HTMLButtonElement | null>(
     null
   );
@@ -89,17 +95,10 @@ const StandardProductManagement = () => {
     price: { open: false, value: "", error: "", submit: false },
   });
 
-  const [
-    getStandardProducts,
-    { isLoading },
-    // isError,
-  ] = useLazyGetStandardByFilterQuery();
-
-  const [getAllStandardProducts] = useLazyGetStandardQuery();
-
+  // Fetch data using the standard hook
   const {
-    data,
-    // isError,
+    data: rawData,
+    isLoading: isGetLoading,
   } = useGetStandardByFilterQuery({
     isStandard: "1",
     page: standardSelector.pagination.page,
@@ -110,105 +109,133 @@ const StandardProductManagement = () => {
     grade: standardSelector.filterData.grade,
   });
 
-  const [
-    deleteStandard,
-    // { isLoading: deleteLoading }
-  ] = useDeleteStandardMutation();
+  const [getAllStandardProducts] = useLazyGetStandardQuery();
+  const [deleteStandard] = useDeleteStandardMutation();
+  const [deleteStandardVariant] = useDeleteStandardVariantMutation();
+  const [updateProductCost, { isLoading: productCostLoading }] = useUpdateProductCostMutation();
+  const [getProductBySearch] = useLazyGetProductBySearchQuery();
 
-  const [updateProductCost, { isLoading: productCostLoading }] =
-    useUpdateProductCostMutation();
-
-  const [
-    getProductBySearch,
-    // { isLoading: productBySearchLoading }
-  ] = useLazyGetProductBySearchQuery();
-
-  const [productData, setProductData] = useState<
-    StandardCustomizedResponse[] | []
-  >([]);
+  const productData = useMemo(() => {
+    if (!rawData?.data) return [];
+    const flattenedData: any[] = [];
+    rawData.data.forEach((prod: any) => {
+      if (!prod.id) return;
+      if (prod.variants && prod.variants.length > 0) {
+        prod.variants.forEach((v: any) => {
+          if (!v.id) return;
+          flattenedData.push({
+            ...prod,
+            ...v,
+            id: `${prod.id}_${v.id}`,
+            originalProductId: prod.id,
+            isVariant: true,
+            productName: prod.productName
+          });
+        });
+      } else {
+        flattenedData.push({
+          ...prod,
+          id: String(prod.id),
+          originalProductId: prod.id,
+          isVariant: false
+        });
+      }
+    });
+    return flattenedData;
+  }, [rawData]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await getStandardProducts({
-          isStandard: "1",
-          page: standardSelector.pagination.page,
-          size: standardSelector.pagination.pageSize,
-          productName: standardSelector.filterData.productName,
-          startDate: standardSelector.filterData.startDate,
-          endDate: standardSelector.filterData.endDate,
-          grade: standardSelector.filterData.grade,
-        });
-        // Flatten data: If a product has variants, create a row for each variant.
-        const flattenedData: any[] = [];
-        response?.data.data.forEach((prod: any) => {
-          if (prod.variants && prod.variants.length > 0) {
-            prod.variants.forEach((v: any) => {
-              flattenedData.push({
-                ...prod,
-                ...v, // Override product defaults with variant details (length, rate, costs, etc.)
-                id: `${prod.id}_${v.id}`, // Unique ID for DataGrid
-                originalProductId: prod.id,
-                isVariant: true,
-                // Ensure we keep the product name
-                productName: prod.productName
-              });
-            });
+    if (productData.length > 0) {
+      setFileData(
+        productData.map((obj: any, index: number) => {
+          const filtered: any = { sno: String(index + 1) };
+          Object.keys(headers).forEach((key) => {
+            if (key !== "sno") {
+              filtered[key] = obj[key];
+            }
+          });
+          return filtered;
+        })
+      );
+    }
+  }, [productData]);
+
+
+
+  const getSelectedIds = () => {
+    if (selectedRows.type === "include") {
+      return Array.from(selectedRows.ids);
+    }
+    return productData
+      .map((row: any) => row.id)
+      .filter((id) => !selectedRows.ids.has(id));
+  };
+
+  const handleEditRow = (id: string | number) => {
+    navigate(`/admin/master-form?tab=standard&id=${id}`);
+  };
+
+  const handleDeleteRow = (ids: Array<string | number>) => {
+    setDeleteConfirmation({ open: true, ids });
+  };
+
+  const confirmDelete = async () => {
+    const ids = deleteConfirmation.ids;
+    try {
+      if (ids && ids.length > 0) {
+        const variantsToDelete: number[] = [];
+        const productsToDelete: number[] = [];
+
+        // Map product ID to set of its variant IDs being deleted
+        const productToDeletedVariants = new Map<number, number[]>();
+
+        ids.forEach((id) => {
+          const strId = String(id);
+          if (strId.includes("_")) {
+            // It's a variant row: "prodId_varId"
+            const [pId, vId] = strId.split("_").map(Number);
+            if (!productToDeletedVariants.has(pId)) {
+              productToDeletedVariants.set(pId, []);
+            }
+            productToDeletedVariants.get(pId)!.push(vId);
           } else {
-            flattenedData.push({
-              ...prod,
-              originalProductId: prod.id,
-              isVariant: false
-            });
+            // It's a product row
+            productsToDelete.push(Number(strId));
           }
         });
 
-        setProductData(flattenedData);
+        // For each affected product via variant selection
+        productToDeletedVariants.forEach((deletedVariantIds, pId) => {
+          const product = rawData?.data.find((p: any) => p.id === pId);
+          if (product) {
+            const currentVariants = product.variants ? product.variants.filter((v: any) => v.status === "1") : [];
+            const totalActiveVariants = currentVariants.length;
 
-        setFileData(
-          flattenedData.map((obj: Record<string, any>, index: number) => {
-            const filtered: Record<string, any> = { sno: String(index + 1) };
-            Object.keys(headers).forEach((key) => {
-              if (key !== "sno") {
-                filtered[key] = obj[key];
+            // If we're deleting all active variants or if this product is already marked for deletion anyway
+            if (deletedVariantIds.length >= totalActiveVariants && totalActiveVariants > 0) {
+              if (!productsToDelete.includes(pId)) {
+                productsToDelete.push(pId);
               }
-            });
-            return filtered;
-          })
-        );
-      } catch (error) {
-        console.error("Error fetching product data");
-      }
-    };
-    fetchData();
-  }, [standardSelector, data]);
+            } else {
+              // Only some variants being deleted, or no variants existed (redundant check)
+              variantsToDelete.push(...deletedVariantIds);
+            }
+          }
+        });
 
-  const handleDeleteRow = async (ids: Array<string | number>) => {
-    try {
-      if (ids && ids.length > 0) {
-        // Extract originalProductIds if passed directly or via selection
-        // If passed from button click (single item), it might be [originalId]
-        // If passed from multiselect, it's [compositeId1, compositeId2]
-
-        const originalIds = [...new Set(ids.map(id => {
-          const row = productData.find((p: any) => p.id === id);
-          return row ? row.originalProductId : Number(id); // Fallback if direct number passed
-        }))];
-
-        const deleteData = await deleteStandard({ ids: originalIds });
-        if (deleteData.error) {
-          dispatch(
-            addToast({ message: "Failed to Deleting Product!", type: "error" })
-          );
-        } else {
-          dispatch(
-            addToast({
-              message: "Product Deleted Successfully",
-              type: "success",
-            })
-          );
+        // Execute deletions
+        // Note: If a product is in productsToDelete, its variants will be soft-deleted by the backend.
+        // If we want hard-delete for variants alone, we still call deleteStandardVariant for variants not included in a full product delete.
+        if (variantsToDelete.length > 0) {
+          await deleteStandardVariant({ ids: variantsToDelete });
         }
-        return deleteData;
+
+        if (productsToDelete.length > 0) {
+          await deleteStandard({ ids: productsToDelete });
+        }
+
+        dispatch(addToast({ message: "Deleted successfully", type: "success" }));
+        setSelectedRows({ type: "include", ids: new Set() }); // Clear selection after delete
       }
     } catch (error) {
       dispatch(
@@ -217,16 +244,13 @@ const StandardProductManagement = () => {
           type: "error",
         })
       );
+    } finally {
+      setDeleteConfirmation({ open: false, ids: [] });
     }
   };
 
-  const handleEditRow = (id: string) => {
-    navigate(`/admin/master-form?tab=standard&id=${id}`);
-  };
-
-  const handlePagination = (params: any) => {
-    const { page, pageSize } = params;
-    dispatch(paginationSlice({ page, pageSize }));
+  const handlePagination = (model: GridPaginationModel) => {
+    dispatch(paginationSlice({ page: model.page, pageSize: model.pageSize }));
   };
 
   const handleModalChange = (key: string, value: string) => {
@@ -266,7 +290,7 @@ const StandardProductManagement = () => {
           ...prev,
           [typedKey]: {
             ...prev[typedKey],
-            error: `${key} is required**`,
+            error: `${key} is required ** `,
           },
         };
       });
@@ -286,9 +310,10 @@ const StandardProductManagement = () => {
       }) => ReturnType<typeof updateProductCost>
     ) => {
       try {
-        const originalIds = [...new Set(selectedRows.map(id => {
-          const row = productData.find((p: any) => p.id === id);
-          return row ? row.originalProductId : Number(id);
+        const currentIds = getSelectedIds();
+        const originalIds = [...new Set(currentIds.map(id => {
+          const row = productData.find((p: any) => String(p.id) === String(id));
+          return row ? Number(row.originalProductId) : Number(id);
         }))];
         const payload = { ids: originalIds, percentage: Number(value) };
         await updateProductPrice(payload).unwrap();
@@ -311,7 +336,7 @@ const StandardProductManagement = () => {
         dispatch(
           addToast({
             message: `Failed to Update ${key.charAt(0).toUpperCase() + key.slice(1)
-              }!`,
+              } !`,
             type: "error",
           })
         );
@@ -479,8 +504,9 @@ const StandardProductManagement = () => {
         }) as StandardFileDataDto[]
       );
     } else if (value === "2") {
-      const selected = selectedRows
-        .map((value) => productData.find((obj) => obj.id === value))
+      const currentIds = getSelectedIds();
+      const selected = currentIds
+        .map((id: string | number) => productData.find((obj: any) => obj.id === id))
         .filter(
           (item): item is StandardCustomizedResponse => item !== undefined
         );
@@ -595,7 +621,7 @@ const StandardProductManagement = () => {
           <Button
             color="error"
             sx={{ minWidth: 0, padding: 0 }}
-            onClick={() => handleDeleteRow([Number(params.row.id)])}
+            onClick={() => handleDeleteRow([params.row.id])}
           >
             <Delete />
           </Button>
@@ -654,7 +680,7 @@ const StandardProductManagement = () => {
             alignItems: "center",
           }}
         >
-          {selectedRows.length > 0 && (
+          {(selectedRows.type === "exclude" || selectedRows.ids.size > 0) && (
             <Box>
               <Button
                 sx={{
@@ -693,7 +719,7 @@ const StandardProductManagement = () => {
                     backgroundColor: "#f9ebea",
                   },
                 }}
-                onClick={() => handleDeleteRow(selectedRows)}
+                onClick={() => handleDeleteRow(getSelectedIds())}
                 title="Delete"
               >
                 <Delete />
@@ -725,23 +751,38 @@ const StandardProductManagement = () => {
       </Box>
       <Box sx={{ width: "100%", mt: 2 }}>
         <Box sx={{ height: 310, width: "100%" }}>
-          <DataTable
+          <DataGrid
             rows={productData}
             columns={columns}
             disableColumnMenu
             checkboxSelection
-            rowCount={productData.length}
+            rowCount={Number(rawData?.total) || 0}
             pageSizeOptions={[10, 25, 50, 100]}
             paginationMode="server"
             onPaginationModelChange={handlePagination}
             paginationModel={standardSelector.pagination}
-            loading={isLoading}
-            onRowSelectionModelChange={(params) => {
-              const rows: Array<number> = [];
-              params.ids.forEach((value) => {
-                rows.push(Number(value));
-              });
-              setSelectedRows(rows);
+            loading={isGetLoading}
+            onRowSelectionModelChange={(newSelection) => {
+              setSelectedRows(newSelection);
+            }}
+            rowSelectionModel={selectedRows}
+            getRowId={(row) => row.id}
+            initialState={{
+              pagination: {
+                paginationModel: standardSelector.pagination,
+              },
+            }}
+            sx={{
+              borderRadius: "16px",
+              border: "1px solid #e0e0e0",
+              "& .MuiDataGrid-columnHeaders": {
+                backgroundColor: "#F8F8F8",
+                borderBottom: "1px solid #e0e0e0",
+              },
+              "& .MuiDataGrid-footerContainer": {
+                borderTop: "1px solid #e0e0e0",
+                backgroundColor: "#fafafa",
+              }
             }}
           />
         </Box>
@@ -792,6 +833,23 @@ const StandardProductManagement = () => {
         }}
         loading={productCostLoading}
       />
+      <Dialog
+        open={deleteConfirmation.open}
+        onClose={() => setDeleteConfirmation({ open: false, ids: [] })}
+      >
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete the selected product(s)? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmation({ open: false, ids: [] })}>Cancel</Button>
+          <Button onClick={confirmDelete} color="error" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

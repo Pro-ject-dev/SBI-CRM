@@ -8,116 +8,116 @@ import { type Estimation } from '../../features/salesManager/leads/types';
 
 // Helper to map an existing Estimation API object to our slice's state shape
 const mapEstimationToState = (estimationData: Estimation) => {
-    const customerNameParts = estimationData.customerName.split(' ');
-    const customerInfo: CustomerInfo = {
-        firstName: customerNameParts.shift() || '', lastName: customerNameParts.join(' ') || '',
-        phone: estimationData.customerPhone || '', gst: estimationData.customerGstin || '',
-        address1: estimationData.customerAddress1 || '', address2: estimationData.customerAddress2 || '',
-        city: estimationData.customerCity || '', state: estimationData.customerState || '',
-        zip: estimationData.customerZip || '', country: estimationData.customerCountry || '',
-    };
-    const bankInfo: BankDetails = {
-        bankId: estimationData.bankId || '', bankTitle: estimationData.bankAccountHolder || '',
-        bankName: estimationData.bankName || '', accountNo: estimationData.bankAccountNumber || '',
-        accountType: estimationData.bankAccountType || '', micrCode: estimationData.bankMicrCode || '',
-        ifscCode: estimationData.bankIfscCode || '',
-    };
-    const termsInfo: TermsDetails = {
-        termId: estimationData.termId || '', termTitle: estimationData.termsTitle || '',
-        termDesc: estimationData.termsDescription || '',
-    };
-    // --- FIX IS HERE: This function now parses strings to numbers ---
-    const mapApiAddonsToUi = (apiAddons: any[]): ProductListData[] => {
-      return (apiAddons || []).map(addon => ({
-        id: addon.id.toString(),
-        code: addon.prodCode,
-        productName: addon.name,
-        quantity: parseFloat(addon.quantity) || 1,
-        ratePerKg: parseFloat(addon.unitPrice) || 0,
-        totalAmount: parseFloat(addon.totalPrice) || 0,
-        remark: addon.specification,
-        size: addon.size,
-        length: addon.size.split('x')[0]?.trim() || '0',
-        width: addon.size.split('x')[1]?.trim() || '0',
-        thickness: addon.size.split('x')[2]?.trim() || '0',
-        // Parse all numeric base values
-        baseProductDefaultLength: addon.baseProductDefaultLength || '0',
-        baseProductDefaultWidth: addon.baseProductDefaultWidth || '0',
-        baseProductDefaultThickness: addon.baseProductDefaultThickness || '0',
-        baseProductWeight: addon.baseProductWeight || '0',
-        // Default other numeric fields
-        grade: '', gst: 18, estimatedCost: 0, discount: 0,
-        gstPercentage: 18, unitCost: 0, discountAmount: 0,
-        customBadgeText: addon.notes || '',
-      }));
-    };
+  const customerNameParts = estimationData.customerName.split(' ');
+  const customerInfo: CustomerInfo = {
+    firstName: customerNameParts.shift() || '', lastName: customerNameParts.join(' ') || '',
+    phone: estimationData.customerPhone || '', gst: estimationData.customerGstin || '',
+    address1: estimationData.customerAddress1 || '', address2: estimationData.customerAddress2 || '',
+    city: estimationData.customerCity || '', state: estimationData.customerState || '',
+    zip: estimationData.customerZip || '', country: estimationData.customerCountry || '',
+  };
+  const bankInfo: BankDetails = {
+    bankId: estimationData.bankId || '', bankTitle: estimationData.bankAccountHolder || '',
+    bankName: estimationData.bankName || '', accountNo: estimationData.bankAccountNumber || '',
+    accountType: estimationData.bankAccountType || '', micrCode: estimationData.bankMicrCode || '',
+    ifscCode: estimationData.bankIfscCode || '',
+  };
+  const termsInfo: TermsDetails = {
+    termId: estimationData.termId || '', termTitle: estimationData.termsTitle || '',
+    termDesc: estimationData.termsDescription || '',
+  };
+  // --- FIX IS HERE: This function now parses strings to numbers ---
+  const mapApiAddonsToUi = (apiAddons: any[]): ProductListData[] => {
+    return (apiAddons || []).map(addon => ({
+      id: addon.id.toString(),
+      code: addon.prodCode,
+      productName: addon.name,
+      quantity: parseFloat(addon.quantity) || 1,
+      ratePerKg: parseFloat(addon.unitPrice) || 0,
+      totalAmount: parseFloat(addon.totalPrice) || 0,
+      remark: addon.specification,
+      size: addon.size,
+      length: addon.size.split('x')[0]?.trim() || '0',
+      width: addon.size.split('x')[1]?.trim() || '0',
+      thickness: addon.size.split('x')[2]?.trim() || '0',
+      // Parse all numeric base values
+      baseProductDefaultLength: addon.baseProductDefaultLength || '0',
+      baseProductDefaultWidth: addon.baseProductDefaultWidth || '0',
+      baseProductDefaultThickness: addon.baseProductDefaultThickness || '0',
+      baseProductWeight: addon.baseProductWeight || '0',
+      // Default other numeric fields
+      grade: '', gst: 18, estimatedCost: 0, discount: 0,
+      gstPercentage: 18, unitCost: 0, discountAmount: 0,
+      customBadgeText: addon.notes || '',
+    }));
+  };
 
-    const standardProducts: StandardFormData[] = [];
-    const customProducts: CustomProductData[] = [];
+  const standardProducts: StandardFormData[] = [];
+  const customProducts: CustomProductData[] = [];
 
-    (estimationData.products || []).forEach(p => {
-        if (p.size === 'N/A') {
-            standardProducts.push({
-                id: p.id.toString(),
-                code: p.prodCode,
-                productName: p.name,
-                ratePerQuantity: parseFloat(p.unitPrice) || 0,
-                productCombo: p.combo,
-                productCategory: p.category,
-                quantity: p.quantity,
-                remark: p.specification,
-                totalAmount: parseFloat(p.totalPrice) || 0,
-                gst: '18',
-                minCost: parseFloat(p.minCost || '0'),
-                maxCost: parseFloat(p.maxCost || '0'),
-                addOnsProducts: mapApiAddonsToUi(p.addons),
-                customBadgeText: p.notes || '',
-                // Parse base values
-                baseProductWeight: p.baseProductWeight || '0',
-                baseProductDefaultLength: p.baseProductDefaultLength || '0',
-                baseProductDefaultWidth: p.baseProductDefaultWidth || '0',
-                baseProductDefaultThickness: p.baseProductDefaultThickness || '0',
-            });
-        } else {
-            const sizeParts = p.size.split('x').map(s => s.trim());
-            customProducts.push({
-                id: `${p.id}-${p.size.replace(/\s/g, '')}`,
-                baseProductId: p.id.toString(),
-                code: p.prodCode,
-                productName: p.name,
-                productCombo: p.combo,
-                productCategory: p.category,
-                quantity: parseFloat(p.quantity) || 1,
-                length: sizeParts[0] || '0',
-                width: sizeParts[1] || '0',
-                thickness: sizeParts[2] || '0',
-                size: p.size,
-                ratePerKg: parseFloat(p.unitPrice) || 0,
-                totalAmount: parseFloat(p.totalPrice) || 0,
-                remark: p.specification,
-                // Parse base values
-                baseProductWeight: p.baseProductWeight || '0',
-                baseProductDefaultLength: p.baseProductDefaultLength || '0',
-                baseProductDefaultWidth: p.baseProductDefaultWidth || '0',
-                baseProductDefaultThickness: p.baseProductDefaultThickness || '0',
-                gst: 18,
-                addOnsProducts: mapApiAddonsToUi(p.addons),
-                customBadgeText: p.notes || '',
-            });
-        }
-    });
-    const totalAfterDiscount = parseFloat(estimationData.totalAfterDiscount);
-    const taxTotal = parseFloat(estimationData.taxTotal);
-    const gstPercent = totalAfterDiscount > 0 ? (taxTotal / totalAfterDiscount) * 100 : 18;
-    return {
-        standardProducts, customProducts, customerInfo, bankInfo, termsInfo,
-        gstPercent: isNaN(gstPercent) ? 18 : gstPercent,
-        discountPercent: parseFloat(estimationData.discount) || 0,
-        pdfTemplateType: estimationData.documentType === "Proforma Invoice" ? "proforma" : "quotation" as 'proforma' | 'quotation',
-        leadId: parseInt(estimationData.leadId, 10),
-        editingEstimationId: estimationData.id,
-        referenceNumber: estimationData.referenceNumber,
-    };
+  (estimationData.products || []).forEach(p => {
+    if (p.size === 'N/A') {
+      standardProducts.push({
+        id: p.id.toString(),
+        code: p.prodCode,
+        productName: p.name,
+        ratePerQuantity: parseFloat(p.unitPrice) || 0,
+        productCombo: p.combo,
+        productCategory: p.category,
+        quantity: p.quantity,
+        remark: p.specification,
+        totalAmount: parseFloat(p.totalPrice) || 0,
+        gst: '18',
+        minCost: parseFloat(p.minCost || '0'),
+        maxCost: parseFloat(p.maxCost || '0'),
+        addOnsProducts: mapApiAddonsToUi(p.addons),
+        customBadgeText: p.notes || '',
+        // Parse base values
+        baseProductWeight: p.baseProductWeight || '0',
+        baseProductDefaultLength: p.baseProductDefaultLength || '0',
+        baseProductDefaultWidth: p.baseProductDefaultWidth || '0',
+        baseProductDefaultThickness: p.baseProductDefaultThickness || '0',
+      });
+    } else {
+      const sizeParts = p.size.split('x').map(s => s.trim());
+      customProducts.push({
+        id: `${p.id}-${p.size.replace(/\s/g, '')}`,
+        baseProductId: p.id.toString(),
+        code: p.prodCode,
+        productName: p.name,
+        productCombo: p.combo,
+        productCategory: p.category,
+        quantity: parseFloat(p.quantity) || 1,
+        length: sizeParts[0] || '0',
+        width: sizeParts[1] || '0',
+        thickness: sizeParts[2] || '0',
+        size: p.size,
+        ratePerKg: parseFloat(p.unitPrice) || 0,
+        totalAmount: parseFloat(p.totalPrice) || 0,
+        remark: p.specification,
+        // Parse base values
+        baseProductWeight: p.baseProductWeight || '0',
+        baseProductDefaultLength: p.baseProductDefaultLength || '0',
+        baseProductDefaultWidth: p.baseProductDefaultWidth || '0',
+        baseProductDefaultThickness: p.baseProductDefaultThickness || '0',
+        gst: 18,
+        addOnsProducts: mapApiAddonsToUi(p.addons),
+        customBadgeText: p.notes || '',
+      });
+    }
+  });
+  const totalAfterDiscount = parseFloat(estimationData.totalAfterDiscount);
+  const taxTotal = parseFloat(estimationData.taxTotal);
+  const gstPercent = totalAfterDiscount > 0 ? (taxTotal / totalAfterDiscount) * 100 : 18;
+  return {
+    standardProducts, customProducts, customerInfo, bankInfo, termsInfo,
+    gstPercent: isNaN(gstPercent) ? 18 : gstPercent,
+    discountPercent: parseFloat(estimationData.discount) || 0,
+    pdfTemplateType: estimationData.documentType === "Proforma Invoice" ? "proforma" : "quotation" as 'proforma' | 'quotation',
+    leadId: parseInt(estimationData.leadId, 10),
+    editingEstimationId: estimationData.id,
+    referenceNumber: estimationData.referenceNumber,
+  };
 };
 
 interface EstimationState {
@@ -129,7 +129,7 @@ interface EstimationState {
 }
 const initialState: EstimationState = {
   standardProducts: [], customProducts: [], customerInfo: null, bankInfo: null,
-  termsInfo: null, gstPercent: 18,  discountAmount: 0, pdfTemplateType: 'proforma',
+  termsInfo: null, gstPercent: 18, discountAmount: 0, pdfTemplateType: 'proforma',
   leadId: null, editingEstimationId: null, referenceNumber: null,
   status: 'idle', error: null,
 };

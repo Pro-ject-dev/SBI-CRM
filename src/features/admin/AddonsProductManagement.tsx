@@ -1,11 +1,11 @@
 import { Box, Button, Container } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import {
   DeleteSweepOutlined as Delete,
   DriveFileRenameOutline as Edit,
 } from "@mui/icons-material";
 import { DataTable } from "../../components/UI/DataTable";
-import type { GridColDef } from "@mui/x-data-grid";
+import type { GridColDef, GridPaginationModel, GridRowSelectionModel } from "@mui/x-data-grid";
 import {
   useDeleteAddonsMutation,
   useGetAddonsByFilterQuery,
@@ -35,7 +35,7 @@ const AddonsProductManagement = () => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
   const addonsSelector = useSelector((state: RootState) => state.addons);
-  const [selectedRows, setSelectedRows] = useState<Array<number>>([]);
+  const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() });
   const headers = {
     sno: "S. No",
     name: "Product Name",
@@ -78,7 +78,6 @@ const AddonsProductManagement = () => {
     { label: "Selected Products", value: "2" },
     { label: "All Products", value: "3" },
   ];
-  const [fileData, setFileData] = useState<AddonsFileDataDto[] | []>([]);
   const [exportDropDownValue, setExportDropDownValue] = useState<string>("1");
   const [exportDisable, setExportDisable] = useState<boolean>(false);
 
@@ -89,17 +88,11 @@ const AddonsProductManagement = () => {
     price: { open: false, value: "", error: "", submit: false },
   });
 
-  const [
-    getAddonsProducts,
-    { isLoading },
-    // isError,
-  ] = useLazyGetAddonsByFilterQuery();
-
   const [getAllAddonsProducts] = useLazyGetAddonsQuery();
 
   const {
-    data,
-    // isError,
+    data: rawData,
+    isLoading: isGetLoading,
   } = useGetAddonsByFilterQuery({
     page: addonsSelector.pagination.page,
     size: addonsSelector.pagination.pageSize,
@@ -122,37 +115,27 @@ const AddonsProductManagement = () => {
   const [updateProductCost, { isLoading: productCostLoading }] =
     useUpdateProductCostMutation();
 
-  const [productData, setProductData] = useState<AddonsResponse[] | []>([]);
+  const productData = useMemo(() => {
+    return rawData?.data || [];
+  }, [rawData]);
+
+  const [fileData, setFileData] = useState<AddonsFileDataDto[] | []>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await getAddonsProducts({
-          page: addonsSelector.pagination.page,
-          size: addonsSelector.pagination.pageSize,
-          productName: addonsSelector.filterData.productName,
-          startDate: addonsSelector.filterData.startDate,
-          endDate: addonsSelector.filterData.endDate,
-          grade: addonsSelector.filterData.grade,
-        });
-        setProductData(response?.data.data);
-        setFileData(
-          response?.data.data.map((obj: Record<string, any>, index: number) => {
-            const filtered: Record<string, any> = { sno: String(index + 1) };
-            Object.keys(headers).forEach((key) => {
-              if (key !== "sno") {
-                filtered[key] = obj[key];
-              }
-            });
-            return filtered;
-          })
-        );
-      } catch (error) {
-        console.error("Error fetching product data");
-      }
-    };
-    fetchData();
-  }, [addonsSelector, data]);
+    if (productData.length > 0) {
+      setFileData(
+        productData.map((obj: Record<string, any>, index: number) => {
+          const filtered: Record<string, any> = { sno: String(index + 1) };
+          Object.keys(headers).forEach((key) => {
+            if (key !== "sno") {
+              filtered[key] = obj[key];
+            }
+          });
+          return filtered;
+        }) as AddonsFileDataDto[]
+      );
+    }
+  }, [productData]);
 
   const handleDeleteRow = async (ids: number[]) => {
     try {
@@ -170,7 +153,7 @@ const AddonsProductManagement = () => {
             })
           );
         }
-        setSelectedRows([]);
+        setSelectedRows({ type: "include", ids: new Set() });
         return deleteData;
       }
     } catch (error) {
@@ -183,13 +166,21 @@ const AddonsProductManagement = () => {
     }
   };
 
+  const getSelectedIds = () => {
+    if (selectedRows.type === "include") {
+      return Array.from(selectedRows.ids);
+    }
+    return productData
+      .map((row: any) => row.id)
+      .filter((id: string | number) => !selectedRows.ids.has(id));
+  };
+
   const handleEditRow = (id: string) => {
     navigate(`/admin/master-form?tab=addons&id=${id}`);
   };
 
-  const handlePagination = (params: any) => {
-    const { page, pageSize } = params;
-    dispatch(paginationSlice({ page, pageSize }));
+  const handlePagination = (model: GridPaginationModel) => {
+    dispatch(paginationSlice({ page: model.page, pageSize: model.pageSize }));
   };
 
   const handleModalChange = (key: string, value: string) => {
@@ -249,7 +240,11 @@ const AddonsProductManagement = () => {
       }) => ReturnType<typeof updateProductCost>
     ) => {
       try {
-        const payload = { ids: selectedRows, percentage: Number(value) };
+        const currentIds = getSelectedIds();
+        const payload = {
+          ids: currentIds.map((id: string | number) => Number(id)),
+          percentage: Number(value)
+        };
         await updateProductPrice(payload).unwrap();
         setModalData((prev) => ({
           ...prev,
@@ -413,7 +408,6 @@ const AddonsProductManagement = () => {
   const handleExportModalClose = () => {
     setExportAnchor(null);
     setExportDropDownValue("1");
-    setFileData(fileData);
   };
 
   const handleExportDropDownChange = async (
@@ -435,9 +429,10 @@ const AddonsProductManagement = () => {
         }) as AddonsFileDataDto[]
       );
     } else if (value === "2") {
-      const selected = selectedRows
-        .map((value) => productData.find((obj) => obj.id === value))
-        .filter((item): item is AddonsResponse => item !== undefined);
+      const currentIds = getSelectedIds();
+      const selected = currentIds
+        .map((id: string | number) => productData.find((obj: any) => obj.id === id))
+        .filter((item: any): item is AddonsResponse => item !== undefined);
       setFileData(
         selected?.map((obj: Record<string, any>, index: number) => {
           const filtered: Record<string, any> = { sno: String(index + 1) };
@@ -552,7 +547,7 @@ const AddonsProductManagement = () => {
           <Button
             color="error"
             sx={{ minWidth: 0, padding: 0 }}
-            onClick={() => handleDeleteRow(params.row.id)}
+            onClick={() => handleDeleteRow([params.row.id])}
           >
             <Delete />
           </Button>
@@ -611,7 +606,7 @@ const AddonsProductManagement = () => {
             alignItems: "center",
           }}
         >
-          {selectedRows.length > 0 && (
+          {(selectedRows.type === "exclude" || selectedRows.ids.size > 0) && (
             <Box>
               <Button
                 sx={{
@@ -650,7 +645,7 @@ const AddonsProductManagement = () => {
                     backgroundColor: "#f9ebea",
                   },
                 }}
-                onClick={() => handleDeleteRow(selectedRows)}
+                onClick={() => handleDeleteRow(getSelectedIds().map((id: string | number) => Number(id)))}
                 title="Delete"
               >
                 <Delete />
@@ -687,18 +682,20 @@ const AddonsProductManagement = () => {
             columns={columns}
             disableColumnMenu
             checkboxSelection
-            rowCount={productData.length}
+            rowCount={Number(rawData?.total) || 0}
             pageSizeOptions={[10, 25, 50, 100]}
             paginationMode="server"
             onPaginationModelChange={handlePagination}
             paginationModel={addonsSelector.pagination}
-            loading={isLoading}
-            onRowSelectionModelChange={(params) => {
-              const rows: Array<number> = [];
-              params.ids.forEach((value) => {
-                rows.push(Number(value));
-              });
-              setSelectedRows(rows);
+            loading={isGetLoading}
+            onRowSelectionModelChange={(newSelection) => {
+              setSelectedRows(newSelection);
+            }}
+            rowSelectionModel={selectedRows}
+            initialState={{
+              pagination: {
+                paginationModel: addonsSelector.pagination,
+              },
             }}
           />
         </Box>

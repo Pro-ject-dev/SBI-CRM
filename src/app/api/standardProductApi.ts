@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const standardProductApi = createApi({
   reducerPath: "standardProductApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
+    baseUrl: import.meta.env.VITE_API_BASE_URL || "https://sbiapi.ssengineeringworks.online",
     prepareHeaders: (headers) => {
       const accessToken = localStorage.getItem("authToken");
       if (accessToken) {
@@ -78,6 +78,14 @@ export const standardProductApi = createApi({
       }),
       invalidatesTags: ["Standard"],
     }),
+    deleteStandardVariant: builder.mutation({
+      query: (payload) => ({
+        url: `${localStorage.getItem("api_endpoint")}/deleteStandardVariant`,
+        method: "PUT",
+        body: payload,
+      }),
+      invalidatesTags: ["Standard"],
+    }),
     isProductExist: builder.mutation({
       query: (searchTerm: string) => ({
         url: `${localStorage.getItem(
@@ -116,4 +124,5 @@ export const {
   useLazyGetStandardByFilterQuery,
   useGetStandardByFilterQuery,
   useUpdateProductCostMutation,
+  useDeleteStandardVariantMutation,
 } = standardProductApi;

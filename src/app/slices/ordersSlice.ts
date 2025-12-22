@@ -7,52 +7,52 @@ import {
 
 // --- Type Definitions --- (No changes here)
 export interface ApiOrderResponse {
-    id: number;
-    leadId: string;
-    estId: string;
-    date: string;
-    orderStatus: string;
-    deadlineStart: string | null;
-    deadlineEnd: string | null;
-    estimation: {
-        referenceNumber: string;
-        customerName: string;
-        products: any[];
-        grandTotal: string;
-    } | null;
-    leads: {
-        name: string;
-    } | null;
+  id: number;
+  leadId: string;
+  estId: string;
+  date: string;
+  orderStatus: string;
+  deadlineStart: string | null;
+  deadlineEnd: string | null;
+  estimation: {
+    referenceNumber: string;
+    customerName: string;
+    products: any[];
+    grandTotal: string;
+  } | null;
+  leads: {
+    name: string;
+  } | null;
 }
 export interface OrderData {
-    id: number;
-    orderID: string;
-    customerName: string;
-    date: string;
-    totalProducts: number;
-    orderStatus: string;
-    startDate: string | null;
-    endDate: string | null;
-    grandTotal: string;
+  id: number;
+  orderID: string;
+  customerName: string;
+  date: string;
+  totalProducts: number;
+  orderStatus: string;
+  startDate: string | null;
+  endDate: string | null;
+  grandTotal: string;
 }
 export interface Payment {
-    id: number;
-    orderId: number;
-    date: string;
-    paidAmt: string;
-    remark: string;
+  id: number;
+  orderId: number;
+  date: string;
+  paidAmt: string;
+  remark: string;
 }
 export interface OrderDetails {
-    id: number;
-    orderID: string;
-    customerName: string;
-    grandTotal: string;
-    totalPaidAmt: number;
+  id: number;
+  orderID: string;
+  customerName: string;
+  grandTotal: string;
+  totalPaidAmt: number;
 }
 export interface PaymentFormData {
-    date: string;
-    paidAmt: string;
-    remark: string;
+  date: string;
+  paidAmt: string;
+  remark: string;
 }
 
 // --- Async Thunks ---
@@ -195,12 +195,12 @@ const ordersSlice = createSlice({
     setViewingOrder: (state, action: PayloadAction<OrderDetails | null>) => {
       state.viewingOrder = action.payload;
       if (!action.payload) {
-          state.payments = [];
-          state.paymentsError = null;
+        state.payments = [];
+        state.paymentsError = null;
       }
     },
     clearPaymentsError: (state) => {
-        state.paymentsError = null;
+      state.paymentsError = null;
     },
   },
   extraReducers: (builder) => {
@@ -212,14 +212,14 @@ const ordersSlice = createSlice({
       .addCase(fetchPaymentsByOrderId.pending, (state) => { state.isLoadingPayments = true; state.paymentsError = null; })
       .addCase(fetchPaymentsByOrderId.fulfilled, (state, action) => { state.isLoadingPayments = false; state.payments = action.payload.payments; if (state.viewingOrder) { state.viewingOrder.totalPaidAmt = action.payload.totalPaidAmt; } })
       .addCase(fetchPaymentsByOrderId.rejected, (state, action) => { state.isLoadingPayments = false; state.paymentsError = action.payload ?? 'Failed to fetch payments.'; })
-      
+
       // 3. We add a dedicated fulfilled case for deletePayment.
       .addCase(deletePayment.fulfilled, (state, action) => {
         state.isSubmittingPayment = false;
-        
+
         // Find the payment that was just deleted from our current state
         const deletedPayment = state.payments.find(p => p.id === action.payload.paymentId);
-        
+
         if (deletedPayment && state.viewingOrder) {
           // Immediately subtract its amount from the total
           state.viewingOrder.totalPaidAmt -= parseFloat(deletedPayment.paidAmt) || 0;
@@ -236,7 +236,7 @@ const ordersSlice = createSlice({
         (state) => {
           state.isSubmittingPayment = true;
           state.paymentsError = null;
-          
+
         }
       )
       .addMatcher(

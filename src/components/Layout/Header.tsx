@@ -22,10 +22,10 @@ import type { UserRole } from "../../types/auth";
 const Header = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  
+
   // Get auth data from Redux store
   const { userName, role } = useSelector((state: RootState) => state.auth);
-  
+
   // State for User Menu
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
 
@@ -40,16 +40,16 @@ const Header = () => {
   const handleSignOut = () => {
     // Clear auth data from Redux
     dispatch(logout());
-    
+
     // Clear localStorage
     localStorage.removeItem("authToken");
     localStorage.removeItem("role");
     localStorage.removeItem("roleDisplayName");
     localStorage.removeItem("api_endpoint");
-    
+
     // Close menu
     handleCloseUserMenu();
-    
+
     // Navigate to login page
     navigate("/login");
   };
@@ -74,9 +74,11 @@ const Header = () => {
       case "sales_manager":
         return "Sales Manager Dashboard";
       case "warehouse_manager":
-        return "Warehouse Dashboard";
+        return "Store Management Dashboard";
       case "operation_manager":
         return "Operation Manager Dashboard";
+      case "purchase_manager":
+        return "Purchase Management Dashboard";
       default:
         return "Dashboard";
     }
@@ -101,11 +103,13 @@ const Header = () => {
       case "sales_manager":
         return "Sales Manager";
       case "warehouse_manager":
-        return "Warehouse Manager";
+        return "Store Manager";
       case "operation_manager":
         return "Operation Manager";
+      case "purchase_manager":
+        return "Purchase Manager";
       default:
-        return "User";
+        return role || "User";
     }
   };
 
@@ -134,7 +138,7 @@ const Header = () => {
         >
           {getDashboardTitle(role)}
         </Typography>
-        
+
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Button
             onClick={handleOpenUserMenu}
@@ -164,7 +168,7 @@ const Header = () => {
             >
               {getUserInitials(userName)}
             </Avatar>
-            
+
             <Box
               sx={{
                 display: { xs: "none", md: "block" },
@@ -185,10 +189,10 @@ const Header = () => {
                 {getRoleDisplayName(role)}
               </Typography>
             </Box>
-            
+
             <KeyboardArrowDownIcon sx={{ color: "grey.500" }} />
           </Button>
-          
+
           <Menu
             id="user-menu-appbar"
             anchorEl={anchorElUser}
@@ -224,20 +228,20 @@ const Header = () => {
                 {getRoleDisplayName(role)}
               </Typography>
             </Box>
-            
+
             {/* Menu Items */}
             <MenuItem onClick={handleProfile} sx={{ py: 1.25, px: 2 }}>
               <AccountCircleIcon fontSize="small" sx={{ mr: 1.5, color: "text.secondary" }} />
               <Typography variant="body2">Profile</Typography>
             </MenuItem>
-            
+
             <MenuItem onClick={handleSettings} sx={{ py: 1.25, px: 2 }}>
               <SettingsIcon fontSize="small" sx={{ mr: 1.5, color: "text.secondary" }} />
               <Typography variant="body2">Settings</Typography>
             </MenuItem>
-            
+
             <Divider />
-            
+
             <MenuItem onClick={handleSignOut} sx={{ py: 1.25, px: 2, color: "error.main" }}>
               <LogoutIcon fontSize="small" sx={{ mr: 1.5 }} />
               <Typography variant="body2">Sign out</Typography>

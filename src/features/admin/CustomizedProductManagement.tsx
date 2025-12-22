@@ -1,11 +1,11 @@
-import { Box, Button, Container } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { Box, Button, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
+import { useEffect, useRef, useState, useMemo } from "react";
 import {
   DeleteSweepOutlined as Delete,
   DriveFileRenameOutline as Edit,
 } from "@mui/icons-material";
 import { DataTable } from "../../components/UI/DataTable";
-import type { GridColDef } from "@mui/x-data-grid";
+import type { GridColDef, GridPaginationModel, GridRowSelectionModel } from "@mui/x-data-grid";
 import {
   useDeleteCustomizedMutation,
   useGetCustomizedByFilterQuery,
@@ -37,7 +37,11 @@ const CustomizedProductManagement = () => {
   const customizedSelector = useSelector(
     (state: RootState) => state.customized
   );
-  const [selectedRows, setSelectedRows] = useState<Array<number>>([]);
+  const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() });
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ open: boolean; ids: (string | number)[] }>({
+    open: false,
+    ids: [],
+  });
 
   const headers = {
     sno: "S. No",
@@ -92,17 +96,11 @@ const CustomizedProductManagement = () => {
     price: { open: false, value: "", error: "", submit: false },
   });
 
-  const [
-    getCustomizedProducts,
-    { isLoading },
-    // isError,
-  ] = useLazyGetCustomizedByFilterQuery();
-
   const [getAllCustomizedProducts] = useLazyGetCustomizedQuery();
 
   const {
-    data,
-    // isError,
+    data: rawData,
+    isLoading: isGetLoading,
   } = useGetCustomizedByFilterQuery({
     isStandard: "0",
     page: customizedSelector.pagination.page,
@@ -126,45 +124,44 @@ const CustomizedProductManagement = () => {
   const [updateProductCost, { isLoading: productCostLoading }] =
     useUpdateProductCostMutation();
 
-  const [productData, setProductData] = useState<
-    StandardCustomizedResponse[] | []
-  >([]);
+  const productData = useMemo(() => {
+    return rawData?.data || [];
+  }, [rawData]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await getCustomizedProducts({
-          isStandard: "0",
-          page: customizedSelector.pagination.page,
-          size: customizedSelector.pagination.pageSize,
-          productName: customizedSelector.filterData.productName,
-          startDate: customizedSelector.filterData.startDate,
-          endDate: customizedSelector.filterData.endDate,
-          grade: customizedSelector.filterData.grade,
-        });
-        setProductData(response?.data.data);
-        setFileData(
-          response?.data.data.map((obj: Record<string, any>, index: number) => {
-            const filtered: Record<string, any> = { sno: String(index + 1) };
-            Object.keys(headers).forEach((key) => {
-              if (key !== "sno") {
-                filtered[key] = obj[key];
-              }
-            });
-            return filtered;
-          })
-        );
-      } catch (error) {
-        console.error("Error fetching product data");
-      }
-    };
-    fetchData();
-  }, [customizedSelector, data]);
+    if (productData.length > 0) {
+      setFileData(
+        productData.map((obj: Record<string, any>, index: number) => {
+          const filtered: Record<string, any> = { sno: String(index + 1) };
+          Object.keys(headers).forEach((key) => {
+            if (key !== "sno") {
+              filtered[key] = obj[key];
+            }
+          });
+          return filtered;
+        }) as CustomizedFileDataDto[]
+      );
+    }
+  }, [productData]);
 
-  const handleDeleteRow = async (ids: number[]) => {
+  const getSelectedIds = () => {
+    if (selectedRows.type === "include") {
+      return Array.from(selectedRows.ids);
+    }
+    return productData
+      .map((row: any) => row.id)
+      .filter((id) => !selectedRows.ids.has(id));
+  };
+
+  const handleDeleteRow = (ids: Array<string | number>) => {
+    setDeleteConfirmation({ open: true, ids });
+  };
+
+  const confirmDelete = async () => {
+    const ids = deleteConfirmation.ids;
     try {
-      if (ids) {
-        const deleteData = await deleteCustomized({ ids });
+      if (ids && ids.length > 0) {
+        const deleteData = await deleteCustomized({ ids: ids.map(id => Number(id)) }); // Assuming API expects numbers
         if (deleteData.error) {
           dispatch(
             addToast({ message: "Failed to Deleting Product!", type: "error" })
@@ -176,9 +173,8 @@ const CustomizedProductManagement = () => {
               type: "success",
             })
           );
+          setSelectedRows({ type: "include", ids: new Set() });
         }
-        setSelectedRows([]);
-        return deleteData;
       }
     } catch (error) {
       dispatch(
@@ -187,6 +183,8 @@ const CustomizedProductManagement = () => {
           type: "error",
         })
       );
+    } finally {
+      setDeleteConfirmation({ open: false, ids: [] });
     }
   };
 
@@ -194,9 +192,8 @@ const CustomizedProductManagement = () => {
     navigate(`/admin/master-form?tab=customized&id=${id}`);
   };
 
-  const handlePagination = (params: any) => {
-    const { page, pageSize } = params;
-    dispatch(paginationSlice({ page, pageSize }));
+  const handlePagination = (model: GridPaginationModel) => {
+    dispatch(paginationSlice({ page: model.page, pageSize: model.pageSize }));
   };
 
   const handleModalChange = (key: string, value: string) => {
@@ -256,7 +253,8 @@ const CustomizedProductManagement = () => {
       }) => ReturnType<typeof updateProductCost>
     ) => {
       try {
-        const payload = { ids: selectedRows, percentage: Number(value) };
+        const currentIds = getSelectedIds();
+        const payload = { ids: currentIds.map(id => Number(id)), percentage: Number(value) };
         await updateProductPrice(payload).unwrap();
         setModalData((prev) => ({
           ...prev,
@@ -443,8 +441,9 @@ const CustomizedProductManagement = () => {
         }) as CustomizedFileDataDto[]
       );
     } else if (value === "2") {
-      const selected = selectedRows
-        .map((value) => productData.find((obj) => obj.id === value))
+      const currentIds = getSelectedIds();
+      const selected = currentIds
+        .map((value: string | number) => productData.find((obj: any) => obj.id === value))
         .filter(
           (item): item is StandardCustomizedResponse => item !== undefined
         );
@@ -566,7 +565,7 @@ const CustomizedProductManagement = () => {
           <Button
             color="error"
             sx={{ minWidth: 0, padding: 0 }}
-            onClick={() => handleDeleteRow(params.row.id)}
+            onClick={() => handleDeleteRow([params.row.id])}
           >
             <Delete />
           </Button>
@@ -625,7 +624,7 @@ const CustomizedProductManagement = () => {
             alignItems: "center",
           }}
         >
-          {selectedRows.length > 0 && (
+          {(selectedRows.type === "exclude" || selectedRows.ids.size > 0) && (
             <Box>
               <Button
                 sx={{
@@ -664,7 +663,7 @@ const CustomizedProductManagement = () => {
                     backgroundColor: "#f9ebea",
                   },
                 }}
-                onClick={() => handleDeleteRow(selectedRows)}
+                onClick={() => handleDeleteRow(getSelectedIds())}
                 title="Delete"
               >
                 <Delete />
@@ -701,18 +700,20 @@ const CustomizedProductManagement = () => {
             columns={columns}
             disableColumnMenu
             checkboxSelection
-            rowCount={productData.length}
+            rowCount={Number(rawData?.total) || 0}
             pageSizeOptions={[10, 25, 50, 100]}
             paginationMode="server"
             onPaginationModelChange={handlePagination}
             paginationModel={customizedSelector.pagination}
-            loading={isLoading}
-            onRowSelectionModelChange={(params) => {
-              const rows: Array<number> = [];
-              params.ids.forEach((value) => {
-                rows.push(Number(value));
-              });
-              setSelectedRows(rows);
+            loading={isGetLoading}
+            onRowSelectionModelChange={(newSelection) => {
+              setSelectedRows(newSelection);
+            }}
+            rowSelectionModel={selectedRows}
+            initialState={{
+              pagination: {
+                paginationModel: customizedSelector.pagination,
+              },
             }}
           />
         </Box>
@@ -763,6 +764,23 @@ const CustomizedProductManagement = () => {
         }}
         loading={productCostLoading}
       />
+      <Dialog
+        open={deleteConfirmation.open}
+        onClose={() => setDeleteConfirmation({ open: false, ids: [] })}
+      >
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete the selected product(s)? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmation({ open: false, ids: [] })}>Cancel</Button>
+          <Button onClick={confirmDelete} color="error" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

@@ -31,7 +31,7 @@ export default function BankDetailsStep({ onBankInfoChange, savedData }: BankFor
     micrCode: '',
     ifscCode: '',
   });
-  
+
   // Use a ref to track whether the form has been updated
   const hasUpdated = useRef(false);
 
@@ -50,12 +50,12 @@ export default function BankDetailsStep({ onBankInfoChange, savedData }: BankFor
       hasUpdated.current = true;
       return;
     }
-    
+
     const isValid =
       selectedUnit !== '' &&
       bankDetails.bankName !== '' &&
       bankDetails.accountNo !== '';
-    
+
     onBankInfoChange(bankDetails, isValid);
   }, [bankDetails, selectedUnit]);  // Remove onBankInfoChange from dependencies
 
@@ -199,13 +199,13 @@ export default function BankDetailsStep({ onBankInfoChange, savedData }: BankFor
           </Select>
         </FormControl>
       </FormGrid>
-      
+
       {error && (
         <Grid>
           <Alert severity="warning">{error}</Alert>
         </Grid>
       )}
-      
+
       {loading ? (
         <Grid container justifyContent="center" sx={{ py: 4 }}>
           <CircularProgress />

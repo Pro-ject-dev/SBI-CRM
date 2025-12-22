@@ -31,7 +31,7 @@ const ConsumableMaterialsLog = () => {
                     .format("YYYY-MM-DD HH:mm:ss"),
                 dateTo: dayjs(endDate).endOf("day").format("YYYY-MM-DD HH:mm:ss"),
             }
-            : undefined,
+            : {},
     );
 
     useEffect(() => {

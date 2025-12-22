@@ -3,13 +3,14 @@ import { adminMenuItems } from "../../constants/admin/sideMenu";
 import { operationManagerMenuItems } from "../../constants/operationManager/sideMenu";
 import { salesManagerMenuItems } from "../../constants/salesManager/sideMenu";
 import { warehouseMenuItems } from "../../constants/warehouse/sideMenu";
+import { purchaseManagerMenuItems } from "../../constants/purchaseManager/sideMenu";
 import Sidebar from "./SideBar";
 import type { RootState } from "../../app/store";
 
 const RoleBasedSidebar = () => {
   // Get role from Redux store instead of localStorage
   const { role } = useSelector((state: RootState) => state.auth);
-  
+
   let sideMenuItems;
   switch (role) {
     case "admin":
@@ -23,6 +24,9 @@ const RoleBasedSidebar = () => {
       break;
     case "operation_manager":
       sideMenuItems = operationManagerMenuItems;
+      break;
+    case "purchase_manager":
+      sideMenuItems = purchaseManagerMenuItems;
       break;
     default:
       // Fallback to operation manager if no role is set
