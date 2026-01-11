@@ -197,7 +197,8 @@ export default function EstimationLayout(props: { disableCustomTheme?: boolean }
         bankDetails: mappedBankDetails,
         termsAndConditions: termsAndConditionsPDF,
         templateType: templateType,
-        taxType: overview.taxType,
+        taxType: overview.taxType as 'gst' | 'igst',
+        discountPercent: (calculatedDiscountAmount / itemsTotalAmount) * 100 || 0,
       } as QuotationData;
     };
 

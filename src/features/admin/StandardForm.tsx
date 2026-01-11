@@ -246,7 +246,6 @@ const StandardForm = () => {
               value={productName}
               onChange={(_, val) => { setProductName(val); handleIsProductExist(val); }}
               error={errors.productName}
-              type="text"
             />
           </Grid>
           <Grid item xs={12} sm={6}>

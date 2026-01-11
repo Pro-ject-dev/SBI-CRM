@@ -156,7 +156,7 @@ const MemoizedProductRow = React.memo(({ product, type, pricingMode, onBadgeText
                 <TableCell align="right">
                     {type === 'standard'
                         ? formatCurrency(pricingMode === 'vip' && standardProduct!.maxCost > 0 ? standardProduct!.maxCost : standardProduct!.ratePerQuantity)
-                        : formatCurrency(product.quantity > 0 ? product.totalAmount / product.quantity : 0)
+                        : formatCurrency(Number(product.quantity) > 0 ? product.totalAmount / Number(product.quantity) : 0)
                     }
                 </TableCell>
                 <TableCell align="right">{formatCurrency(product.totalAmount)}</TableCell>

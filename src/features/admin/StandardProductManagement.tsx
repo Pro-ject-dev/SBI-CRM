@@ -270,7 +270,7 @@ const StandardProductManagement = () => {
       }) => ReturnType<typeof updateProductCost>
     ) => {
       try {
-        const originalIds = [...new Set(selectedRows.map(id => {
+        const originalIds = [...new Set(Array.from(selectedRows.ids).map(id => {
           const row = productData.find((p: any) => p.id === id);
           return row ? row.originalProductId : Number(id);
         }))].filter((id): id is number => id !== undefined);

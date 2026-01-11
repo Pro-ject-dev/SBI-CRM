@@ -72,6 +72,7 @@ export interface QuotationData {
   igst?: number;
   grandTotal: number;
   discountPercent: number;
+  taxType?: 'gst' | 'igst';
 
   // Bank & Terms
   bankDetails: BankDetailsPDF;
@@ -463,8 +464,8 @@ export const QuotationPDFGenerator = (data: QuotationData): jsPDF | null => {
     if (data.cgst > 0 && data.sgst > 0) {
       summaryItems.push({
         label: `CGST (${data.totalAfterDiscount > 0
-            ? ((data.cgst / data.totalAfterDiscount) * 100).toFixed(2)
-            : 0
+          ? ((data.cgst / data.totalAfterDiscount) * 100).toFixed(2)
+          : 0
           }%)`,
         value: data.cgst,
         bold: false,
@@ -472,8 +473,8 @@ export const QuotationPDFGenerator = (data: QuotationData): jsPDF | null => {
       });
       summaryItems.push({
         label: `SGST (${data.totalAfterDiscount > 0
-            ? ((data.sgst / data.totalAfterDiscount) * 100).toFixed(2)
-            : 0
+          ? ((data.sgst / data.totalAfterDiscount) * 100).toFixed(2)
+          : 0
           }%)`,
         value: data.sgst,
         bold: false,
@@ -482,8 +483,8 @@ export const QuotationPDFGenerator = (data: QuotationData): jsPDF | null => {
     } else if (data.igst && data.igst > 0) {
       summaryItems.push({
         label: `IGST (${data.totalAfterDiscount > 0
-            ? ((data.igst / data.totalAfterDiscount) * 100).toFixed(2)
-            : 0
+          ? ((data.igst / data.totalAfterDiscount) * 100).toFixed(2)
+          : 0
           }%)`,
         value: data.igst,
         bold: false,
