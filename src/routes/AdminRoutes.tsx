@@ -1,6 +1,7 @@
 import { Route } from "react-router-dom";
 import ProtectedRoute from "../features/auth/ProtectedRoute";
 import AdminDashboard from "../pages/admin/AdminDashboard";
+import ConsumableMaterialsManagement from "../features/admin/ConsumableMaterialsManagement";
 import AdminLayout from "../layouts/AdminLayout";
 import MasterForm from "../pages/admin/MasterForm";
 import ProductManagement from "../pages/admin/ProductManagement";
@@ -36,6 +37,7 @@ const AdminRoutes = () => (
       />
       <Route path="raw-materials" element={<RawMaterialsManagement />} />
       <Route path="raw-materials-log" element={<RawMaterialsLog />} />
+      <Route path="consumable-materials" element={<ConsumableMaterialsManagement />} />
       <Route path="consumable-materials-log" element={<ConsumableMaterialsLog />} />
       <Route path="help" element={<HelpSupport />} />
     </Route>

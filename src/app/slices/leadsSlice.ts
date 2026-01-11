@@ -28,7 +28,7 @@ const token = localStorage.getItem("authToken");
 
 export const fetchLeads = createAsyncThunk('leads/fetchLeads', async (_, { rejectWithValue }) => {
   try {
-    const response = await fetch('https://sbiapi.ssengineeringworks.online/api/admin/getAllLeads', {
+    const response = await fetch('http://localhost:8000/api/admin/getAllLeads', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!response.ok) throw new Error('Server responded with an error!');
@@ -42,7 +42,7 @@ export const fetchLeads = createAsyncThunk('leads/fetchLeads', async (_, { rejec
 
 export const fetchLeadById = createAsyncThunk('leads/fetchLeadById', async (id: number, { rejectWithValue }) => {
   try {
-    const response = await fetch(`https://sbiapi.ssengineeringworks.online/api/admin/getLeadsById?id=${id}`, {
+    const response = await fetch(`http://localhost:8000/api/admin/getLeadsById?id=${id}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!response.ok) throw new Error('Failed to fetch lead details.');
@@ -59,7 +59,7 @@ export const fetchLeadById = createAsyncThunk('leads/fetchLeadById', async (id: 
 
 export const addLead = createAsyncThunk('leads/addLead', async (formData: LeadFormData, { rejectWithValue, dispatch }) => {
   try {
-    const response = await fetch('https://sbiapi.ssengineeringworks.online/api/admin/addLeads', {
+    const response = await fetch('http://localhost:8000/api/admin/addLeads', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify(formData),
@@ -83,7 +83,7 @@ export const addLead = createAsyncThunk('leads/addLead', async (formData: LeadFo
 export const editLead = createAsyncThunk('leads/editLead', async (payload: { formData: LeadFormData, id: number }, { rejectWithValue }) => {
   const body = { ...payload.formData, id: String(payload.id), isOrder: '0' };
   try {
-    const response = await fetch(`https://sbiapi.ssengineeringworks.online/api/admin/editLeads`, {
+    const response = await fetch(`http://localhost:8000/api/admin/editLeads`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify(body),
@@ -103,7 +103,7 @@ export const editLead = createAsyncThunk('leads/editLead', async (payload: { for
 
 export const deleteLead = createAsyncThunk('leads/deleteLead', async (id: number, { rejectWithValue }) => {
   try {
-    const response = await fetch(`https://sbiapi.ssengineeringworks.online/api/admin/deleteLead?id=${id}`, {
+    const response = await fetch(`http://localhost:8000/api/admin/deleteLead?id=${id}`, {
       method: 'PUT',
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -124,7 +124,7 @@ export const deleteLead = createAsyncThunk('leads/deleteLead', async (id: number
 // ... other thunks like convertToOrder, fetchEstimations, deleteEstimation are fine ...
 export const convertToOrder = createAsyncThunk('leads/convertToOrder', async (id: number, { rejectWithValue }) => {
   try {
-    const response = await fetch(`https://sbiapi.ssengineeringworks.online/api/admin/convertLeadsToOrder?id=${id}`, {
+    const response = await fetch(`http://localhost:8000/api/admin/convertLeadsToOrder?id=${id}`, {
       method: 'PUT',
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -138,7 +138,7 @@ export const convertToOrder = createAsyncThunk('leads/convertToOrder', async (id
 
 export const fetchEstimations = createAsyncThunk('leads/fetchEstimations', async (leadId: number, { rejectWithValue }) => {
   try {
-    const response = await fetch(`https://sbiapi.ssengineeringworks.online/api/admin/getEstimation?leadId=${leadId}`, {
+    const response = await fetch(`http://localhost:8000/api/admin/getEstimation?leadId=${leadId}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!response.ok) throw new Error('Failed to fetch estimations.');
@@ -151,7 +151,7 @@ export const fetchEstimations = createAsyncThunk('leads/fetchEstimations', async
 
 export const deleteEstimation = createAsyncThunk('leads/deleteEstimation', async (estimationId: number, { rejectWithValue }) => {
   try {
-    const response = await fetch(`https://sbiapi.ssengineeringworks.online/api/admin/deleteEstimation?id=${estimationId}`, {
+    const response = await fetch(`http://localhost:8000/api/admin/deleteEstimation?id=${estimationId}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
     });

@@ -1,9 +1,9 @@
 import {
   Dashboard as DashboardIcon,
-  Inventory as InventoryIcon,
-  Assignment as AssignmentIcon,
+  PrecisionManufacturing as PrecisionManufacturingIcon,
+  Work as WorkIcon,
+  AddShoppingCart as AddShoppingCartIcon,
   HelpOutline as HelpOutlineIcon,
-  ShoppingCart as ShoppingCartIcon,
 } from "@mui/icons-material";
 import type { SideBar } from "../../types/sideBar";
 
@@ -17,19 +17,19 @@ export const operationManagerMenuItems: SideBar[] = [
   {
     id: "ordermanagement",
     label: "Order Management",
-    icon: InventoryIcon,
+    icon: PrecisionManufacturingIcon,
     path: "/operation-manager/order-management",
   },
   {
     id: "jobcards",
     label: "Job Cards",
-    icon: AssignmentIcon,
+    icon: WorkIcon,
     path: "/operation-manager/job-cards",
   },
   {
     id: "consumablerequests",
     label: "Consumable Requests",
-    icon: ShoppingCartIcon,
+    icon: AddShoppingCartIcon,
     path: "/operation-manager/consumable-requests",
   },
   {

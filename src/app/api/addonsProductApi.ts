@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const addonsProductApi = createApi({
   reducerPath: "addonsProductApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_API_BASE_URL || "https://sbiapi.ssengineeringworks.online",
+    baseUrl: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
     prepareHeaders: (headers) => {
       const accessToken = localStorage.getItem("authToken");
       if (accessToken) {

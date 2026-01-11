@@ -27,7 +27,7 @@ export function generateJobCard(order: OrderManagementDataDto) {
     const sectionSpacing = 15; // Space between sections
     const pageHeight = doc.internal.pageSize.height;
     const bottomMargin = 50; // Space from bottom for signatures
-    
+
     // Add company logo
     if (Logo) {
       doc.addImage(Logo, "PNG", 15, 2, 30, 30);
@@ -37,14 +37,14 @@ export function generateJobCard(order: OrderManagementDataDto) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.text("SRI BRAMHA INDUSTRIES", 50, 15);
-    
+
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
     doc.text("COMMERCIAL KITCHEN & BAKERY EQUIPMENTS", 50, 22);
-    
+
     doc.setFontSize(10);
     doc.text("GSTIN: 33AVTPS8228G1Z0", 205, 5, { align: "right" });
-    
+
     // Company address and contact
     doc.setFontSize(9);
     const addressLines = [
@@ -90,7 +90,7 @@ export function generateJobCard(order: OrderManagementDataDto) {
         0: { fontStyle: 'bold', cellWidth: 60 },
         1: { cellWidth: 80 },
       },
-      theme: 'plain',
+      theme: 'grid',
     });
 
     // Update currentY after job card table
@@ -138,7 +138,7 @@ export function generateJobCard(order: OrderManagementDataDto) {
         0: { fontStyle: 'bold', cellWidth: 60 },
         1: { cellWidth: 80 },
       },
-      theme: 'plain',
+      theme: 'grid',
     });
 
     // Update currentY after client details table
@@ -175,11 +175,13 @@ export function generateJobCard(order: OrderManagementDataDto) {
         cellPadding: 2,
       },
       headStyles: {
-        fillColor: [37, 99, 235],
-        textColor: 255,
+        fillColor: [255, 255, 255],
+        textColor: [0, 0, 0],
         fontStyle: 'bold',
+        lineWidth: 0.1,
+        lineColor: [0, 0, 0]
       },
-      theme: 'striped',
+      theme: 'grid',
       columnStyles: {
         0: { cellWidth: 25 }, // Item Code
         1: { cellWidth: 45 }, // Description
@@ -196,7 +198,7 @@ export function generateJobCard(order: OrderManagementDataDto) {
     // Calculate estimated height for production stages
     const productionStagesCount = (order.deadline && Array.isArray(order.deadline)) ? order.deadline.length : 0;
     const estimatedProductionHeight = (productionStagesCount * 12) + 60;
-    
+
     if (currentY + estimatedProductionHeight > pageHeight - bottomMargin) {
       doc.addPage();
       currentY = 20;
@@ -208,19 +210,19 @@ export function generateJobCard(order: OrderManagementDataDto) {
     doc.text("Production Line Stages with Deadlines", 15, currentY);
 
     const productionStagesHeaders = [
-      "Stage No", "Stage Name", "Start Date", "End Date", 
+      "Stage No", "Stage Name", "Start Date", "End Date",
       "Est. Time", "Status", "Remarks"
     ];
 
     // Use dynamic internal deadlines from order data, fallback to default stages if none exist
     let productionStagesBody: any[] = [];
-    
+
     if (order.deadline && Array.isArray(order.deadline) && order.deadline.length > 0) {
       // Use dynamic internal deadlines
       productionStagesBody = order.deadline.map((deadline, index) => {
         const startDate = deadline.startAt ? new Date(deadline.startAt).toLocaleDateString('en-GB') : "-";
         const endDate = deadline.endAt ? new Date(deadline.endAt).toLocaleDateString('en-GB') : "-";
-        
+
         // Calculate estimated time based on start and end dates
         let estTime = "-";
         if (deadline.startAt && deadline.endAt) {
@@ -230,7 +232,7 @@ export function generateJobCard(order: OrderManagementDataDto) {
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
           estTime = `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
         }
-        
+
         return [
           index + 1,
           deadline.name || `Stage ${index + 1}`,
@@ -257,11 +259,13 @@ export function generateJobCard(order: OrderManagementDataDto) {
         cellPadding: 1,
       },
       headStyles: {
-        fillColor: [37, 99, 235],
-        textColor: 255,
+        fillColor: [255, 255, 255],
+        textColor: [0, 0, 0],
         fontStyle: 'bold',
+        lineWidth: 0.1,
+        lineColor: [0, 0, 0]
       },
-      theme: 'striped',
+      theme: 'grid',
       columnStyles: {
         0: { cellWidth: 15 }, // Stage No
         1: { cellWidth: 25 }, // Stage Name
@@ -287,7 +291,7 @@ export function generateJobCard(order: OrderManagementDataDto) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text("Supervisor Notes:", 15, currentY + 10);
-    
+
     // Add dotted lines for notes
     for (let i = 0; i < 3; i++) {
       doc.setLineDashPattern([2, 2], 0);
@@ -301,7 +305,7 @@ export function generateJobCard(order: OrderManagementDataDto) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text("Signatures:", 15, currentY + 45);
-    
+
     const signatureLabels = ["Operation Manager:", "QC Manager:", "Dispatch Officer:"];
     signatureLabels.forEach((label, index) => {
       doc.text(label, 15, currentY + 60 + index * 18);

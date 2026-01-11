@@ -8,6 +8,11 @@ import {
   IconButton,
   Paper,
   Stack,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  FormControl,
+  FormLabel,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { Close, Add, Edit } from "@mui/icons-material";
@@ -57,6 +62,7 @@ const VendorModal: React.FC<VendorModalProps> = ({
     address: "",
     gstNumber: "",
     paymentTerms: "",
+    category: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -70,6 +76,7 @@ const VendorModal: React.FC<VendorModalProps> = ({
         address: vendor.address || "",
         gstNumber: vendor.gstNumber || "",
         paymentTerms: vendor.paymentTerms || "",
+        category: vendor.category || "",
       });
     } else {
       setFormData({
@@ -80,6 +87,7 @@ const VendorModal: React.FC<VendorModalProps> = ({
         address: "",
         gstNumber: "",
         paymentTerms: "",
+        category: "",
       });
     }
     setErrors({});
@@ -94,13 +102,14 @@ const VendorModal: React.FC<VendorModalProps> = ({
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.name.trim()) newErrors.name = "Name is required";
     if (!formData.contactPerson.trim()) newErrors.contactPerson = "Contact person is required";
     if (!formData.email.trim()) newErrors.email = "Email is required";
     if (!formData.phone.trim()) newErrors.phone = "Phone is required";
     if (!formData.address.trim()) newErrors.address = "Address is required";
     if (!formData.paymentTerms.trim()) newErrors.paymentTerms = "Payment terms are required";
+    if (!formData.category.trim()) newErrors.category = "Vendor Category is required";
 
     // Email validation
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
@@ -126,7 +135,7 @@ const VendorModal: React.FC<VendorModalProps> = ({
           addToast({ message: "Vendor added successfully", type: "success" })
         );
       }
-      
+
       onClose();
     } catch (error) {
       dispatch(
@@ -167,13 +176,13 @@ const VendorModal: React.FC<VendorModalProps> = ({
               </Typography>
             </Box>
           </Box>
-          <IconButton 
+          <IconButton
             onClick={onClose}
-            sx={{ 
+            sx={{
               color: "inherit",
-              "&:hover": { 
-                backgroundColor: "rgba(255, 255, 255, 0.1)" 
-              } 
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.1)"
+              }
             }}
           >
             <Close />
@@ -185,10 +194,10 @@ const VendorModal: React.FC<VendorModalProps> = ({
           <Grid container spacing={3}>
             {/* Basic Information Section */}
             <Grid item xs={12}>
-              <Paper 
-                elevation={0} 
-                sx={{ 
-                  p: 3, 
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
                   border: 1,
                   borderColor: "divider",
                   borderRadius: 2,
@@ -211,6 +220,26 @@ const VendorModal: React.FC<VendorModalProps> = ({
                       error={!!errors.name}
                       helperText={errors.name}
                       placeholder="Enter vendor name"
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                        }
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                      Vendor Category *
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      size="medium"
+                      value={formData.category}
+                      onChange={(e) => handleChange("category", e.target.value)}
+                      error={!!errors.category}
+                      helperText={errors.category}
+                      placeholder="Enter vendor category"
                       sx={{
                         "& .MuiOutlinedInput-root": {
                           borderRadius: 2,
@@ -285,10 +314,10 @@ const VendorModal: React.FC<VendorModalProps> = ({
 
             {/* Additional Details Section */}
             <Grid item xs={12}>
-              <Paper 
-                elevation={0} 
-                sx={{ 
-                  p: 3, 
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
                   border: 1,
                   borderColor: "divider",
                   borderRadius: 2,
@@ -320,6 +349,8 @@ const VendorModal: React.FC<VendorModalProps> = ({
                       }}
                     />
                   </Grid>
+
+
 
                   <Grid item xs={12} md={6}>
                     <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
@@ -382,10 +413,10 @@ const VendorModal: React.FC<VendorModalProps> = ({
             * Required fields
           </Typography>
           <Stack direction="row" spacing={2}>
-            <Button 
+            <Button
               onClick={onClose}
               variant="outlined"
-              sx={{ 
+              sx={{
                 borderRadius: 2,
                 px: 3,
                 py: 1.5,
@@ -395,11 +426,11 @@ const VendorModal: React.FC<VendorModalProps> = ({
             >
               Cancel
             </Button>
-            <Button 
-              variant="contained" 
+            <Button
+              variant="contained"
               onClick={handleSubmit}
               startIcon={vendor ? <Edit /> : <Add />}
-              sx={{ 
+              sx={{
                 borderRadius: 2,
                 px: 3,
                 py: 1.5,

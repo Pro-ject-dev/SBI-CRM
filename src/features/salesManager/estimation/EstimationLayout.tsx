@@ -13,7 +13,7 @@ import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import {
   initializeFromExisting, initializeNew, setStandardProducts, setCustomProducts,
   setCustomerInfo, setBankInfo, setTermsInfo, setAmounts, setPdfTemplateType,
-  resetEstimationState, saveEstimationAsync,
+  setTaxType, resetEstimationState, saveEstimationAsync,
 } from '../../../app/slices/estimationSlice';
 
 // Component & Type Imports
@@ -55,7 +55,7 @@ export default function EstimationLayout(props: { disableCustomTheme?: boolean }
 
   const {
     standardProducts, customProducts, customerInfo, bankInfo, termsInfo,
-    gstPercent, discountAmount, pdfTemplateType, leadId, editingEstimationId,
+    gstPercent, discountAmount, pdfTemplateType, taxType, leadId, editingEstimationId,
     referenceNumber, status, error: submissionError
   } = useAppSelector((state) => state.estimation);
 
@@ -72,10 +72,18 @@ export default function EstimationLayout(props: { disableCustomTheme?: boolean }
     } else if (state?.leadData) {
       dispatch(initializeNew(state.leadData));
     } else {
-      dispatch(resetEstimationState());
+      // Fallback: Check URL for leadId if state is missing (e.g. refresh)
+      const params = new URLSearchParams(location.search);
+      const leadIdFromUrl = params.get('leadId') || params.get('id'); // Adjust query param key as needed
+      if (leadIdFromUrl) {
+        // We might not have name/phone here, but we can set the ID to prevent API error
+        dispatch(initializeNew({ id: Number(leadIdFromUrl) }));
+      } else {
+        dispatch(resetEstimationState());
+      }
     }
     return () => { dispatch(resetEstimationState()); };
-  }, [location.state, dispatch]);
+  }, [location.state, dispatch, location.search]);
 
   const handleReturnToLeads = () => navigate('/sales/leadsGeneration');
 
@@ -86,6 +94,7 @@ export default function EstimationLayout(props: { disableCustomTheme?: boolean }
   const handleTermInfoChange = React.useCallback((info: TermsDetails) => dispatch(setTermsInfo(info)), [dispatch]);
   const handleAmountsUpdate = React.useCallback((gst: number | null, discAmt: number | null) => dispatch(setAmounts({ gstPercent: gst, discountAmount: discAmt })), [dispatch]);
   const handlePdfTemplateTypeChange = React.useCallback((type: 'proforma' | 'quotation') => dispatch(setPdfTemplateType(type)), [dispatch]);
+  const handleTaxTypeChange = React.useCallback((type: 'gst' | 'igst') => dispatch(setTaxType(type)), [dispatch]);
 
   const handleBadgeTextUpdate = React.useCallback((productType: 'standard' | 'custom', mainProductId: string, text: string, addOnId?: string) => {
     const list = productType === 'standard' ? standardProducts : customProducts;
@@ -139,13 +148,22 @@ export default function EstimationLayout(props: { disableCustomTheme?: boolean }
       const mapAddOns = (addOns?: ProductListData[]): QuotationItem[] => (addOns || []).map(a => ({ id: a.id, slNo: 0, productName: a.productName, productCode: a.code || "N/A", size: a.size || `${a.length}L x ${a.width}W`, specification: a.remark || "", quantity: a.quantity, total: a.totalAmount, unitPrice: a.ratePerKg, customBadgeText: a.customBadgeText, }));
       const combinedItemsForPdf: QuotationItem[] = [
         ...overview.products.map((p: StandardFormData) => { const total = p.totalAmount + (p.addOnsProducts?.reduce((sum, ad) => sum + ad.totalAmount, 0) || 0); itemsTotalAmount += total; return { id: p.id, slNo: slNoCounter++, productName: p.productName, productCode: p.code || "N/A", size: p.size || "N/A", specification: p.remark || "", category: p.productCategory, combo: p.productCombo, quantity: parseFloat(p.quantity) || 0, total: p.totalAmount, unitPrice: p.ratePerQuantity, customBadgeText: p.customBadgeText, addOnsProducts: mapAddOns(p.addOnsProducts), }; }),
-        ...overview.customProducts.map((c: CustomProductData) => { const total = c.totalAmount + (c.addOnsProducts?.reduce((sum, ad) => sum + ad.totalAmount, 0) || 0); itemsTotalAmount += total; return { id: c.baseProductId, slNo: slNoCounter++, productName: c.productName, productCode: c.code || "N/A", size: c.size, specification: c.remark || "", category: c.productCategory, combo: c.productCombo, quantity: c.quantity, total: c.totalAmount, unitPrice: c.ratePerKg, customBadgeText: c.customBadgeText, addOnsProducts: mapAddOns(c.addOnsProducts), }; }),
+        ...overview.customProducts.map((c: CustomProductData) => { const total = c.totalAmount + (c.addOnsProducts?.reduce((sum, ad) => sum + ad.totalAmount, 0) || 0); itemsTotalAmount += total; return { id: c.baseProductId, slNo: slNoCounter++, productName: c.productName, productCode: c.code || "N/A", size: c.size, specification: c.remark || "", category: c.productCategory, combo: c.productCombo, quantity: c.quantity, total: c.totalAmount, unitPrice: c.quantity > 0 ? c.totalAmount / c.quantity : 0, customBadgeText: c.customBadgeText, addOnsProducts: mapAddOns(c.addOnsProducts), }; }),
       ];
 
       const calculatedDiscountAmount = overview.discountAmount || 0;
       const amountAfterDiscount = itemsTotalAmount - calculatedDiscountAmount;
       const gstPercentVal = overview.gstPercent || 0;
       const calculatedGstAmount = amountAfterDiscount * (gstPercentVal / 100);
+
+      let cgst = 0, sgst = 0, igst = 0;
+      if (overview.taxType === 'igst') {
+        igst = calculatedGstAmount;
+      } else {
+        cgst = calculatedGstAmount / 2;
+        sgst = calculatedGstAmount / 2;
+      }
+
       const grandTotal = amountAfterDiscount + calculatedGstAmount;
       const customer = overview.customerInfo;
       const bank = overview.bankInfo;
@@ -172,12 +190,14 @@ export default function EstimationLayout(props: { disableCustomTheme?: boolean }
         totalBeforeDiscount: itemsTotalAmount,
         discount: calculatedDiscountAmount,
         totalAfterDiscount: amountAfterDiscount,
-        cgst: calculatedGstAmount / 2,
-        sgst: calculatedGstAmount / 2,
+        cgst: cgst,
+        sgst: sgst,
+        igst: igst,
         grandTotal: grandTotal,
         bankDetails: mappedBankDetails,
         termsAndConditions: termsAndConditionsPDF,
         templateType: templateType,
+        taxType: overview.taxType,
       } as QuotationData;
     };
 
@@ -226,7 +246,8 @@ export default function EstimationLayout(props: { disableCustomTheme?: boolean }
           discountAmount: String(data.discount),      // The fixed amount
           totalAfterDiscount: String(data.totalAfterDiscount),
           taxCgst: String(data.cgst), taxSgst: String(data.sgst),
-          taxTotal: String(data.cgst + data.sgst), grandTotal: String(data.grandTotal),
+          taxIgst: String(data.igst), taxType: data.taxType, // Added missing fields
+          taxTotal: String(data.cgst + data.sgst + (data.igst || 0)), grandTotal: String(data.grandTotal),
           bankAccountHolder: data.bankDetails.unitName, bankName: data.bankDetails.bankName,
           bankAccountNumber: data.bankDetails.accountNo, bankAccountType: data.bankDetails.accountType,
           bankIfscCode: data.bankDetails.ifsc, bankMicrCode: data.bankDetails.micr,
@@ -261,8 +282,19 @@ export default function EstimationLayout(props: { disableCustomTheme?: boolean }
     };
 
     const refNo = referenceNumber || generateRefNo();
-    const overviewDataForPdf = { products: standardProducts, customProducts, customerInfo, bankInfo, termsInfo, gstPercent, discountAmount };
+    const overviewDataForPdf = { products: standardProducts, customProducts, customerInfo, bankInfo, termsInfo, gstPercent, discountAmount, taxType };
     const quotationPayload = mapOverviewToQuotationData(overviewDataForPdf, refNo, pdfTemplateType);
+
+    // --- FIX: Try to recover leadId if missing, but proceed if still null (Direct Estimation flow) ---
+    let currentLeadId = leadId;
+    if (!currentLeadId) {
+      const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+      const urlId = params.get('leadId') || params.get('id');
+      if (urlId) {
+        currentLeadId = Number(urlId);
+      }
+      // If still null, we proceed (Direct Estimation)
+    }
 
     try {
       const pdfDoc = QuotationPDFGenerator(quotationPayload);
@@ -271,7 +303,7 @@ export default function EstimationLayout(props: { disableCustomTheme?: boolean }
       const fileName = `${pdfTemplateType === "proforma" ? "Proforma Invoice" : "Quotation"}-${refNo}.pdf`;
       pdfDoc.save(fileName);
 
-      const finalApiPayload = buildFinalPayload(quotationPayload, leadId, editingEstimationId);
+      const finalApiPayload = buildFinalPayload(quotationPayload, currentLeadId, editingEstimationId);
 
       console.log("Final Payload Sent to API:", JSON.stringify(finalApiPayload, null, 2));
 
@@ -304,6 +336,8 @@ export default function EstimationLayout(props: { disableCustomTheme?: boolean }
         onPricingModeChange={() => { }}
         pdfTemplateType={pdfTemplateType}
         onPdfTemplateTypeChange={handlePdfTemplateTypeChange}
+        taxType={taxType}
+        onTaxTypeChange={handleTaxTypeChange}
         onBadgeTextUpdate={handleBadgeTextUpdate} />;
       default: throw new Error("Unknown step");
     }

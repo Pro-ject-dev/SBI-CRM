@@ -11,6 +11,8 @@ export interface RawMaterial {
   vendorId?: number;
   vendor?: Vendor;
   status: "1" | "0";
+  gstType?: "normal" | "central";
+  gstRate?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -36,7 +38,8 @@ export interface Vendor {
   address: string;
   gstNumber?: string;
   paymentTerms: string;
-  status: "1" | "0";
+  category: string;
+  status: "active" | "inactive";
   createdAt: string;
   updatedAt: string;
 }
@@ -81,11 +84,13 @@ export interface PurchaseOrder {
   deliveryDate: string;
   cgst: string;
   sgst: string;
+  igst?: string;
   paymentNote: string;
   deliveryNote: string;
   insurance: string;
   warranty: string;
   remarks: string;
+  gstType?: string;
   approvedBy?: string | null;
   approvedDate?: string | null;
   notes?: string;

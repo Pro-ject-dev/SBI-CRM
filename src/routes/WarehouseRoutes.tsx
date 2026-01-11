@@ -14,7 +14,7 @@ import HelpSupport from "../pages/HelpSupport";
 const WarehouseRoutes = () => (
   <>
     <Route
-      path="/warehouse"
+      path="/store"
       element={
         <ProtectedRoute allowedRoles={["warehouse_manager", "admin"]}>
           <WarehouseLayout />

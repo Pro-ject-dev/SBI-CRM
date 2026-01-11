@@ -58,7 +58,7 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
       setDuplicateAlert(null);
 
       if (comboList.length === 0) {
-        const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://sbiapi.ssengineeringworks.online";
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
         fetch(`${baseUrl}/api/admin/getCombos`, {
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
         })
@@ -71,7 +71,7 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
 
   useEffect(() => {
     if (selectedIds.comboId) {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://sbiapi.ssengineeringworks.online";
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
       fetch(`${baseUrl}/api/admin/getCategorybyCombo?comboId=${selectedIds.comboId}`, {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
       })
@@ -96,7 +96,7 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
 
   useEffect(() => {
     if (selectedIds.comboId) {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://sbiapi.ssengineeringworks.online";
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
       fetch(`${baseUrl}/api/admin/getProductbyCombo&Category?isStandard=1`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -167,7 +167,7 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
       if (productData.variants && productData.variants.length > 0) {
         const v = productData.variants[0];
         initialVariantId = v.id;
-        initialRate = parseFloat(v.ratePerQuantity);
+        initialRate = parseFloat(v.ratePerQuantity) || 0;
         initialMin = v.minCost;
         initialMax = v.maxCost;
       }
@@ -199,7 +199,7 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
         return {
           ...p,
           selectedVariantId: variantId,
-          ratePerQuantity: parseFloat(variant.ratePerQuantity),
+          ratePerQuantity: parseFloat(variant.ratePerQuantity) || 0,
           minCost: variant.minCost,
           maxCost: variant.maxCost,
           setPrice: '' // Reset set price on variant change
@@ -375,9 +375,9 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
                           </FormControl>
                         </Grid>
                       )}
-                      <Grid item xs={12} md={6}><TextField label="Rate Per Quantity" value={p.ratePerQuantity || 'N/A'} fullWidth InputProps={{ readOnly: true }} /></Grid>
-                      <Grid item xs={12} md={6}><TextField label="Min Cost" value={p.minCost || 'N/A'} fullWidth InputProps={{ readOnly: true }} /></Grid>
-                      <Grid item xs={12} md={6}><TextField label="Max Cost" value={p.maxCost || 'N/A'} fullWidth InputProps={{ readOnly: true }} /></Grid>
+                      <Grid item xs={12} md={6}><TextField label="Rate Per Quantity" value={p.ratePerQuantity ?? 'N/A'} fullWidth InputProps={{ readOnly: true }} /></Grid>
+                      <Grid item xs={12} md={6}><TextField label="Min Cost" value={p.minCost ?? 'N/A'} fullWidth InputProps={{ readOnly: true }} /></Grid>
+                      <Grid item xs={12} md={6}><TextField label="Max Cost" value={p.maxCost ?? 'N/A'} fullWidth InputProps={{ readOnly: true }} /></Grid>
                       <Grid item xs={12} md={6}>
                         <TextField
                           label="Set Price" type="number" value={p.setPrice}

@@ -213,7 +213,7 @@ const ConsumableMaterialsManagement = () => {
       headerAlign: "center",
       align: "center",
       renderCell: (params) => (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", gap: 1 }}>
           {Number(params.row.currentStock) <= Number(params.row.minimumStock) && (
             <Warning color="warning" fontSize="small" />
           )}
@@ -238,8 +238,11 @@ const ConsumableMaterialsManagement = () => {
       minWidth: 150,
       headerAlign: "center",
       align: "center",
-      renderCell: (params) =>
-        getStockStatus(params.row.currentStock, params.row.minimumStock),
+      renderCell: (params) => (
+        <Box sx={{ display: "flex", justifyContent: "center", width: "100%", alignItems: "center" }}>
+          {getStockStatus(params.row.currentStock, params.row.minimumStock)}
+        </Box>
+      ),
     },
 
     {

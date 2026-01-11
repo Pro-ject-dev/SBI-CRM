@@ -72,7 +72,7 @@ export interface QuotationData {
   igst?: number;
   grandTotal: number;
   discountPercent: number;
-  
+
   // Bank & Terms
   bankDetails: BankDetailsPDF;
   termsAndConditions?: { term: string; details: string; id?: string }[];
@@ -283,9 +283,9 @@ export const QuotationPDFGenerator = (data: QuotationData): jsPDF | null => {
       "Qty",
       "Total Amount",
     ];
-    
+
     const tableRowsData: any[] = [];
-    
+
     const badgeRowStyle = {
       halign: "left" as const,
       fontStyle: "italic",
@@ -343,9 +343,9 @@ export const QuotationPDFGenerator = (data: QuotationData): jsPDF | null => {
           const addOnDetails = [`• ${addOn.productName}`];
           if (addOn.productCode) addOnDetails.push(`  Code: ${addOn.productCode}`);
           if (addOn.specification) addOnDetails.push(`  Spec: ${addOn.specification}`);
-          
+
           tableRowsData.push([
-            "", 
+            "",
             addOnDetails.join("\n"),
             addOn.size,
             formatCurrencyForTable(addOn.unitPrice),
@@ -355,7 +355,7 @@ export const QuotationPDFGenerator = (data: QuotationData): jsPDF | null => {
         });
       }
     });
-    
+
     const tableAvailableWidth = pageWidth - leftMargin - rightMargin;
     const cellPaddingValue = 1.5;
     const totalHorizontalPaddingPerCell = cellPaddingValue * 2;
@@ -429,56 +429,62 @@ export const QuotationPDFGenerator = (data: QuotationData): jsPDF | null => {
     const summaryValueWidthRatio = 0.35;
     const summaryItemHeight = 7;
 
-    const summaryItems = [
-      {
+    const summaryItems: { label: string; value: number; bold: boolean; size: number; isDiscount?: boolean }[] = [];
+
+    if (data.discount > 0) {
+      summaryItems.push({
         label: "Subtotal (Before Discount)",
         value: data.totalBeforeDiscount,
         bold: false,
         size: 9,
-      },
-      {
-        label: `Discount`,
+      });
+      summaryItems.push({
+        label: "Discount",
         value: data.discount,
         bold: false,
         size: 9,
         isDiscount: true,
-      },
-      {
+      });
+      summaryItems.push({
         label: "Total (After Discount)",
         value: data.totalAfterDiscount,
         bold: false,
         size: 9,
-      },
-    ];
+      });
+    } else {
+      summaryItems.push({
+        label: "Subtotal",
+        value: data.totalAfterDiscount,
+        bold: false,
+        size: 9,
+      });
+    }
 
     if (data.cgst > 0 && data.sgst > 0) {
       summaryItems.push({
-        label: `CGST (${
-          data.totalAfterDiscount > 0
+        label: `CGST (${data.totalAfterDiscount > 0
             ? ((data.cgst / data.totalAfterDiscount) * 100).toFixed(2)
             : 0
-        }%)`,
+          }%)`,
         value: data.cgst,
         bold: false,
         size: 9,
       });
       summaryItems.push({
-        label: `SGST (${
-          data.totalAfterDiscount > 0
+        label: `SGST (${data.totalAfterDiscount > 0
             ? ((data.sgst / data.totalAfterDiscount) * 100).toFixed(2)
             : 0
-        }%)`,
+          }%)`,
         value: data.sgst,
         bold: false,
         size: 9,
       });
     } else if (data.igst && data.igst > 0) {
       summaryItems.push({
-        label: `IGST (${
-          data.totalAfterDiscount > 0
+        label: `IGST (${data.totalAfterDiscount > 0
             ? ((data.igst / data.totalAfterDiscount) * 100).toFixed(2)
             : 0
-        }%)`,
+          }%)`,
         value: data.igst,
         bold: false,
         size: 9,

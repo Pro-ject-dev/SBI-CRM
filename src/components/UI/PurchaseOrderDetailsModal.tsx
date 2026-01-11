@@ -71,7 +71,7 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
 
   const { role } = useSelector((state: RootState) => state.auth);
   const isAdmin = role === "admin";
-  
+
   // Debug log to check the purchase order data
   React.useEffect(() => {
     if (purchaseOrder) {
@@ -83,13 +83,13 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
 
   const handleApproveReject = (action: string) => {
     if (!purchaseOrder) return;
-    
+
     setConfirmationDialog({
       open: true,
       title: `${action === 'approve' ? 'Approve' : 'Reject'} Purchase Order`,
       message: `Are you sure you want to ${action} purchase order #${purchaseOrder.id || 'N/A'}?`,
       action: action,
-              orderId: purchaseOrder.id?.toString() || '',
+      orderId: purchaseOrder.id?.toString() || '',
     });
   };
 
@@ -106,52 +106,52 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
         }
       }
 
-      await updatePurchaseOrderStatus({ 
-        id: orderId, 
+      await updatePurchaseOrderStatus({
+        id: orderId,
         status: action === 'approve' ? 'Approved' : 'Rejected',
         pdfBlob,
       }).unwrap();
-      
-      dispatch(addToast({ 
-        message: `Purchase order ${action}d successfully!`, 
-        type: 'success' 
+
+      dispatch(addToast({
+        message: `Purchase order ${action}d successfully!`,
+        type: 'success'
       }));
-      
+
       onClose(); // Close modal on success
     } catch (error) {
-      dispatch(addToast({ 
-        message: `Failed to ${action} purchase order.`, 
-        type: 'error' 
+      dispatch(addToast({
+        message: `Failed to ${action} purchase order.`,
+        type: 'error'
       }));
       console.error(`Failed to ${action} purchase order:`, error);
     } finally {
-      setConfirmationDialog({ 
-        open: false, 
-        title: "", 
-        message: "", 
-        action: "", 
-        orderId: "" 
+      setConfirmationDialog({
+        open: false,
+        title: "",
+        message: "",
+        action: "",
+        orderId: ""
       });
     }
   };
 
   const handleCloseConfirmation = () => {
-    setConfirmationDialog({ 
-      open: false, 
-      title: "", 
-      message: "", 
-      action: "", 
-      orderId: "" 
+    setConfirmationDialog({
+      open: false,
+      title: "",
+      message: "",
+      action: "",
+      orderId: ""
     });
   };
 
   const getStatusChip = (status: string) => {
     try {
       if (!status) return <Chip label="Unknown" color="default" size="small" className="font-medium" />;
-      
+
       const s = String(status).toLowerCase().trim();
       let color: "warning" | "success" | "error" | "info" | "default" = "default";
-      
+
       switch (s) {
         case "pending":
           color = "warning";
@@ -168,7 +168,7 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
         default:
           color = "default";
       }
-      
+
       return <Chip label={status} color={color} size="small" className="font-medium" />;
     } catch (error) {
       console.error("Error in getStatusChip:", error);
@@ -179,16 +179,16 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
   const getItemStatusChip = (status: string) => {
     try {
       if (!status) return <Chip label="Unknown" color="default" size="small" className="font-medium" />;
-      
+
       const s = String(status).toLowerCase().trim();
       let color: "success" | "default" = "default";
       let label = "Inactive";
-      
+
       if (s === "1" || s === "active" || s === "true") {
         color = "success";
         label = "Active";
       }
-      
+
       return <Chip label={label} color={color} size="small" className="font-medium" />;
     } catch (error) {
       console.error("Error in getItemStatusChip:", error);
@@ -199,10 +199,10 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
   if (!purchaseOrder) return null;
 
   // Get the current status - check multiple possible property names
-  const currentStatus = purchaseOrder.status || 
-                       purchaseOrder.orderStatus || 
-                       '';
-                       
+  const currentStatus = purchaseOrder.status ||
+    purchaseOrder.orderStatus ||
+    '';
+
   const isPendingStatus = currentStatus && currentStatus.toLowerCase() === 'pending';
 
   return (
@@ -244,8 +244,8 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
                   </Button>
                 </div>
               )}
-              <IconButton 
-                onClick={onClose} 
+              <IconButton
+                onClick={onClose}
                 size="small"
                 className="hover:bg-white hover:bg-opacity-50 transition-all duration-200"
               >
@@ -262,13 +262,13 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
                 Order Information
               </Typography>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <DetailItem 
-                  label="Vendor" 
+                <DetailItem
+                  label="Vendor"
                   value={
-                    typeof purchaseOrder.vendor === 'string' 
-                      ? purchaseOrder.vendor 
+                    typeof purchaseOrder.vendor === 'string'
+                      ? purchaseOrder.vendor
                       : purchaseOrder.vendor?.name || 'N/A'
-                  } 
+                  }
                 />
                 <DetailItem label="Requested By" value={purchaseOrder.requestedBy || 'N/A'} />
                 <DetailItem
@@ -276,33 +276,76 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
                   value={
                     purchaseOrder.requestedDate
                       ? (() => {
-                          try {
-                            return format(new Date(purchaseOrder.requestedDate), "PPpp");
-                          } catch (error) {
-                            console.error("Error formatting date:", error);
-                            return purchaseOrder.requestedDate || "N/A";
-                          }
-                        })()
+                        try {
+                          return format(new Date(purchaseOrder.requestedDate), "PPpp");
+                        } catch (error) {
+                          console.error("Error formatting date:", error);
+                          return purchaseOrder.requestedDate || "N/A";
+                        }
+                      })()
                       : "N/A"
                   }
                 />
-                <DetailItem
-                  label="Total Amount"
-                  value={
-                    <span className="text-green-600 font-bold text-lg">
-                      ₹{(() => {
-                        try {
-                          const amount = Number(purchaseOrder.totalAmount || 0);
-                          if (isNaN(amount)) return "0.00";
-                          return amount.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-                        } catch (error) {
-                          console.error("Error formatting amount:", error);
-                          return "0.00";
-                        }
-                      })()}
-                    </span>
+
+                {/* Financial Breakdown */}
+                {(() => {
+                  const basicAmount = Number(purchaseOrder.totalAmount) || 0;
+                  // Use 'any' cast to access properties that might not be in the strict type yet or are optional
+                  const po: any = purchaseOrder;
+                  const gstType = po.gstType || 'normal';
+                  const cgstPct = Number(po.cgst) || 0;
+                  const sgstPct = Number(po.sgst) || 0;
+                  const igstPct = Number(po.igst) || 0;
+
+                  let taxAmount = 0;
+                  let taxLabel = 'Tax';
+
+                  if (gstType === 'central') {
+                    taxAmount = basicAmount * (igstPct / 100);
+                    taxLabel = `IGST (${igstPct}%)`;
+                  } else {
+                    const cgstAmt = basicAmount * (cgstPct / 100);
+                    const sgstAmt = basicAmount * (sgstPct / 100);
+                    taxAmount = cgstAmt + sgstAmt;
+                    taxLabel = `CGST (${cgstPct}%) + SGST (${sgstPct}%)`;
                   }
-                />
+
+                  const grandTotal = basicAmount + taxAmount;
+
+                  return (
+                    <>
+                      <DetailItem
+                        label="Base Amount"
+                        value={
+                          <span className="font-semibold">
+                            ₹{basicAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </span>
+                        }
+                      />
+                      <DetailItem
+                        label="Tax Details"
+                        value={taxLabel}
+                      />
+                      <DetailItem
+                        label="Tax Amount"
+                        value={
+                          <span className="text-orange-600 font-semibold">
+                            ₹{taxAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </span>
+                        }
+                      />
+                      <DetailItem
+                        label="Total Amount"
+                        value={
+                          <span className="text-green-600 font-bold text-lg">
+                            ₹{grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </span>
+                        }
+                      />
+                    </>
+                  );
+                })()}
+
                 <DetailItem label="Order Status" value={getStatusChip(currentStatus)} />
               </div>
             </Box>
@@ -340,17 +383,6 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <DetailItem label="Place of Destination" value={destination || 'N/A'} />
                     <DetailItem label="Delivery By" value={deliveryDisplay || 'N/A'} />
-                    <DetailItem
-                      label="Taxes"
-                      value={
-                        hasTaxes ? (
-                          <span>
-                            {cgst ? `CGST: ${cgst}%` : ''}
-                            {sgst ? `${cgst ? ' | ' : ''}SGST: ${sgst}%` : ''}
-                          </span>
-                        ) : 'N/A'
-                      }
-                    />
                   </div>
                   <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {paymentNote && <DetailItem label="Payment Note" value={paymentNote} />}
@@ -366,7 +398,7 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
             {/* Items */}
             <Box className="mb-6 bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
               <Typography variant="h6" className="mb-4 font-bold text-gray-800 pb-2 border-b border-gray-100 flex items-center gap-2">
-                Order Items 
+                Order Items
                 <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
                   {Array.isArray(purchaseOrder.items) ? purchaseOrder.items.length : 0} items
                 </span>
@@ -374,8 +406,8 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
               <div className="space-y-4">
                 {purchaseOrder.items && purchaseOrder.items.length > 0 ? (
                   purchaseOrder.items.map((item, index) => (
-                    <div 
-                      key={item.id || index} 
+                    <div
+                      key={item.id || index}
                       className="p-4 border border-gray-200 rounded-lg bg-gradient-to-r from-gray-50 to-blue-50 hover:from-blue-50 hover:to-indigo-50 transition-all duration-300 hover:shadow-sm"
                     >
                       <div className="flex justify-between items-center mb-3">
@@ -477,14 +509,7 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
                             {(item as any)?.specification || 'N/A'}
                           </Typography>
                         </div>
-                        <div className="text-center p-2 bg-white rounded-md border border-gray-100">
-                          <Typography variant="caption" className="text-gray-500 font-medium block">
-                            GST %
-                          </Typography>
-                          <Typography variant="body2" className="font-semibold text-gray-800">
-                            {(item as any)?.gst || 'N/A'}
-                          </Typography>
-                        </div>
+
                         <div className="text-center p-2 bg-white rounded-md border border-gray-100">
                           <Typography variant="caption" className="text-gray-500 font-medium block">
                             Delivery
@@ -512,8 +537,8 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
                 Notes
               </Typography>
               <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 min-h-[60px]">
-                <Typography 
-                  variant="body2" 
+                <Typography
+                  variant="body2"
                   className={`text-gray-700 leading-relaxed ${!purchaseOrder.notes ? 'italic text-gray-500' : ''}`}
                 >
                   {purchaseOrder.notes || "No additional notes provided for this purchase order."}
@@ -543,8 +568,8 @@ const PurchaseOrderDetailsModal: React.FC<PurchaseOrderDetailsModalProps> = ({
           <Button onClick={handleCloseConfirmation} color="primary" disabled={isLoading}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleConfirmAction} 
+          <Button
+            onClick={handleConfirmAction}
             color={confirmationDialog.action === 'approve' ? 'success' : 'error'}
             variant="contained"
             disabled={isLoading}

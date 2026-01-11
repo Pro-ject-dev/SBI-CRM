@@ -9,7 +9,7 @@ export interface LeadData {
   followup: string;
 }
 export interface LeadFormData {
-  name: string; email:string; date: string; module: string;
+  name: string; email: string; date: string; module: string;
   phoneNumber: string; source: string;
   feedback: string;
   followup: string;
@@ -37,7 +37,7 @@ export interface Estimation {
   customerCountry: string; customerState: string; customerZip: string;
   customerPhone: string; customerGstin: string; customerEmail?: string;
   subtotal: string; discount: string; discountAmount: string;
-  totalAfterDiscount: string; taxCgst: string; taxSgst: string; taxTotal: string;
+  totalAfterDiscount: string; taxCgst: string; taxSgst: string; taxTotal: string; igst?: string; taxType?: 'gst' | 'igst';
   grandTotal: string; bankAccountHolder: string; bankName: string;
   bankAccountNumber: string; bankAccountType: string; bankIfscCode: string;
   bankMicrCode: string; bankBranchName: string; termsTitle: string;

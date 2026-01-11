@@ -183,6 +183,8 @@ const PurchaseOrdersManagement = () => {
             deliveryDate: row?.deliveryDate ?? row?.delivery_date ?? "",
             cgst: row?.cgst ?? "",
             sgst: row?.sgst ?? "",
+            igst: row?.igst ?? "",
+            gstType: row?.gstType ?? "normal",
             paymentNote: row?.paymentNote ?? row?.payment_note ?? "",
             deliveryNote: row?.deliveryNote ?? row?.delivery_note ?? "",
             insurance: row?.insurance ?? "",
@@ -333,9 +335,20 @@ const PurchaseOrdersManagement = () => {
         totalAmount: Number(order.totalAmount) || 0,
         cgst: Number(order.cgst) || 0,
         sgst: Number(order.sgst) || 0,
+        igst: Number(order.igst) || 0,
+        gstType: order.gstType || 'normal',
+      };
+
+      const isIgst = order.gstType === 'central';
+      const taxes = {
+        cgstPct: isIgst ? 0 : (Number(order.cgst) || 9),
+        sgstPct: isIgst ? 0 : (Number(order.sgst) || 9),
+        igstPct: isIgst ? (Number(order.igst) || 18) : 0,
+        roundOff: Number((order as any).roundOff || 0),
       };
 
       generatePurchaseOrderPdf(pdfData, {
+        taxes,
         notes: {
           remarks: order.remarks,
           payment: order.paymentNote,
@@ -427,9 +440,27 @@ const PurchaseOrdersManagement = () => {
       align: "center",
       renderCell: (params: any) => {
         try {
-          const amount = Number(params?.row?.totalAmount ?? 0);
-          if (isNaN(amount)) return "₹0.00";
-          return `₹${amount.toFixed(2)}`;
+          const row = params?.row;
+          const basicAmount = Number(row?.totalAmount ?? 0);
+          if (isNaN(basicAmount)) return "₹0.00";
+
+          let taxAmount = 0;
+          // Calculate tax
+          const gstType = row?.gstType || 'normal';
+
+          if (gstType === 'central') {
+            const igstPct = Number(row?.igst) || 0;
+            taxAmount = basicAmount * (igstPct / 100);
+          } else {
+            const cgstPct = Number(row?.cgst) || 0;
+            const sgstPct = Number(row?.sgst) || 0;
+            const cgstAmt = basicAmount * (cgstPct / 100);
+            const sgstAmt = basicAmount * (sgstPct / 100);
+            taxAmount = cgstAmt + sgstAmt;
+          }
+
+          const total = basicAmount + taxAmount;
+          return `₹${total.toFixed(2)}`;
         } catch (error) {
           console.error("Error rendering total amount:", error);
           return "₹0.00";

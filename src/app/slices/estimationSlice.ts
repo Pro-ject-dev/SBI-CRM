@@ -114,6 +114,7 @@ const mapEstimationToState = (estimationData: Estimation) => {
     gstPercent: isNaN(gstPercent) ? 18 : gstPercent,
     discountPercent: parseFloat(estimationData.discount) || 0,
     pdfTemplateType: estimationData.documentType === "Proforma Invoice" ? "proforma" : "quotation" as 'proforma' | 'quotation',
+    taxType: estimationData.taxType === 'igst' ? 'igst' : 'gst',
     leadId: parseInt(estimationData.leadId, 10),
     editingEstimationId: estimationData.id,
     referenceNumber: estimationData.referenceNumber,
@@ -124,12 +125,13 @@ interface EstimationState {
   standardProducts: StandardFormData[]; customProducts: CustomProductData[];
   customerInfo: CustomerInfo | null; bankInfo: BankDetails | null; termsInfo: TermsDetails | null;
   gstPercent: number; discountAmount: number | null; pdfTemplateType: 'proforma' | 'quotation';
+  taxType: 'gst' | 'igst';
   leadId: number | null; editingEstimationId: number | null; referenceNumber: string | null;
   status: 'idle' | 'loading' | 'succeeded' | 'failed'; error: string | null;
 }
 const initialState: EstimationState = {
   standardProducts: [], customProducts: [], customerInfo: null, bankInfo: null,
-  termsInfo: null, gstPercent: 18, discountAmount: 0, pdfTemplateType: 'proforma',
+  termsInfo: null, gstPercent: 18, discountAmount: 0, pdfTemplateType: 'proforma', taxType: 'gst',
   leadId: null, editingEstimationId: null, referenceNumber: null,
   status: 'idle', error: null,
 };
@@ -142,8 +144,8 @@ export const saveEstimationAsync = createAsyncThunk(
     const { editingEstimationId, leadId } = state.estimation;
     const isEditing = !!editingEstimationId;
     const endpoint = isEditing
-      ? `https://sbiapi.ssengineeringworks.online/api/admin/editEstimation?leadId=${leadId}`
-      : "https://sbiapi.ssengineeringworks.online/api/admin/addEstimation";
+      ? `http://localhost:8000/api/admin/editEstimation?leadId=${leadId}`
+      : "http://localhost:8000/api/admin/addEstimation";
     try {
       const response = await fetch(endpoint, {
         method: isEditing ? "PUT" : "POST",
@@ -189,6 +191,7 @@ const estimationSlice = createSlice({
       if (action.payload.discountAmount !== null) state.discountAmount = action.payload.discountAmount;
     },
     setPdfTemplateType: (state, action: PayloadAction<'proforma' | 'quotation'>) => { state.pdfTemplateType = action.payload; },
+    setTaxType: (state, action: PayloadAction<'gst' | 'igst'>) => { state.taxType = action.payload; },
     resetEstimationState: (state) => initialState,
   },
   extraReducers: (builder) => {
@@ -201,6 +204,6 @@ const estimationSlice = createSlice({
 
 export const {
   initializeFromExisting, initializeNew, setStandardProducts, setCustomProducts,
-  setCustomerInfo, setBankInfo, setTermsInfo, setAmounts, setPdfTemplateType, resetEstimationState,
+  setCustomerInfo, setBankInfo, setTermsInfo, setAmounts, setPdfTemplateType, setTaxType, resetEstimationState,
 } = estimationSlice.actions;
 export default estimationSlice.reducer;

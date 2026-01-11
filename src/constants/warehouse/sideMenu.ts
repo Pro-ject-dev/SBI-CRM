@@ -1,12 +1,10 @@
 import {
-  Inventory as InventoryIcon,
-  People as PeopleIcon,
-  ShoppingCart as ShoppingCartIcon,
-  Assignment as AssignmentIcon,
   Dashboard as DashboardIcon,
+  Grain as GrainIcon,
+  BuildCircle as BuildCircleIcon,
+  AssignmentInd as AssignmentIndIcon,
+  PendingActions as PendingActionsIcon,
   HelpOutline as HelpOutlineIcon,
-  Category as CategoryIcon,
-  RequestPage as RequestPageIcon,
 } from "@mui/icons-material";
 import type { SideBar } from "../../types/sideBar";
 
@@ -15,36 +13,36 @@ export const warehouseMenuItems: SideBar[] = [
     id: "dashboard",
     label: "Dashboard",
     icon: DashboardIcon,
-    path: "/warehouse/dashboard",
+    path: "/store/dashboard",
   },
   {
     id: "rawmaterials",
     label: "Raw Materials",
-    icon: InventoryIcon,
-    path: "/warehouse/raw-materials",
+    icon: GrainIcon,
+    path: "/store/raw-materials",
   },
   {
     id: "consumablematerials",
     label: "Consumable Materials",
-    icon: CategoryIcon,
-    path: "/warehouse/consumable-materials",
+    icon: BuildCircleIcon,
+    path: "/store/consumable-materials",
   },
   {
     id: "stockassignment",
     label: "Stock Assignment",
-    icon: AssignmentIcon,
-    path: "/warehouse/stock-assignment",
+    icon: AssignmentIndIcon,
+    path: "/store/stock-assignment",
   },
   {
     id: "consumablerequests",
     label: "Consumable Requests",
-    icon: RequestPageIcon,
-    path: "/warehouse/consumable-requests",
+    icon: PendingActionsIcon,
+    path: "/store/consumable-requests",
   },
   {
     id: "help",
     label: "Help & Support",
     icon: HelpOutlineIcon,
-    path: "/warehouse/help",
+    path: "/store/help",
   },
 ];

@@ -16,6 +16,7 @@ export const SelectBox: React.FC<SelectBoxProps> = ({
   helperText,
   options,
   error,
+  placeholder = "Select an option",
   fullWidth = true,
   readonly,
   ...props
@@ -38,18 +39,18 @@ export const SelectBox: React.FC<SelectBoxProps> = ({
         }}
         renderValue={(selectedValue) => {
           console.log("renderValue called:", { selectedValue, selectedValueType: typeof selectedValue, options: options?.length, optionsData: options });
-          if (!selectedValue) return "Select a raw material";
-          
+          if (!selectedValue) return placeholder;
+
           // Debug: Log all options and their values
           console.log("All options:", options);
           console.log("Looking for value:", selectedValue);
-          
+
           const selectedOption = options?.find(option => {
             const match = String(option.value) === String(selectedValue);
             console.log("Comparing:", { optionValue: option.value, optionValueType: typeof option.value, selectedValue, selectedValueType: typeof selectedValue, match });
             return match;
           });
-          
+
           console.log("Found selected option:", selectedOption, "for value:", selectedValue);
           return selectedOption?.label || selectedValue;
         }}
@@ -67,7 +68,7 @@ export const SelectBox: React.FC<SelectBoxProps> = ({
         {...props}
       >
         <MenuItem value="" disabled>
-          Select a raw material
+          {placeholder}
         </MenuItem>
         {options?.map((option, idx) => {
           console.log("Rendering MenuItem:", { idx, option, value: option?.value, label: option?.label, type: typeof option?.value });

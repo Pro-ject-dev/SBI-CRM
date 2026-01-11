@@ -1,16 +1,17 @@
 import {
   Dashboard as DashboardIcon,
-  People as PeopleIcon,
-  Inventory as InventoryIcon,
-  ShoppingCart as ShoppingCartIcon, // For Orders
-  Group as GroupIcon, // For Employees
-  Category as CategoryIcon, // For Raw Materials
-  Assignment as AssignmentIcon, // For Leads (or another suitable icon)
+  Leaderboard as LeaderboardIcon, // Leads
+  ShoppingBag as ShoppingBagIcon, // Orders
+  FactCheck as FactCheckIcon, // PO Approval
+  Inventory2 as Inventory2Icon, // Product Management
+  Grain as GrainIcon, // Raw Materials
+  BuildCircle as BuildCircleIcon, // Consumable Materials
+  HistoryEdu as HistoryEduIcon, // Raw Material Log
+  ManageHistory as ManageHistoryIcon, // Consumable Log
+  Badge as BadgeIcon, // Employees
+  DynamicForm as DynamicFormIcon, // Master Forms
   HelpOutline as HelpOutlineIcon,
-  History as HistoryIcon, // For Raw Materials Log
 } from "@mui/icons-material";
-
-import WarehouseIcon from "@mui/icons-material/Warehouse";
 
 import type { SideBar } from "../../types/sideBar";
 
@@ -24,55 +25,61 @@ export const adminMenuItems: SideBar[] = [
   {
     id: "leads",
     label: "Leads",
-    icon: AssignmentIcon,
+    icon: LeaderboardIcon,
     path: "/admin/leads",
   },
   {
     id: "orders",
     label: "Orders",
-    icon: ShoppingCartIcon,
+    icon: ShoppingBagIcon,
     path: "/admin/orders",
   },
   {
     id: "poapproval",
     label: "PO Approval",
-    icon: InventoryIcon,
+    icon: FactCheckIcon,
     path: "/admin/purchase-orders-approval",
   },
   {
     id: "productmanagement",
     label: "Product Management",
-    icon: InventoryIcon,
+    icon: Inventory2Icon,
     path: "/admin/product-management",
   },
   {
     id: "rawmaterials",
     label: "Raw Materials",
-    icon: CategoryIcon,
+    icon: GrainIcon,
     path: "/admin/raw-materials",
+  },
+  {
+    id: "consumablematerials",
+    label: "Consumable Materials",
+    icon: BuildCircleIcon,
+    path: "/admin/consumable-materials",
   },
   {
     id: "consumablematerialslog",
     label: "Consumable Log",
-    icon: HistoryIcon,
+    icon: ManageHistoryIcon,
     path: "/admin/consumable-materials-log",
   },
   {
     id: "rawmaterialslog",
     label: "Raw Materials Log",
-    icon: HistoryIcon,
+    icon: HistoryEduIcon,
     path: "/admin/raw-materials-log",
   },
   {
     id: "employees",
     label: "Employees",
-    icon: GroupIcon,
+    icon: BadgeIcon,
     path: "/admin/employees",
   },
   {
     id: "masterforms",
     label: "Master Forms",
-    icon: PeopleIcon,
+    icon: DynamicFormIcon,
     path: "/admin/master-form",
   },
   {

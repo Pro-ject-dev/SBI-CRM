@@ -57,7 +57,7 @@ export interface PaymentFormData {
 
 // --- Async Thunks ---
 const TOKEN = localStorage.getItem("authToken");
-const BASE_URL = 'https://sbiapi.ssengineeringworks.online';
+const BASE_URL = 'http://localhost:8000';
 
 // No changes to fetchAllOrders, fetchPaymentsByOrderId, addPayment, updatePayment
 export const fetchAllOrders = createAsyncThunk<ApiOrderResponse[], void, { rejectValue: string }>(

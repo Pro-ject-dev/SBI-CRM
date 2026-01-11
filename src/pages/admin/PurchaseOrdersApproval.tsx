@@ -56,9 +56,9 @@ const PurchaseOrdersApproval = () => {
       filtered = filtered.filter((order) => {
         const vendorName = (order.vendorName || order.vendor || '').toLowerCase();
         const requestedBy = (order.requestedBy || '').toLowerCase();
-        
-        return vendorName.includes(searchLower) || 
-               requestedBy.includes(searchLower);
+
+        return vendorName.includes(searchLower) ||
+          requestedBy.includes(searchLower);
       });
     }
 
@@ -150,7 +150,7 @@ const PurchaseOrdersApproval = () => {
           // Get vendor name with proper fallback
           const vendorName = vendorsMap.get(row.vendorId?.toString()) || row.vendor?.name || row.vendor || "Unknown Vendor";
           console.log(`  - Vendor ${row.vendorId} -> ${vendorName}`);
-          
+
           const result = {
             id: row.id ?? row.orderId ?? row.order_id ?? `row-${index}`,
             orderNumber: row.orderNumber ?? row.orderId ?? row.order_id ?? `Order-${index}`,
@@ -165,6 +165,8 @@ const PurchaseOrdersApproval = () => {
             deliveryDate: row.deliveryDate ?? row.delivery_date ?? "",
             cgst: row.cgst ?? "",
             sgst: row.sgst ?? "",
+            igst: row.igst ?? "",
+            gstType: row.gstType ?? "normal",
             paymentNote: row.paymentNote ?? row.payment_note ?? "",
             deliveryNote: row.deliveryNote ?? row.delivery_note ?? "",
             insurance: row.insurance ?? "",
@@ -217,7 +219,7 @@ const PurchaseOrdersApproval = () => {
   const handleApproveReject = (id: string, action: string) => {
     const order = filteredData.find((order: any) => order.id === id);
     const orderNumber = order?.orderNumber || id;
-    
+
     setConfirmationDialog({
       open: true,
       title: `${action === 'approve' ? 'Approve' : 'Reject'} Purchase Order`,
@@ -230,7 +232,7 @@ const PurchaseOrdersApproval = () => {
   const handleConfirmAction = async () => {
     const { action, orderId } = confirmationDialog;
     const status = action === 'approve' ? 'Approved' : 'Rejected';
-    
+
     try {
       let pdfBlob: Blob | undefined;
       if (status === 'Approved') {
@@ -245,11 +247,11 @@ const PurchaseOrdersApproval = () => {
       }
 
       await updatePurchaseOrderStatus({ id: orderId, status, pdfBlob }).unwrap();
-      dispatch(addToast({ 
-        message: `Purchase order ${status.toLowerCase()} successfully`, 
-        type: "success" 
+      dispatch(addToast({
+        message: `Purchase order ${status.toLowerCase()} successfully`,
+        type: "success"
       }));
-      
+
       setConfirmationDialog({ open: false, title: "", message: "", action: "", orderId: "" });
       setDetailsModalOpen(false); // Close the details modal after action
       refetch();
@@ -311,11 +313,11 @@ const PurchaseOrdersApproval = () => {
           // Always return string, never object
           const vendor = params?.row?.vendor;
           const vendorName = params?.row?.vendorName;
-          
+
           if (typeof vendor === "string") return vendor || "N/A";
           if (typeof vendorName === "string") return vendorName || "N/A";
           if (vendor && typeof vendor === "object" && vendor.name) return vendor.name;
-          
+
           return "N/A";
         } catch {
           return "N/A";
@@ -331,8 +333,26 @@ const PurchaseOrdersApproval = () => {
       align: "center",
       renderCell: (params: any) => {
         try {
-          const amount = Number(params?.row?.totalAmount ?? 0);
-          return `₹${amount.toFixed(2)}`;
+          const row = params?.row;
+          const basicAmount = Number(row?.totalAmount ?? 0);
+          if (isNaN(basicAmount)) return "₹0.00";
+
+          let taxAmount = 0;
+          const gstType = row?.gstType || 'normal';
+
+          if (gstType === 'central') {
+            const igstPct = Number(row?.igst) || 0;
+            taxAmount = basicAmount * (igstPct / 100);
+          } else {
+            const cgstPct = Number(row?.cgst) || 0;
+            const sgstPct = Number(row?.sgst) || 0;
+            const cgstAmt = basicAmount * (cgstPct / 100);
+            const sgstAmt = basicAmount * (sgstPct / 100);
+            taxAmount = cgstAmt + sgstAmt;
+          }
+
+          const total = basicAmount + taxAmount;
+          return `₹${total.toFixed(2)}`;
         } catch {
           return "₹0.00";
         }
@@ -453,8 +473,8 @@ const PurchaseOrdersApproval = () => {
             flexWrap: "wrap",
           }}
         >
-          
-          
+
+
           <FormControl size="small" sx={{ minWidth: 150 }}>
             <InputLabel>Status</InputLabel>
             <Select
@@ -490,29 +510,29 @@ const PurchaseOrdersApproval = () => {
             sx={{ minWidth: 150 }}
           />
 
-                     <Button
-             variant="outlined"
-             onClick={handleClearFilters}
-             sx={{ minWidth: 100 }}
-           >
-             Clear Filters
-           </Button>
-         </Box>
-       </Box>
-       
-       {/* Filter Summary */}
-       {(searchTerm || statusFilter !== 'all' || startDate || endDate) && (
-         <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-           <Typography variant="body2" color="text.secondary">
-             <strong>Active Filters:</strong>
-             {searchTerm && ` Search: "${searchTerm}"`}
-             {statusFilter !== 'all' && ` Status: ${statusFilter}`}
-             {startDate && ` From: ${new Date(startDate).toLocaleDateString()}`}
-             {endDate && ` To: ${new Date(endDate).toLocaleDateString()}`}
-             {` (${filteredData.length} of ${orderData.length} orders)`}
-           </Typography>
-         </Box>
-       )}
+          <Button
+            variant="outlined"
+            onClick={handleClearFilters}
+            sx={{ minWidth: 100 }}
+          >
+            Clear Filters
+          </Button>
+        </Box>
+      </Box>
+
+      {/* Filter Summary */}
+      {(searchTerm || statusFilter !== 'all' || startDate || endDate) && (
+        <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+          <Typography variant="body2" color="text.secondary">
+            <strong>Active Filters:</strong>
+            {searchTerm && ` Search: "${searchTerm}"`}
+            {statusFilter !== 'all' && ` Status: ${statusFilter}`}
+            {startDate && ` From: ${new Date(startDate).toLocaleDateString()}`}
+            {endDate && ` To: ${new Date(endDate).toLocaleDateString()}`}
+            {` (${filteredData.length} of ${orderData.length} orders)`}
+          </Typography>
+        </Box>
+      )}
       <Box sx={{ height: 600, overflowX: "auto" }}>
         {error ? (
           <Typography color="error" align="center">
@@ -520,16 +540,16 @@ const PurchaseOrdersApproval = () => {
           </Typography>
         ) : filteredData.length === 0 && !isLoading && !isFetching ? (
           <Typography align="center" sx={{ mt: 4, color: 'text.secondary' }}>
-            {orderData.length === 0 
+            {orderData.length === 0
               ? `No purchase orders found. ${data ? 'The API returned empty data.' : 'No data received from API.'}`
               : 'No purchase orders match the current filters.'
             }
           </Typography>
         ) : (
-          <DataTable 
-            rows={filteredData} 
-            columns={columns} 
-            disableColumnMenu 
+          <DataTable
+            rows={filteredData}
+            columns={columns}
+            disableColumnMenu
             disableRowSelectionOnClick
             loading={isLoading || isFetching}
             getRowId={(row: any) => row.id ?? row.orderId ?? row.orderNumber ?? `${row.vendorId}-${row.requestedDate}`}
@@ -563,8 +583,8 @@ const PurchaseOrdersApproval = () => {
           <Button onClick={handleCloseConfirmation} color="primary">
             Cancel
           </Button>
-          <Button 
-            onClick={handleConfirmAction} 
+          <Button
+            onClick={handleConfirmAction}
             color={confirmationDialog.action === 'approve' ? 'success' : 'error'}
             variant="contained"
             autoFocus

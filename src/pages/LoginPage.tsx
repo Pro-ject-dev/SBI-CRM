@@ -33,7 +33,7 @@ const LoginPage = () => {
       } else if (authState.role === "operation_manager") {
         navigate("/operation-manager/dashboard", { replace: true });
       } else if (authState.role === "warehouse_manager") {
-        navigate("/warehouse/dashboard", { replace: true });
+        navigate("/store/dashboard", { replace: true });
       } else if (authState.role === "purchase_manager") {
         navigate("/purchase-manager/dashboard", { replace: true });
       }
@@ -110,8 +110,8 @@ const LoginPage = () => {
               console.log("Navigating to /operation-manager/dashboard");
               navigate("/operation-manager/dashboard", { replace: true });
             } else if (role === "warehouse_manager") {
-              console.log("Navigating to /warehouse/dashboard");
-              navigate("/warehouse/dashboard", { replace: true });
+              console.log("Navigating to /store/dashboard");
+              navigate("/store/dashboard", { replace: true });
             } else if (role === "purchase_manager") {
               console.log("Navigating to /purchase-manager/dashboard");
               navigate("/purchase-manager/dashboard", { replace: true });

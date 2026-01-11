@@ -24,12 +24,12 @@ const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({ open, handleClose, 
   if (!lead) return null;
 
   const handleAddEstimation = () => {
-    navigate('/sales/estimation', { state: { leadData: lead } });
+    navigate(`/sales/estimation?leadId=${lead.id}`, { state: { leadData: lead } });
     handleClose();
   };
-  
+
   const handleEditEstimation = (estimation: Estimation) => {
-    navigate('/sales/estimation', { state: { estimationData: estimation } });
+    navigate(`/sales/estimation?leadId=${estimation.leadId}&estimationId=${estimation.id}`, { state: { estimationData: estimation } });
     handleClose();
   };
 
@@ -56,12 +56,12 @@ const LeadDetailsModal: React.FC<LeadDetailsModalProps> = ({ open, handleClose, 
                   <Typography variant="body2" color="text.secondary">Total: {parseFloat(est.grandTotal).toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</Typography>
                 </Box>
                 {estimationActionId === est.id ? (
-                    <CircularProgress size={24} />
+                  <CircularProgress size={24} />
                 ) : (
-                    <Box>
-                      <IconButton onClick={() => handleEditEstimation(est)} color="primary"><Edit /></IconButton>
-                      <IconButton onClick={() => onDeleteEstimation(est.id)} color="error"><Delete /></IconButton>
-                    </Box>
+                  <Box>
+                    <IconButton onClick={() => handleEditEstimation(est)} color="primary"><Edit /></IconButton>
+                    <IconButton onClick={() => onDeleteEstimation(est.id)} color="error"><Delete /></IconButton>
+                  </Box>
                 )}
               </Paper>
             </Grid>

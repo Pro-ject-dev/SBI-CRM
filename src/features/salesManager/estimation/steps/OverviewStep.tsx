@@ -33,6 +33,8 @@ interface OverviewPageProps {
     onPricingModeChange: (mode: 'normal' | 'vip') => void;
     pdfTemplateType: PdfTemplateType;
     onPdfTemplateTypeChange: (type: PdfTemplateType) => void;
+    taxType: 'gst' | 'igst';
+    onTaxTypeChange: (type: 'gst' | 'igst') => void;
     onBadgeTextUpdate: (productType: 'standard' | 'custom', mainProductId: string, text: string, addOnId?: string) => void;
 }
 
@@ -57,7 +59,7 @@ const MemoizedAddOnRow = React.memo(({ addOn, productType, mainProductId, onBadg
             onBadgeTextUpdate(productType, mainProductId, localBadgeText, addOn.id);
         }
     };
-    
+
     useEffect(() => {
         setLocalBadgeText(addOn.customBadgeText || '');
     }, [addOn.customBadgeText]);
@@ -74,14 +76,14 @@ const MemoizedAddOnRow = React.memo(({ addOn, productType, mainProductId, onBadg
                 )}
                 <Box sx={{ pl: 4, mt: 1 }}>
                     {isEditing ? (
-                        <TextField 
-                            autoFocus 
-                            fullWidth 
-                            size="small" 
-                            variant="standard" 
+                        <TextField
+                            autoFocus
+                            fullWidth
+                            size="small"
+                            variant="standard"
                             value={localBadgeText}
                             onChange={(e) => setLocalBadgeText(e.target.value)}
-                            onBlur={handleBlur} 
+                            onBlur={handleBlur}
                             placeholder="Add a note for the PDF..." />
                     ) : (
                         <Button size="small" startIcon={<AddCommentIcon />} onClick={() => setIsEditing(true)}
@@ -109,14 +111,14 @@ const MemoizedProductRow = React.memo(({ product, type, pricingMode, onBadgeText
 
     const standardProduct = type === 'standard' ? product as StandardFormData : null;
     const customProduct = type === 'custom' ? product as CustomProductData : null;
-    
+
     const handleBlur = () => {
         setIsEditing(false);
         if (localBadgeText !== (product.customBadgeText || '')) {
             onBadgeTextUpdate(type, product.id, localBadgeText);
         }
     };
-    
+
     useEffect(() => {
         setLocalBadgeText(product.customBadgeText || '');
     }, [product.customBadgeText]);
@@ -132,15 +134,15 @@ const MemoizedProductRow = React.memo(({ product, type, pricingMode, onBadgeText
                         </Typography>
                     )}
                     {isEditing ? (
-                        <TextField 
-                            autoFocus 
-                            fullWidth 
-                            size="small" 
-                            variant="standard" 
+                        <TextField
+                            autoFocus
+                            fullWidth
+                            size="small"
+                            variant="standard"
                             value={localBadgeText}
                             onChange={(e) => setLocalBadgeText(e.target.value)}
-                            onBlur={handleBlur} 
-                            placeholder="Add a note for the PDF..." 
+                            onBlur={handleBlur}
+                            placeholder="Add a note for the PDF..."
                             sx={{ mt: 1 }} />
                     ) : (
                         <Button size="small" startIcon={<AddCommentIcon />} onClick={() => setIsEditing(true)}
@@ -152,7 +154,10 @@ const MemoizedProductRow = React.memo(({ product, type, pricingMode, onBadgeText
                 {type === 'custom' && <TableCell>{customProduct?.size}</TableCell>}
                 <TableCell align="right">{product.quantity}</TableCell>
                 <TableCell align="right">
-                    {type === 'standard' ? formatCurrency(pricingMode === 'vip' && standardProduct!.maxCost > 0 ? standardProduct!.maxCost : standardProduct!.ratePerQuantity) : formatCurrency(customProduct!.ratePerKg)}
+                    {type === 'standard'
+                        ? formatCurrency(pricingMode === 'vip' && standardProduct!.maxCost > 0 ? standardProduct!.maxCost : standardProduct!.ratePerQuantity)
+                        : formatCurrency(product.quantity > 0 ? product.totalAmount / product.quantity : 0)
+                    }
                 </TableCell>
                 <TableCell align="right">{formatCurrency(product.totalAmount)}</TableCell>
             </TableRow>
@@ -178,12 +183,13 @@ export default function OverviewStep({
     initialGstPercent, initialDiscountAmount, onAmountsUpdate,
     pricingMode,
     pdfTemplateType, onPdfTemplateTypeChange,
+    taxType, onTaxTypeChange,
     onBadgeTextUpdate
 }: OverviewPageProps) {
 
     const [gstInput, setGstInput] = useState<string>(initialGstPercent?.toString() ?? '18');
     const [discountAmountInput, setDiscountAmountInput] = useState<string>(initialDiscountAmount?.toString() ?? '0');
-    
+
     const itemsTotalAmount = useMemo(() => {
         const calculateTotal = (items: (StandardFormData | CustomProductData)[]) =>
             items.reduce((sum, item) => {
@@ -206,7 +212,7 @@ export default function OverviewStep({
 
         const currentParsedGst = !isNaN(gst) && gst >= 0 ? gst : null;
         const currentParsedDiscountAmt = !isNaN(discountAmt) && discountAmt >= 0 ? discountAmt : 0;
-        
+
         // Validation: Discount can't be more than the total.
         const discountIsInvalid = currentParsedDiscountAmt > itemsTotalAmount;
 
@@ -227,7 +233,7 @@ export default function OverviewStep({
     useEffect(() => {
         onAmountsUpdate(parsedGstPercent, isDiscountInvalid ? null : parsedDiscountAmount);
     }, [parsedGstPercent, parsedDiscountAmount, isDiscountInvalid, onAmountsUpdate]);
-    
+
     const handleGstInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
         if (value === '' || /^\d*\.?\d*$/.test(value)) setGstInput(value);
@@ -240,15 +246,15 @@ export default function OverviewStep({
 
     return (
         <Box sx={{ width: '100%', mb: 4, p: { xs: 1, md: 2 } }}>
-             <Typography variant="h4" gutterBottom sx={{ mb: 3, textAlign: 'center' }} style={{ color: 'black' }}>Order Summary - #{orderId}</Typography>
-            
+            <Typography variant="h4" gutterBottom sx={{ mb: 3, textAlign: 'center' }} style={{ color: 'black' }}>Order Summary - #{orderId}</Typography>
+
             {standardProducts.length > 0 && (
                 <Card sx={{ mb: 3 }}>
                     <CardContent>
                         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}><ShoppingCartIcon color="primary" /><Typography variant="h6">Standard Products</Typography></Stack>
                         <Divider sx={{ mb: 2 }} />
                         <TableContainer><Table size="small">
-                            <TableHead><TableRow><TableCell sx={{minWidth: 200}}>Product Name</TableCell><TableCell align="right">Qty</TableCell><TableCell align="right">Rate/Unit</TableCell><TableCell align="right">Total</TableCell></TableRow></TableHead>
+                            <TableHead><TableRow><TableCell sx={{ minWidth: 200 }}>Product Name</TableCell><TableCell align="right">Qty</TableCell><TableCell align="right">Rate/Unit</TableCell><TableCell align="right">Total</TableCell></TableRow></TableHead>
                             <TableBody>
                                 {standardProducts.map((product) => (
                                     <MemoizedProductRow
@@ -305,6 +311,13 @@ export default function OverviewStep({
                 <CardContent>
                     <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}><CalculateIcon color="primary" /><Typography variant="h6">Tax, Discount & Final Amount</Typography></Stack>
                     <Divider sx={{ mb: 2 }} />
+                    <Box sx={{ mb: 2 }}>
+                        <Typography variant="subtitle2" gutterBottom>Tax Type</Typography>
+                        <RadioGroup row value={taxType} onChange={(e) => onTaxTypeChange(e.target.value as 'gst' | 'igst')} name="tax-template-group">
+                            <FormControlLabel value="gst" control={<Radio />} label="GST (CGST + SGST)" />
+                            <FormControlLabel value="igst" control={<Radio />} label="IGST" />
+                        </RadioGroup>
+                    </Box>
                     <MuiGrid container spacing={3} alignItems="flex-start">
                         <MuiGrid item xs={12} md={6}><TextField label="GST (%)" type="text" inputMode="decimal" value={gstInput} onChange={handleGstInputChange} required fullWidth error={gstInput !== '' && (parsedGstPercent === null || parsedGstPercent <= 0)} helperText={gstInput !== '' && (parsedGstPercent === null || parsedGstPercent <= 0) ? "GST must be a positive number." : "Required for order placement."} /></MuiGrid>
                         {/* <MuiGrid item xs={12} md={6}><TextField label="Discount (%)" type="text" inputMode="decimal" value={discountInput} onChange={handleDiscountInputChange} fullWidth error={discountInput !== '' && (parsedDiscountPercent < 0)} helperText={discountInput !== '' && (parsedDiscountPercent < 0) ? "Discount cannot be negative." : "Optional (e.g., 5 for 5%)"} /></MuiGrid> */}
@@ -323,19 +336,32 @@ export default function OverviewStep({
                         <MuiGrid item xs={12} md={12}><Stack spacing={0.5} sx={{ textAlign: 'right', pt: 1 }}>
                             <Typography variant="body1">Subtotal: {formatCurrency(itemsTotalAmount)}</Typography>
                             {/* <Typography variant="body1" color={calculatedDiscountValue > 0 ? "error.main" : "text.secondary"}>Discount ({parsedDiscountPercent || 0}%): - {formatCurrency(calculatedDiscountValue)}</Typography> */}
-                            <Typography variant="body1" color={parsedDiscountAmount > 0 ? "error.main" : "text.secondary"}>
-                                    Discount: - {formatCurrency(parsedDiscountAmount)}
-                            </Typography>
-                            <Typography variant="subtitle1" sx={{borderTop: '1px dashed grey', pt: 1, mt:1}}>Amount After Discount: {formatCurrency(amountAfterDiscount)}</Typography>
-                            <Typography variant="body1" color="text.secondary">GST ({parsedGstPercent || 0}%): + {formatCurrency(calculatedGstValue)}</Typography>
-                            <Divider sx={{ my: 1 }}/><Typography variant="h5" component="p" sx={{ fontWeight: 'bold' }}>Total Payable: {formatCurrency(finalPayableAmount)}</Typography>
+                            {parsedDiscountAmount > 0 && (
+                                <>
+                                    <Typography variant="body1" color="error.main">
+                                        Discount: - {formatCurrency(parsedDiscountAmount)}
+                                    </Typography>
+                                    <Typography variant="subtitle1" sx={{ borderTop: '1px dashed grey', pt: 1, mt: 1 }}>
+                                        Amount After Discount: {formatCurrency(amountAfterDiscount)}
+                                    </Typography>
+                                </>
+                            )}
+                            {taxType === 'igst' ? (
+                                <Typography variant="body1" color="text.secondary">IGST ({parsedGstPercent || 0}%): + {formatCurrency(calculatedGstValue)}</Typography>
+                            ) : (
+                                <Box>
+                                    <Typography variant="body1" color="text.secondary">CGST ({(parsedGstPercent || 0) / 2}%): + {formatCurrency(calculatedGstValue / 2)}</Typography>
+                                    <Typography variant="body1" color="text.secondary">SGST ({(parsedGstPercent || 0) / 2}%): + {formatCurrency(calculatedGstValue / 2)}</Typography>
+                                </Box>
+                            )}
+                            <Divider sx={{ my: 1 }} /><Typography variant="h5" component="p" sx={{ fontWeight: 'bold' }}>Total Payable: {formatCurrency(finalPayableAmount)}</Typography>
                         </Stack></MuiGrid>
                     </MuiGrid>
                 </CardContent>
             </Card>
 
             <MuiGrid container spacing={3}>
-                {customerInfo && (<MuiGrid item xs={12} md={6}><Card sx={{ height: '100%' }}><CardContent><Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}><AccountBoxIcon color="action" /><Typography variant="h6">Customer Information</Typography></Stack><Divider sx={{ mb: 2 }} /><Typography variant="subtitle1" gutterBottom>{customerInfo.firstName} {customerInfo.lastName}</Typography><Stack direction="row" spacing={1} alignItems="center" sx={{mb: 0.5}}><PhoneIcon fontSize="small" color="action" /><Typography variant="body2" color="text.secondary">{customerInfo.phone}</Typography></Stack><Typography variant="body2" color="text.secondary" gutterBottom>{customerInfo.address1}{customerInfo.address2 && `, ${customerInfo.address2}`}</Typography><Typography variant="body2" color="text.secondary">{customerInfo.city}, {customerInfo.state} - {customerInfo.zip}</Typography>{customerInfo.gst && <Typography variant="body2" color="text.secondary">GSTIN: {customerInfo.gst}</Typography>}</CardContent></Card></MuiGrid>)}
+                {customerInfo && (<MuiGrid item xs={12} md={6}><Card sx={{ height: '100%' }}><CardContent><Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}><AccountBoxIcon color="action" /><Typography variant="h6">Customer Information</Typography></Stack><Divider sx={{ mb: 2 }} /><Typography variant="subtitle1" gutterBottom>{customerInfo.firstName} {customerInfo.lastName}</Typography><Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}><PhoneIcon fontSize="small" color="action" /><Typography variant="body2" color="text.secondary">{customerInfo.phone}</Typography></Stack><Typography variant="body2" color="text.secondary" gutterBottom>{customerInfo.address1}{customerInfo.address2 && `, ${customerInfo.address2}`}</Typography><Typography variant="body2" color="text.secondary">{customerInfo.city}, {customerInfo.state} - {customerInfo.zip}</Typography>{customerInfo.gst && <Typography variant="body2" color="text.secondary">GSTIN: {customerInfo.gst}</Typography>}</CardContent></Card></MuiGrid>)}
                 {bankInfo && (<MuiGrid item xs={12} md={6}><Card sx={{ height: '100%' }}><CardContent><Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}><CreditCardIcon color="action" /><Typography variant="h6">Payment Information</Typography></Stack><Divider sx={{ mb: 2 }} /><Typography variant="subtitle2" gutterBottom>{bankInfo.bankTitle}: <strong>{bankInfo.bankName}</strong></Typography><Typography variant="body2" color="text.secondary">Account No: ****{String(bankInfo.accountNo).slice(-4)}</Typography><Typography variant="body2" color="text.secondary">IFSC: {bankInfo.ifscCode}</Typography></CardContent></Card></MuiGrid>)}
                 {termsInfo && (<MuiGrid item xs={12} md={6}><Card sx={{ height: '100%' }}><CardContent><Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}><DescriptionIcon color="action" /><Typography variant="h6">Terms & Conditions</Typography></Stack><Divider sx={{ mb: 2 }} /><Typography variant="subtitle2" gutterBottom>{termsInfo.termTitle}</Typography><Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-line' }}>{termsInfo.termDesc}</Typography></CardContent></Card></MuiGrid>)}
             </MuiGrid>

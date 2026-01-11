@@ -11,6 +11,10 @@ import {
   Divider,
   Chip,
   Stack,
+  Radio,
+  RadioGroup,
+  FormControl,
+  FormControlLabel,
 } from "@mui/material";
 import { Close, Add, Edit } from "@mui/icons-material";
 import { SelectBox } from "./SelectBox";
@@ -64,6 +68,8 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
     currentStock: "",
     unitPrice: "",
     vendorId: "",
+    gstType: "normal",
+    gstRate: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -100,6 +106,8 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
         currentStock: material.currentStock?.toString() || "",
         unitPrice: material.unitPrice?.toString() || "",
         vendorId: material.vendorId?.toString() || "",
+        gstType: material.gstType || "normal",
+        gstRate: material.gstRate?.toString() || "",
       });
     } else {
       setFormData({
@@ -111,6 +119,8 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
         currentStock: "",
         unitPrice: "",
         vendorId: "",
+        gstType: "normal",
+        gstRate: "",
       });
     }
     setErrors({});
@@ -125,7 +135,7 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.name.trim()) newErrors.name = "Name is required";
     if (!formData.description.trim()) newErrors.description = "Description is required";
     if (!formData.unit) newErrors.unit = "Unit is required";
@@ -138,6 +148,9 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
     }
     if (!formData.unitPrice || Number(formData.unitPrice) <= 0) {
       newErrors.unitPrice = "Valid unit price is required";
+    }
+    if (formData.gstRate && (isNaN(Number(formData.gstRate)) || Number(formData.gstRate) < 0)) {
+      newErrors.gstRate = "Valid tax rate is required";
     }
 
     setErrors(newErrors);
@@ -157,6 +170,8 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
         currentStock: Number(formData.currentStock),
         unitPrice: Number(formData.unitPrice),
         vendorId: formData.vendorId ? Number(formData.vendorId) : null,
+        gstType: formData.gstType,
+        gstRate: formData.gstRate,
       };
 
       if (material) {
@@ -170,7 +185,7 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
           addToast({ message: "Raw Material added successfully", type: "success" })
         );
       }
-      
+
       onClose();
     } catch (error) {
       dispatch(
@@ -211,13 +226,13 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
               </Typography>
             </Box>
           </Box>
-          <IconButton 
+          <IconButton
             onClick={onClose}
-            sx={{ 
+            sx={{
               color: "inherit",
-              "&:hover": { 
-                backgroundColor: "rgba(255, 255, 255, 0.1)" 
-              } 
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.1)"
+              }
             }}
           >
             <Close />
@@ -229,10 +244,10 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
           <Grid container spacing={3}>
             {/* Basic Information Section */}
             <Grid item xs={12}>
-              <Paper 
-                elevation={0} 
-                sx={{ 
-                  p: 3, 
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
                   border: 1,
                   borderColor: "divider",
                   borderRadius: 2,
@@ -274,6 +289,7 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
                       onChange={(_, value) => handleChange("category", value as string)}
                       error={errors.category}
                       fullWidth
+                      placeholder="Select Category"
                     />
                   </Grid>
 
@@ -304,10 +320,10 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
 
             {/* Stock & Pricing Section */}
             <Grid item xs={12}>
-              <Paper 
-                elevation={0} 
-                sx={{ 
-                  p: 3, 
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
                   border: 1,
                   borderColor: "divider",
                   borderRadius: 2,
@@ -329,6 +345,7 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
                       onChange={(_, value) => handleChange("unit", value as string)}
                       error={errors.unit}
                       fullWidth
+                      placeholder="Select Unit"
                     />
                   </Grid>
 
@@ -409,6 +426,47 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
                       onChange={(_, value) => handleChange("vendorId", value as string)}
                       error={errors.vendorId}
                       fullWidth
+                      placeholder="Select Vendor"
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                      GST Configuration
+                    </Typography>
+                    <FormControl>
+                      <RadioGroup
+                        row
+                        value={formData.gstType}
+                        onChange={(e) => handleChange("gstType", e.target.value)}
+                      >
+                        <FormControlLabel value="normal" control={<Radio size="small" />} label="GST" />
+                        <FormControlLabel value="central" control={<Radio size="small" />} label="IGST" />
+                      </RadioGroup>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                      Tax Rate (%)
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      size="medium"
+                      type="number"
+                      value={formData.gstRate}
+                      onChange={(e) => handleChange("gstRate", e.target.value)}
+                      error={!!errors.gstRate}
+                      helperText={errors.gstRate}
+                      placeholder={formData.gstType === 'normal' ? "e.g., 18 (CGST+SGST)" : "e.g., 18 (IGST)"}
+                      InputProps={{
+                        endAdornment: <Typography sx={{ ml: 1, color: "text.secondary" }}>%</Typography>,
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                        }
+                      }}
                     />
                   </Grid>
                 </Grid>
@@ -417,10 +475,10 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
 
             {/* Summary Section */}
             <Grid item xs={12}>
-              <Paper 
-                elevation={0} 
-                sx={{ 
-                  p: 3, 
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
                   border: 1,
                   borderColor: "divider",
                   borderRadius: 2,
@@ -432,27 +490,27 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
                 </Typography>
                 <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
                   {formData.category && (
-                    <Chip 
-                      label={`Category: ${formData.category}`} 
-                      color="primary" 
-                      variant="outlined" 
-                      size="small" 
+                    <Chip
+                      label={`Category: ${formData.category}`}
+                      color="primary"
+                      variant="outlined"
+                      size="small"
                     />
                   )}
                   {formData.unit && (
-                    <Chip 
-                      label={`Unit: ${formData.unit}`} 
-                      color="secondary" 
-                      variant="outlined" 
-                      size="small" 
+                    <Chip
+                      label={`Unit: ${formData.unit}`}
+                      color="secondary"
+                      variant="outlined"
+                      size="small"
                     />
                   )}
                   {formData.vendorId && (
-                    <Chip 
-                      label={`Vendor: ${vendorOptions.find((v: OptionProps) => v.value === formData.vendorId)?.label || 'Selected'}`} 
-                      color="info" 
-                      variant="outlined" 
-                      size="small" 
+                    <Chip
+                      label={`Vendor: ${vendorOptions.find((v: OptionProps) => v.value === formData.vendorId)?.label || 'Selected'}`}
+                      color="info"
+                      variant="outlined"
+                      size="small"
                     />
                   )}
                 </Stack>
@@ -477,10 +535,10 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
             * Required fields
           </Typography>
           <Stack direction="row" spacing={2}>
-            <Button 
+            <Button
               onClick={onClose}
               variant="outlined"
-              sx={{ 
+              sx={{
                 borderRadius: 2,
                 px: 3,
                 py: 1.5,
@@ -490,11 +548,11 @@ const RawMaterialModal: React.FC<RawMaterialModalProps> = ({
             >
               Cancel
             </Button>
-            <Button 
-              variant="contained" 
+            <Button
+              variant="contained"
               onClick={handleSubmit}
               startIcon={material ? <Edit /> : <Add />}
-              sx={{ 
+              sx={{
                 borderRadius: 2,
                 px: 3,
                 py: 1.5,

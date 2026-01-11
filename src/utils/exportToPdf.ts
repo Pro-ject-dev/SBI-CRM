@@ -9,22 +9,26 @@ export function exportToPdf<T>(
 ) {
   const doc = new jsPDF();
 
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const rightMargin = pageWidth - 15;
+
   if (Logo) {
-    doc.addImage(Logo, "PNG", 15, 2, 30, 30);
+    doc.addImage(Logo, "PNG", 15, 5, 25, 25);
   }
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("SRI BRAMHA INDUSTRIES", 50, 15);
+  doc.text("SRI BRAMHA INDUSTRIES", 45, 12);
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  doc.text("COMMERCIAL KITCHEN & BAKERY EQUIPMENTS", 50, 22);
+  doc.setFontSize(10);
+  doc.text("COMMERCIAL KITCHEN & BAKERY EQUIPMENTS", 45, 18);
 
   doc.setFontSize(10);
-  doc.text("GSTIN: 33AVTPS8228G1Z0", 205, 5, { align: "right" });
+  doc.text("GSTIN: 33AVTPS8228G1Z0", rightMargin, 12, { align: "right" });
 
   doc.setFontSize(9);
+  doc.setTextColor(100);
   const addressLines = [
     "Register office & Showroom: Near Reliance Market, Opp to SIT Hostel,",
     "Tanjore, Trichy Main Rd, Ariyamangalam Area, Trichy - 620010",
@@ -32,11 +36,12 @@ export function exportToPdf<T>(
     "www.sribramhaindustries.in | bramhaindustries@gmail.com",
   ];
   addressLines.forEach((line, i) => {
-    doc.text(line, 15, 35 + i * 5);
+    doc.text(line, 45, 24 + i * 4.5);
   });
+  doc.setTextColor(0);
 
-  doc.setDrawColor(150);
-  doc.line(10, 60, 200, 60);
+  doc.setDrawColor(220);
+  doc.line(15, 45, rightMargin, 45);
 
   const pdfHeaders = Object.keys(headers).map((key) => headers[key as keyof T]);
 
@@ -50,22 +55,24 @@ export function exportToPdf<T>(
   );
 
   autoTable(doc, {
-    startY: 65,
+    startY: 50,
     head: [pdfHeaders],
     body: body,
     styles: {
-      halign: "center",
-      valign: "middle",
-      fontSize: 10,
-      lineColor: [0, 0, 0],
+      fontSize: 9,
+      cellPadding: 2,
+      lineColor: [220, 220, 220],
       lineWidth: 0.1,
+      valign: "middle",
     },
     headStyles: {
-      fillColor: [255, 255, 255],
+      fillColor: [240, 240, 240],
       textColor: [0, 0, 0],
       fontStyle: "bold",
-      lineWidth: 0.1,
-      lineColor: [0, 0, 0],
+      halign: "center",
+    },
+    bodyStyles: {
+      halign: "left",
     },
     theme: "grid",
   });

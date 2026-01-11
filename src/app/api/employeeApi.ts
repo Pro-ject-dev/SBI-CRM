@@ -4,7 +4,7 @@ import { Employee } from "../../types/employee";
 export const employeeApi = createApi({
   reducerPath: "employeeApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_API_BASE_URL || "https://sbiapi.ssengineeringworks.online",
+    baseUrl: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
     prepareHeaders: (headers) => {
       const accessToken = localStorage.getItem("authToken");
       if (accessToken) {

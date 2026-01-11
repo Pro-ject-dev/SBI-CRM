@@ -12,6 +12,10 @@ import {
   Divider,
   Chip,
   MenuItem,
+  Radio,
+  RadioGroup,
+  FormControl,
+  FormControlLabel,
 } from "@mui/material";
 import { Close, Add, Delete } from "@mui/icons-material";
 import { SelectBox } from "./SelectBox";
@@ -99,18 +103,20 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
   const [insuranceNote, setInsuranceNote] = useState<string>("");
   const [warrantyNote, setWarrantyNote] = useState<string>("");
   const [remarksNote, setRemarksNote] = useState<string>("");
+  const [gstType, setGstType] = useState<string>("normal");
+  const [igstPct, setIgstPct] = useState<string>("18");
 
   const vendorOptions = React.useMemo(() => {
     if (!vendorsData?.data || !Array.isArray(vendorsData.data)) {
       console.log("No vendors data available");
       return [];
     }
-    
+
     const options = vendorsData.data.map((vendor: any) => ({
       label: vendor.name || 'Unknown Vendor',
       value: vendor.id?.toString() || '',
     })).filter((option: any) => option.value); // Filter out options with empty values
-    
+
     console.log("Vendor options:", options);
     return options;
   }, [vendorsData]);
@@ -120,9 +126,9 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
       console.log("No raw materials data available");
       return [];
     }
-    
+
     console.log("Raw materials data:", rawMaterialsData.data);
-    
+
     const options = rawMaterialsData.data.map((material: any) => {
       const option = {
         label: `${material.name || 'Unknown'} (${material.currentStock || 0} ${material.unit || 'units'})`,
@@ -135,7 +141,7 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
       console.log("Filtering option:", option, "isValid:", isValid);
       return isValid;
     });
-    
+
     console.log("Final raw material options:", options);
     return options;
   }, [rawMaterialsData]);
@@ -181,7 +187,7 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
   const handleItemChange = (index: number, field: string, value: string) => {
     console.log("handleItemChange called:", { index, field, value });
     const newItems = [...items];
-    
+
     if (field === "rawMaterialId") {
       const selectedMaterial = rawMaterialsData?.data?.find(
         (material: any) => material.id?.toString() === value
@@ -210,10 +216,10 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
     const quantity = Number(newItems[index].quantity) || 0;
     const unitPrice = Number(newItems[index].unitPrice) || 0;
     newItems[index].totalPrice = quantity * unitPrice;
-    
+
     console.log("Updated items:", newItems);
     setItems(newItems);
-    
+
     // Clear errors for this field
     const errorKey = `${index}-${field}`;
     if (errors[errorKey]) {
@@ -229,7 +235,7 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!vendorId) {
       newErrors.vendorId = "Vendor is required";
     }
@@ -263,9 +269,7 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
 
       const payload = {
         orderData: {
-          orderId: "PO-STATIC", // As requested
           vendorId,
-          createdBy: userName, // Add the username here
           vendor: selectedVendor ? selectedVendor.name : "",
           vendorAddress: selectedVendor ? selectedVendor.address : "",
           totalAmount: String(getTotalAmount()),
@@ -276,14 +280,16 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
           notes,
           placeOfDestination,
           deliveryDate: deliveryBy,
-          cgst: cgstPct,
-          sgst: sgstPct,
+          cgst: gstType === 'normal' ? cgstPct : "",
+          sgst: gstType === 'normal' ? sgstPct : "",
+          igst: gstType === 'central' ? igstPct : "",
           paymentNote: paymentNote,
           deliveryNote: deliveryNote,
           insurance: insuranceNote,
           warranty: warrantyNote,
           remarks: remarksNote,
-          
+          gstType,
+
         },
         items: items.map((item) => ({
           rawMaterialId: item.rawMaterialId,
@@ -314,7 +320,7 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
         else if (anyErr?.error) message = String(anyErr.error);
         else if (anyErr?.status) message = `Request failed (${anyErr.status})`;
         console.error("Create PO error:", anyErr);
-      } catch {}
+      } catch { }
       dispatch(addToast({ message, type: "error" }));
     }
   };
@@ -340,6 +346,7 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
     setOrderStatus("Pending");
     setStatus("1");
     setPlaceOfDestination("");
+    setGstType("normal");
     setErrors({});
     onClose();
   };
@@ -369,13 +376,13 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
               </Typography>
             </Box>
           </Box>
-          <IconButton 
+          <IconButton
             onClick={handleClose}
-            sx={{ 
+            sx={{
               color: "inherit",
-              "&:hover": { 
-                backgroundColor: "rgba(255, 255, 255, 0.1)" 
-              } 
+              "&:hover": {
+                backgroundColor: "rgba(255, 255, 255, 0.1)"
+              }
             }}
           >
             <Close />
@@ -396,9 +403,9 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
                 </Typography>
                 <SelectBox
                   id="vendorId"
-                                     value={String(vendorId || "")}
+                  value={String(vendorId || "")}
                   options={vendorOptions}
-                                     onChange={(id, value) => {
+                  onChange={(id, value) => {
                     if (typeof value === "string") {
                       setVendorId(value);
                       // Auto-populate place of destination from vendor address
@@ -416,6 +423,7 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
                   error={errors.vendorId || (vendorsError ? "Failed to load vendors" : "") || (vendorOptions.length === 0 && !isLoadingVendors ? "No vendors available" : "")}
                   disabled={isLoadingVendors}
                   fullWidth
+                  placeholder="Select Vendor"
                 />
               </Grid>
 
@@ -426,90 +434,22 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
 
           <Divider sx={{ my: 4 }} />
 
-          {/* Additional Details for PO PDF */}
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="h6" sx={{ mb: 3, fontWeight: "600" }}>
-              Additional Details (for PO PDF)
-            </Typography>
-            <Grid container spacing={3}>
 
-              <Grid item xs={12} md={3}>
-                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
-                  Delivery By (Date)
-                </Typography>
-                <DatePickerField label="deliveryBy" value={deliveryBy} onChange={(_, v)=>setDeliveryBy(v)} />
-              </Grid>
-              {/* <Grid item xs={12} md={3}>
-                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
-                  Round Off
-                </Typography>
-                <TextField fullWidth type="number" value={roundOff} onChange={(e)=>setRoundOff(e.target.value)} placeholder="0.00" />
-              </Grid> */}
-              <Grid item xs={12} md={3}>
-                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
-                  CGST %
-                </Typography>
-                <TextField fullWidth type="number" value={cgstPct} onChange={(e)=>setCgstPct(e.target.value)} placeholder="9" />
-              </Grid>
-              <Grid item xs={12} md={3}>
-                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
-                  SGST %
-                </Typography>
-                <TextField fullWidth type="number" value={sgstPct} onChange={(e)=>setSgstPct(e.target.value)} placeholder="9" />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
-                  Payment Note
-                </Typography>
-                <TextField fullWidth value={paymentNote} onChange={(e)=>setPaymentNote(e.target.value)} placeholder="Payment terms..." />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
-                  Delivery Note
-                </Typography>
-                <TextField fullWidth value={deliveryNote} onChange={(e)=>setDeliveryNote(e.target.value)} placeholder="Delivery terms..." />
-              </Grid>
-              {/* <Grid item xs={12} md={4}>
-                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
-                  Freight
-                </Typography>
-                <TextField fullWidth value={freightNote} onChange={(e)=>setFreightNote(e.target.value)} placeholder="Freight scope..." />
-              </Grid> */}
-              <Grid item xs={12} md={4}>
-                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
-                  Insurance
-                </Typography>
-                <TextField fullWidth value={insuranceNote} onChange={(e)=>setInsuranceNote(e.target.value)} placeholder="Insurance details..." />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
-                  Warranty
-                </Typography>
-                <TextField fullWidth value={warrantyNote} onChange={(e)=>setWarrantyNote(e.target.value)} placeholder="Warranty..." />
-              </Grid>
-              <Grid item xs={12}>
-                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
-                  Remarks
-                </Typography>
-                <TextField fullWidth value={remarksNote} onChange={(e)=>setRemarksNote(e.target.value)} placeholder="Remarks..." />
-              </Grid>
-            </Grid>
-          </Box>
 
           {/* Order Items Section */}
           <Box sx={{ mb: 4 }}>
             <Typography variant="h6" sx={{ mb: 3, fontWeight: "600" }}>
               Order Items
             </Typography>
-            
+
             {items.map((item, index) => (
-              <Box 
-                key={index} 
-                sx={{ 
-                  mb: 3, 
-                  p: 3, 
-                  border: 1, 
-                  borderColor: "divider", 
+              <Box
+                key={index}
+                sx={{
+                  mb: 3,
+                  p: 3,
+                  border: 1,
+                  borderColor: "divider",
                   borderRadius: 2,
                   bgcolor: "background.default"
                 }}
@@ -535,37 +475,38 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
                       Raw Material * {isLoadingRawMaterials && "(Loading...)"}
                     </Typography>
                     <SelectBox
-                       key={`rawMaterial-${index}`}
+                      key={`rawMaterial-${index}`}
                       id={`rawMaterial-${index}`}
-                       value={String(item.rawMaterialId || "")}
-                       options={rawMaterialOptions || []}
-                                             onChange={(id, value) => {
-                         console.log("Raw material selection:", { index, id, value, type: typeof value, rawMaterialOptions });
-                         if (typeof value === "string" && value.trim() !== "") {
-                           console.log("Processing selection:", value);
-                           console.log("Calling handleItemChange for rawMaterialId:", value);
+                      value={String(item.rawMaterialId || "")}
+                      options={rawMaterialOptions || []}
+                      onChange={(id, value) => {
+                        console.log("Raw material selection:", { index, id, value, type: typeof value, rawMaterialOptions });
+                        if (typeof value === "string" && value.trim() !== "") {
+                          console.log("Processing selection:", value);
+                          console.log("Calling handleItemChange for rawMaterialId:", value);
                           handleItemChange(index, "rawMaterialId", value);
-                           
-                           // Additional debugging
-                           console.log("After handleItemChange call, checking if we need to update other fields");
+
+                          // Additional debugging
+                          console.log("After handleItemChange call, checking if we need to update other fields");
                           const selectedMaterial = rawMaterialsData?.data?.find(
-                             (material: any) => material.id?.toString() === value
+                            (material: any) => material.id?.toString() === value
                           );
-                           console.log("Selected material found:", selectedMaterial);
-                           
+                          console.log("Selected material found:", selectedMaterial);
+
                           if (selectedMaterial) {
-                             console.log("Updating additional fields for material:", selectedMaterial.name);
-                             // Note: We don't need to call handleItemChange again since it's already handled above
-                           } else {
-                             console.log("No material found in rawMaterialsData for value:", value);
-                           }
-                         } else {
-                           console.log("Invalid value:", value);
-                         }
-                       }}
-                                             error=""
-                                             disabled={false}
+                            console.log("Updating additional fields for material:", selectedMaterial.name);
+                            // Note: We don't need to call handleItemChange again since it's already handled above
+                          } else {
+                            console.log("No material found in rawMaterialsData for value:", value);
+                          }
+                        } else {
+                          console.log("Invalid value:", value);
+                        }
+                      }}
+                      error=""
+                      disabled={false}
                       fullWidth
+                      placeholder="Select Raw Material"
                     />
                   </Grid>
 
@@ -649,19 +590,7 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
                     />
                   </Grid>
 
-                  <Grid item xs={12} md={2}>
-                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
-                      GST %
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      size="medium"
-                      type="number"
-                      value={item.gstPct || ""}
-                      onChange={(e) => handleItemChange(index, "gstPct", e.target.value)}
-                      placeholder="18"
-                    />
-                  </Grid>
+
 
                   <Grid item xs={12} md={2}>
                     <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
@@ -691,7 +620,7 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
                     />
                   </Grid>
                 </Grid>
-                
+
                 {item.rawMaterialName && (
                   <Box sx={{ mt: 2 }}>
                     <Chip
@@ -709,7 +638,7 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
               startIcon={<Add />}
               onClick={handleAddItem}
               variant="outlined"
-              sx={{ 
+              sx={{
                 borderRadius: 2,
                 px: 3,
                 py: 1.5,
@@ -723,16 +652,119 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
 
           <Divider sx={{ my: 4 }} />
 
+          {/* Additional Details for PO PDF */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" sx={{ mb: 3, fontWeight: "600" }}>
+              Additional Details (for PO PDF)
+            </Typography>
+            <Grid container spacing={3}>
+
+              <Grid item xs={12} md={3}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Delivery By (Date)
+                </Typography>
+                <DatePickerField label="deliveryBy" value={deliveryBy} onChange={(_, v) => setDeliveryBy(v)} />
+              </Grid>
+
+              <Grid item xs={12} md={5}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  GST Configuration
+                </Typography>
+                <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1, px: 2, py: 0.5 }}>
+                  <FormControl component="fieldset">
+                    <RadioGroup
+                      row
+                      value={gstType}
+                      onChange={(e) => setGstType(e.target.value)}
+                    >
+                      <FormControlLabel value="normal" control={<Radio size="small" />} label="GST" />
+                      <FormControlLabel value="central" control={<Radio size="small" />} label="IGST" />
+                    </RadioGroup>
+                  </FormControl>
+                </Box>
+              </Grid>
+              {/* <Grid item xs={12} md={3}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Round Off
+                </Typography>
+                <TextField fullWidth type="number" value={roundOff} onChange={(e)=>setRoundOff(e.target.value)} placeholder="0.00" />
+              </Grid> */}
+              {gstType === 'normal' ? (
+                <>
+                  <Grid item xs={12} md={3}>
+                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                      CGST %
+                    </Typography>
+                    <TextField fullWidth type="number" value={cgstPct} onChange={(e) => setCgstPct(e.target.value)} placeholder="9" />
+                  </Grid>
+                  <Grid item xs={12} md={3}>
+                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                      SGST %
+                    </Typography>
+                    <TextField fullWidth type="number" value={sgstPct} onChange={(e) => setSgstPct(e.target.value)} placeholder="9" />
+                  </Grid>
+                </>
+              ) : (
+                <Grid item xs={12} md={6}>
+                  <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                    IGST %
+                  </Typography>
+                  <TextField fullWidth type="number" value={igstPct} onChange={(e) => setIgstPct(e.target.value)} placeholder="18" />
+                </Grid>
+              )}
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Payment Note
+                </Typography>
+                <TextField fullWidth value={paymentNote} onChange={(e) => setPaymentNote(e.target.value)} placeholder="Payment terms..." />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Delivery Note
+                </Typography>
+                <TextField fullWidth value={deliveryNote} onChange={(e) => setDeliveryNote(e.target.value)} placeholder="Delivery terms..." />
+              </Grid>
+              {/* <Grid item xs={12} md={4}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Freight
+                </Typography>
+                <TextField fullWidth value={freightNote} onChange={(e)=>setFreightNote(e.target.value)} placeholder="Freight scope..." />
+              </Grid> */}
+              <Grid item xs={12} md={4}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Insurance
+                </Typography>
+                <TextField fullWidth value={insuranceNote} onChange={(e) => setInsuranceNote(e.target.value)} placeholder="Insurance details..." />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Warranty
+                </Typography>
+                <TextField fullWidth value={warrantyNote} onChange={(e) => setWarrantyNote(e.target.value)} placeholder="Warranty..." />
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
+                  Remarks
+                </Typography>
+                <TextField fullWidth value={remarksNote} onChange={(e) => setRemarksNote(e.target.value)} placeholder="Remarks..." />
+              </Grid>
+            </Grid>
+          </Box>
+
+          <Divider sx={{ my: 4 }} />
+
           {/* Summary Section */}
           <Box sx={{ mb: 4 }}>
             <Typography variant="h6" sx={{ mb: 3, fontWeight: "600" }}>
               Order Summary
             </Typography>
-            
-            {/* Total Amount */}
-            <Box sx={{ 
-              display: "flex", 
-              justifyContent: "flex-end", 
+
+            {/* Total Amount Breakdown */}
+            <Box sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+              gap: 1,
               mb: 3,
               p: 3,
               border: 1,
@@ -740,9 +772,43 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
               borderRadius: 2,
               bgcolor: "grey.50"
             }}>
-              <Typography variant="h5" fontWeight="600">
-                Total Amount: ₹{getTotalAmount().toFixed(2)}
-              </Typography>
+              <Box sx={{ display: 'flex', gap: 4, width: '100%', justifyContent: 'flex-end' }}>
+                <Typography color="text.secondary">Basic Value:</Typography>
+                <Typography fontWeight="600">₹{getTotalAmount().toFixed(2)}</Typography>
+              </Box>
+
+              {gstType === 'normal' ? (
+                <>
+                  <Box sx={{ display: 'flex', gap: 4, width: '100%', justifyContent: 'flex-end' }}>
+                    <Typography color="text.secondary">CGST ({Number(cgstPct) || 0}%):</Typography>
+                    <Typography>₹{(getTotalAmount() * (Number(cgstPct) || 0) / 100).toFixed(2)}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 4, width: '100%', justifyContent: 'flex-end' }}>
+                    <Typography color="text.secondary">SGST ({Number(sgstPct) || 0}%):</Typography>
+                    <Typography>₹{(getTotalAmount() * (Number(sgstPct) || 0) / 100).toFixed(2)}</Typography>
+                  </Box>
+                </>
+              ) : (
+                <Box sx={{ display: 'flex', gap: 4, width: '100%', justifyContent: 'flex-end' }}>
+                  <Typography color="text.secondary">IGST ({Number(igstPct) || 0}%):</Typography>
+                  <Typography>₹{(getTotalAmount() * (Number(igstPct) || 0) / 100).toFixed(2)}</Typography>
+                </Box>
+              )}
+
+              <Divider sx={{ width: '50%', my: 1 }} />
+
+              <Box sx={{ display: 'flex', gap: 4, width: '100%', justifyContent: 'flex-end' }}>
+                <Typography variant="h6" fontWeight="bold">Net Total:</Typography>
+                <Typography variant="h6" fontWeight="bold">
+                  ₹{(
+                    getTotalAmount() +
+                    (gstType === 'normal'
+                      ? (getTotalAmount() * (Number(cgstPct) || 0) / 100 + getTotalAmount() * (Number(sgstPct) || 0) / 100)
+                      : (getTotalAmount() * (Number(igstPct) || 0) / 100)
+                    )
+                  ).toFixed(2)}
+                </Typography>
+              </Box>
             </Box>
 
             {/* Notes */}
@@ -781,10 +847,10 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
             * Required fields
           </Typography>
           <Box sx={{ display: "flex", gap: 2 }}>
-            <Button 
+            <Button
               onClick={handleClose}
               variant="outlined"
-              sx={{ 
+              sx={{
                 borderRadius: 2,
                 px: 3,
                 py: 1.5,
@@ -794,11 +860,11 @@ const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
             >
               Cancel
             </Button>
-            <Button 
-              variant="contained" 
+            <Button
+              variant="contained"
               onClick={handleSubmit}
               startIcon={<Add />}
-              sx={{ 
+              sx={{
                 borderRadius: 2,
                 px: 3,
                 py: 1.5,

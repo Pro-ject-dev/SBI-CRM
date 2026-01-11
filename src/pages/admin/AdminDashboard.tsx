@@ -57,7 +57,7 @@ const AdminDashboard = () => {
   const purchaseOrdersArray = Array.isArray(purchaseOrdersData)
     ? purchaseOrdersData
     : (purchaseOrdersData as any)?.data &&
-        Array.isArray((purchaseOrdersData as any).data)
+      Array.isArray((purchaseOrdersData as any).data)
       ? (purchaseOrdersData as any).data
       : [];
   const productsArray = Array.isArray(productsData)
@@ -91,12 +91,12 @@ const AdminDashboard = () => {
   const lowStockAlerts =
     rawMaterialsData?.data && Array.isArray(rawMaterialsData.data)
       ? rawMaterialsData.data.filter(
-          (material: any) =>
-            material &&
-            typeof material.currentStock === "number" &&
-            typeof material.minimumStock === "number" &&
-            material.currentStock < material.minimumStock,
-        )
+        (material: any) =>
+          material &&
+          typeof material.currentStock === "number" &&
+          typeof material.minimumStock === "number" &&
+          material.currentStock < material.minimumStock,
+      )
       : [];
 
   const orderStatusMap: { [key: number]: string } = {
@@ -178,27 +178,27 @@ const AdminDashboard = () => {
     },
     ...(consumableStats
       ? [
-          {
-            title: "Consumable Materials",
-            value: consumableStats.totalMaterials.toString(),
-            icon: <Folder size={20} className="text-white" />,
-            color: "from-indigo-400 to-indigo-500",
-            textColor: "text-indigo-600",
-            bgColor: "bg-indigo-50",
-            change: "+3.2%",
-            changeType: "positive",
-          },
-          {
-            title: "Pending Requests",
-            value: consumableStats.pendingRequests.toString(),
-            icon: <AlertTriangle size={20} className="text-white" />,
-            color: "from-pink-400 to-pink-500",
-            textColor: "text-pink-600",
-            bgColor: "bg-pink-50",
-            change: "+7.8%",
-            changeType: "positive",
-          },
-        ]
+        {
+          title: "Consumable Materials",
+          value: consumableStats.totalMaterials.toString(),
+          icon: <Folder size={20} className="text-white" />,
+          color: "from-indigo-400 to-indigo-500",
+          textColor: "text-indigo-600",
+          bgColor: "bg-indigo-50",
+          change: "+3.2%",
+          changeType: "positive",
+        },
+        {
+          title: "Pending Requests",
+          value: consumableStats.pendingRequests.toString(),
+          icon: <AlertTriangle size={20} className="text-white" />,
+          color: "from-pink-400 to-pink-500",
+          textColor: "text-pink-600",
+          bgColor: "bg-pink-50",
+          change: "+7.8%",
+          changeType: "positive",
+        },
+      ]
       : []),
   ];
 
@@ -435,7 +435,7 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                   <Link
-                    to="/warehouse/raw-materials"
+                    to="/store/raw-materials"
                     className="text-red-600 hover:text-red-700 font-medium text-sm bg-white px-3 py-1.5 rounded-lg border border-red-200 hover:border-red-300 transition-colors"
                   >
                     Restock
@@ -490,7 +490,7 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                   <Link
-                    to="/warehouse/consumable-materials"
+                    to="/store/consumable-materials"
                     className="text-orange-600 hover:text-orange-700 font-medium text-sm bg-white px-3 py-1.5 rounded-lg border border-orange-200 hover:border-orange-300 transition-colors"
                   >
                     Restock
@@ -501,7 +501,7 @@ const AdminDashboard = () => {
             {consumableAlerts.length > 6 && (
               <div className="mt-4 text-center">
                 <Link
-                  to="/warehouse/consumable-materials"
+                  to="/store/consumable-materials"
                   className="text-orange-600 hover:text-orange-700 font-medium text-sm"
                 >
                   View all {consumableAlerts.length} alerts →

@@ -1,7 +1,7 @@
 import {
-    People as PeopleIcon,
-    ShoppingCart as ShoppingCartIcon,
     Dashboard as DashboardIcon,
+    Storefront as StorefrontIcon,
+    ShopTwo as ShopTwoIcon,
     HelpOutline as HelpOutlineIcon,
 } from "@mui/icons-material";
 import type { SideBar } from "../../types/sideBar";
@@ -16,13 +16,13 @@ export const purchaseManagerMenuItems: SideBar[] = [
     {
         id: "vendors",
         label: "Vendors",
-        icon: PeopleIcon,
+        icon: StorefrontIcon,
         path: "/purchase-manager/vendors",
     },
     {
         id: "purchaseorders",
         label: "Purchase Orders",
-        icon: ShoppingCartIcon,
+        icon: ShopTwoIcon,
         path: "/purchase-manager/purchase-orders",
     },
     {

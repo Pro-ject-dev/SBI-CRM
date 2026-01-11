@@ -1,10 +1,11 @@
 import {
   Dashboard as DashboardIcon,
-  People as PeopleIcon,
+  Calculate as CalculateIcon,
+  PersonAddAlt1 as PersonAddAlt1Icon,
+  Receipt as ReceiptIcon,
   HelpOutline as HelpOutlineIcon,
 } from "@mui/icons-material";
 import type { SideBar } from "../../types/sideBar";
-import { BarChartIcon, ListIcon } from "lucide-react";
 
 export const salesManagerMenuItems: SideBar[] = [
   {
@@ -16,19 +17,19 @@ export const salesManagerMenuItems: SideBar[] = [
   {
     id: "estimation",
     label: "Estimation",
-    icon: PeopleIcon,
+    icon: CalculateIcon,
     path: "/sales/estimation",
   },
   {
     id: "leads",
     label: "Leads Generation",
-    icon: BarChartIcon,
+    icon: PersonAddAlt1Icon,
     path: "/sales/leadsGeneration",
   },
   {
     id: "orders",
     label: "Orders Management",
-    icon: ListIcon,
+    icon: ReceiptIcon,
     path: "/sales/orderManagement",
   },
   {

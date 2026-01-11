@@ -13,8 +13,7 @@ import Divider from "@mui/material/Divider";
 import PersonIcon from "@mui/icons-material/Person";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import LogoutIcon from "@mui/icons-material/Logout";
-import SettingsIcon from "@mui/icons-material/Settings";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+
 import { logout } from "../../app/slices/authSlice";
 import type { RootState } from "../../app/store";
 import type { UserRole } from "../../types/auth";
@@ -54,17 +53,7 @@ const Header = () => {
     navigate("/login");
   };
 
-  const handleProfile = () => {
-    handleCloseUserMenu();
-    // TODO: Navigate to profile page when implemented
-    console.log("Navigate to profile");
-  };
 
-  const handleSettings = () => {
-    handleCloseUserMenu();
-    // TODO: Navigate to settings page when implemented
-    console.log("Navigate to settings");
-  };
 
   // Get dynamic title based on user role
   const getDashboardTitle = (role: UserRole | null): string => {
@@ -230,15 +219,7 @@ const Header = () => {
             </Box>
 
             {/* Menu Items */}
-            <MenuItem onClick={handleProfile} sx={{ py: 1.25, px: 2 }}>
-              <AccountCircleIcon fontSize="small" sx={{ mr: 1.5, color: "text.secondary" }} />
-              <Typography variant="body2">Profile</Typography>
-            </MenuItem>
 
-            <MenuItem onClick={handleSettings} sx={{ py: 1.25, px: 2 }}>
-              <SettingsIcon fontSize="small" sx={{ mr: 1.5, color: "text.secondary" }} />
-              <Typography variant="body2">Settings</Typography>
-            </MenuItem>
 
             <Divider />
 

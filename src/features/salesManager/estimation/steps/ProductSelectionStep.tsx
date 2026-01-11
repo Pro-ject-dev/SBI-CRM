@@ -97,14 +97,22 @@ const ProductSelectionStep: React.FC<StandardProdLayoutProps> = ({ products, set
         const rateFromDetail = productDetail.ratePerQuantity || 0;
         const newCode = `SBI-SP-${String(productDetail.id).padStart(3, '0')}`;
 
-        // --- FIX: Capture Size Info ---
+        // --- FIX: Capture Size Info & Dimensions ---
         let finalSize = "N/A";
+        let dimLength = productDetail.defaultLength || '';
+        let dimWidth = productDetail.defaultWidth || '';
+        let dimThickness = productDetail.defaultThickness || '';
+
         if (productDetail.selectedVariantId && productDetail.variants) {
           const v = productDetail.variants.find((vr: any) => vr.id === productDetail.selectedVariantId);
           if (v) {
-            finalSize = `${v.length}L x ${v.width}W`; // Basic L x W as per request context, or add thickness if needed
+            finalSize = `${v.length}L x ${v.width}W`;
             if (v.height) finalSize += ` x ${v.height}H`;
             if (v.thickness) finalSize += ` (Thick: ${v.thickness})`;
+
+            dimLength = v.length || '';
+            dimWidth = v.width || '';
+            dimThickness = v.thickness || '';
           }
         } else if (productDetail.defaultLength || productDetail.defaultWidth) {
           finalSize = `${productDetail.defaultLength || '?'}L x ${productDetail.defaultWidth || '?'}W`;
@@ -119,9 +127,9 @@ const ProductSelectionStep: React.FC<StandardProdLayoutProps> = ({ products, set
           gst: productDetail.gst || '', minCost: parseFloat(productDetail.minCost || '0') || 0,
           maxCost: parseFloat(productDetail.maxCost || '0') || 0, addOnsProducts: [],
           baseProductWeight: productDetail.defaultWeight || '',
-          baseProductDefaultLength: productDetail.defaultLength || '',
-          baseProductDefaultWidth: productDetail.defaultWidth || '',
-          baseProductDefaultThickness: productDetail.defaultThickness || '',
+          baseProductDefaultLength: dimLength,
+          baseProductDefaultWidth: dimWidth,
+          baseProductDefaultThickness: dimThickness,
           size: finalSize, // <--- Added Size
         };
       });
