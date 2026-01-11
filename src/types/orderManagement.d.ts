@@ -1,6 +1,7 @@
-interface OrderManagementColumnData {
-  id: string;
-  orderId: string;
+export interface OrderManagementColumnData {
+  id: number;
+  orderId: number;
+  customerName: string;
   date: string;
   totalProduct: number;
   status: string;

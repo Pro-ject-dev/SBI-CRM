@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Box, Typography, CircularProgress, Alert } from '@mui/material';
+import { Box, Typography, CircularProgress, Alert, Button } from '@mui/material';
+import { exportToExcel } from '../../../utils/exportToExcel';
+import { exportToPdf } from '../../../utils/exportToPdf';
 import OrdersTable from './OrdersTable';
 import OrderDetailsModal from './OrderDetailsModal';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
@@ -17,7 +19,7 @@ import {
 } from '../../../app/slices/ordersSlice';
 
 export default function OrderManagementLayout() {
-   const dispatch = useAppDispatch();
+  const dispatch = useAppDispatch();
   const {
     allOrders,
     isLoadingOrders,
@@ -52,7 +54,7 @@ export default function OrderManagementLayout() {
         startDate: order.deadlineStart,
         endDate: order.deadlineEnd,
         grandTotal: order.estimation?.grandTotal ?? '0', // Default to '0' if not present
-    }));
+      }));
 
     if (!searchQuery) { return mapped; }
     const lowercasedQuery = searchQuery.toLowerCase();
@@ -122,6 +124,88 @@ export default function OrderManagementLayout() {
         <Typography variant="h5" gutterBottom mb={0} style={{ color: 'black' }}>
           Orders Management
         </Typography>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => {
+              const exportData = mappedAndFilteredOrders.map(order => ({
+                "Order ID": order.orderID,
+                "Customer Name": order.customerName,
+                "Date": order.date ? new Date(order.date).toLocaleDateString() : 'N/A',
+                "Total Products": order.totalProducts,
+                "Status": order.orderStatus,
+                "Start Date": order.startDate ? new Date(order.startDate).toLocaleDateString() : 'N/A',
+                "End Date": order.endDate ? new Date(order.endDate).toLocaleDateString() : 'N/A',
+                "Grand Total": order.grandTotal
+              }));
+
+              const headers = {
+                "Order ID": "Order ID",
+                "Customer Name": "Customer Name",
+                "Date": "Date",
+                "Total Products": "Total Products",
+                "Status": "Status",
+                "Start Date": "Start Date",
+                "End Date": "End Date",
+                "Grand Total": "Grand Total"
+              };
+
+              exportToExcel(exportData, headers, "Orders_List");
+            }}
+            startIcon={<Box component="img" src="/icons/excel.png" sx={{ width: 20, height: 20 }} />}
+            sx={{
+              borderColor: '#2E7D32',
+              color: '#2E7D32',
+              '&:hover': {
+                borderColor: '#1B5E20',
+                backgroundColor: '#E8F5E9'
+              }
+            }}
+          >
+            Excel
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => {
+              const exportData = mappedAndFilteredOrders.map(order => ({
+                "Order ID": order.orderID,
+                "Customer Name": order.customerName,
+                "Date": order.date ? new Date(order.date).toLocaleDateString() : 'N/A',
+                "Total Products": order.totalProducts,
+                "Status": order.orderStatus,
+                "Start Date": order.startDate ? new Date(order.startDate).toLocaleDateString() : 'N/A',
+                "End Date": order.endDate ? new Date(order.endDate).toLocaleDateString() : 'N/A',
+                "Grand Total": order.grandTotal
+              }));
+
+              const headers = {
+                "Order ID": "Order ID",
+                "Customer Name": "Customer Name",
+                "Date": "Date",
+                "Total Products": "Total Products",
+                "Status": "Status",
+                "Start Date": "Start Date",
+                "End Date": "End Date",
+                "Grand Total": "Grand Total"
+              };
+
+              exportToPdf(exportData, headers, "Orders_List");
+            }}
+            startIcon={<Box component="img" src="/icons/pdf.png" sx={{ width: 20, height: 20 }} />}
+            sx={{
+              borderColor: '#d32f2f',
+              color: '#d32f2f',
+              '&:hover': {
+                borderColor: '#c62828',
+                backgroundColor: '#FFEBEE'
+              }
+            }}
+          >
+            PDF
+          </Button>
+        </Box>
       </Box>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
         Search and view all customer orders in the system.

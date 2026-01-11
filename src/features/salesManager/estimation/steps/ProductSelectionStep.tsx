@@ -26,48 +26,48 @@ const calculateVolumetricTotal = (product: {
   baseProductDefaultWidth: string;
   baseProductDefaultThickness: string;
 }): number => {
-    const { quantity, length: lengthStr, width: widthStr, thickness: thicknessStr, ratePerKg, baseProductWeight, baseProductDefaultLength, baseProductDefaultWidth, baseProductDefaultThickness } = product;
-    
-    // Safely parse all values to numbers
-    const numQuantity = parseFloat(String(quantity));
-    const length = parseFloat(lengthStr);
-    const width = parseFloat(widthStr);
-    const thickness = parseFloat(thicknessStr);
-    const baseWeight = parseFloat(baseProductWeight);
-    const baseL = parseFloat(baseProductDefaultLength);
-    const baseW = parseFloat(baseProductDefaultWidth);
-    const baseT = parseFloat(baseProductDefaultThickness);
-    
-    if ([length, width, thickness, numQuantity, ratePerKg, baseWeight, baseL, baseW, baseT].some(isNaN) || 
-        [length, width, thickness, numQuantity, baseWeight, baseL, baseW, baseT].some(v => v <= 0) || 
-        ratePerKg < 0) {
-        return 0;
-    }
+  const { quantity, length: lengthStr, width: widthStr, thickness: thicknessStr, ratePerKg, baseProductWeight, baseProductDefaultLength, baseProductDefaultWidth, baseProductDefaultThickness } = product;
 
-    const restData = {
-      weight: baseWeight,
-      baseL: baseL,
-      baseW: baseW,
-      baseT: baseT,
-      ratePerKg: ratePerKg,
-      length: length,
-      width: width,
-      thickness: thickness,
-      quantity: numQuantity
-    }
-    
-    console.log("RestData::::", restData);
-    
-    const baseVolume = baseL * baseW * baseT;
-    if (baseVolume === 0) return 0;
-    
-    const density = baseWeight / baseVolume;
-    const customVolume = length * width * thickness;
-    const estimatedWeight = customVolume * density;
-    const totalAmount = estimatedWeight * ratePerKg * numQuantity;
-    console.log("Total Amount:::", totalAmount);
-    
-    return parseFloat(totalAmount.toFixed(2));
+  // Safely parse all values to numbers
+  const numQuantity = parseFloat(String(quantity));
+  const length = parseFloat(lengthStr);
+  const width = parseFloat(widthStr);
+  const thickness = parseFloat(thicknessStr);
+  const baseWeight = parseFloat(baseProductWeight);
+  const baseL = parseFloat(baseProductDefaultLength);
+  const baseW = parseFloat(baseProductDefaultWidth);
+  const baseT = parseFloat(baseProductDefaultThickness);
+
+  if ([length, width, thickness, numQuantity, ratePerKg, baseWeight, baseL, baseW, baseT].some(isNaN) ||
+    [length, width, thickness, numQuantity, baseWeight, baseL, baseW, baseT].some(v => v <= 0) ||
+    ratePerKg < 0) {
+    return 0;
+  }
+
+  const restData = {
+    weight: baseWeight,
+    baseL: baseL,
+    baseW: baseW,
+    baseT: baseT,
+    ratePerKg: ratePerKg,
+    length: length,
+    width: width,
+    thickness: thickness,
+    quantity: numQuantity
+  }
+
+  console.log("RestData::::", restData);
+
+  const baseVolume = baseL * baseW * baseT;
+  if (baseVolume === 0) return 0;
+
+  const density = baseWeight / baseVolume;
+  const customVolume = length * width * thickness;
+  const estimatedWeight = customVolume * density;
+  const totalAmount = estimatedWeight * ratePerKg * numQuantity;
+  console.log("Total Amount:::", totalAmount);
+
+  return parseFloat(totalAmount.toFixed(2));
 };
 
 interface StandardProdLayoutProps {
@@ -96,6 +96,21 @@ const ProductSelectionStep: React.FC<StandardProdLayoutProps> = ({ products, set
         const quantityNumForCalc = parseFloat(quantityStrFromForm) || 0;
         const rateFromDetail = productDetail.ratePerQuantity || 0;
         const newCode = `SBI-SP-${String(productDetail.id).padStart(3, '0')}`;
+
+        // --- FIX: Capture Size Info ---
+        let finalSize = "N/A";
+        if (productDetail.selectedVariantId && productDetail.variants) {
+          const v = productDetail.variants.find((vr: any) => vr.id === productDetail.selectedVariantId);
+          if (v) {
+            finalSize = `${v.length}L x ${v.width}W`; // Basic L x W as per request context, or add thickness if needed
+            if (v.height) finalSize += ` x ${v.height}H`;
+            if (v.thickness) finalSize += ` (Thick: ${v.thickness})`;
+          }
+        } else if (productDetail.defaultLength || productDetail.defaultWidth) {
+          finalSize = `${productDetail.defaultLength || '?'}L x ${productDetail.defaultWidth || '?'}W`;
+          if (productDetail.defaultThickness) finalSize += ` (Thick: ${productDetail.defaultThickness})`;
+        }
+
         return {
           id: productDetail.id.toString(), code: newCode, productName: productDetail.productName,
           ratePerQuantity: rateFromDetail, productCombo: data.productCombo, productCategory: data.productCategory,
@@ -103,19 +118,20 @@ const ProductSelectionStep: React.FC<StandardProdLayoutProps> = ({ products, set
           totalAmount: calculateStandardProductTotal(rateFromDetail, quantityNumForCalc),
           gst: productDetail.gst || '', minCost: parseFloat(productDetail.minCost || '0') || 0,
           maxCost: parseFloat(productDetail.maxCost || '0') || 0, addOnsProducts: [],
-          baseProductWeight: productDetail.defaultWeight || '', 
-          baseProductDefaultLength: productDetail.defaultLength || '', 
-          baseProductDefaultWidth: productDetail.defaultWidth || '', 
+          baseProductWeight: productDetail.defaultWeight || '',
+          baseProductDefaultLength: productDetail.defaultLength || '',
+          baseProductDefaultWidth: productDetail.defaultWidth || '',
           baseProductDefaultThickness: productDetail.defaultThickness || '',
+          size: finalSize, // <--- Added Size
         };
       });
     }
     setProducts([...products, ...newProductsFromForm]);
     handleCloseStandardModal();
   };
-  
+
   const handleDeleteStandardProduct = (id: string) => setProducts(products.filter(p => p.id !== id));
-  
+
   const handleStandardQuantityChange = (id: string, quantityStr: string) => {
     const quantityNum = parseFloat(quantityStr);
     if (isNaN(quantityNum) || quantityNum <= 0) return;
@@ -123,7 +139,7 @@ const ProductSelectionStep: React.FC<StandardProdLayoutProps> = ({ products, set
       p.id === id ? { ...p, quantity: quantityStr, totalAmount: calculateStandardProductTotal(p.ratePerQuantity, quantityNum) } : p
     ));
   };
-  
+
   const handleOpenAddOnsModal = (type: 'standard' | 'custom', productId: string) => {
     setAddOnTarget({ type, id: productId });
     setOpenAddOnsModal(true);
@@ -133,7 +149,7 @@ const ProductSelectionStep: React.FC<StandardProdLayoutProps> = ({ products, set
     setAddOnTarget(null);
     setOpenAddOnsModal(false);
   };
-  
+
   const handleAddAddOn = (addOnData: ProductListData) => {
     if (!addOnTarget) return;
     if (addOnTarget.type === 'standard') {
@@ -143,7 +159,7 @@ const ProductSelectionStep: React.FC<StandardProdLayoutProps> = ({ products, set
     }
     handleCloseAddOnsModal();
   };
-  
+
   const handleStandardAddOnsQuantityChange = (standardProductId: string, addOnId: string, newQuantity: number) => {
     setProducts(products.map(p => {
       if (p.id !== standardProductId) return p;
@@ -160,7 +176,7 @@ const ProductSelectionStep: React.FC<StandardProdLayoutProps> = ({ products, set
   const handleDeleteStandardAddOn = (standardProductId: string, addOnId: string) => {
     setProducts(products.map(p => p.id === standardProductId ? { ...p, addOnsProducts: (p.addOnsProducts || []).filter(a => a.id !== addOnId) } : p));
   };
-  
+
   const handleCustomAddOnsQuantityChange = (customProductId: string, addOnId: string, newQuantity: number) => {
     setCustomProducts(customProducts.map(p => {
       if (p.id !== customProductId) return p;
@@ -177,10 +193,10 @@ const ProductSelectionStep: React.FC<StandardProdLayoutProps> = ({ products, set
   const handleDeleteCustomAddOn = (customProductId: string, addOnId: string) => {
     setCustomProducts(customProducts.map(p => p.id === customProductId ? { ...p, addOnsProducts: (p.addOnsProducts || []).filter(a => a.id !== addOnId) } : p));
   };
-  
+
   const handleOpenCustomModal = () => setOpenCustomModal(true);
   const handleCloseCustomModal = () => setOpenCustomModal(false);
-  
+
   const handleAddCustomProduct = (customProd: CustomProductData) => {
     setCustomProducts([...customProducts, customProd]);
     handleCloseCustomModal();
@@ -200,28 +216,28 @@ const ProductSelectionStep: React.FC<StandardProdLayoutProps> = ({ products, set
   const handleCustomSizeChange = (id: string, newSize: { length: string; width: string; thickness: string; }) => {
     setCustomProducts(customProducts.map(p => {
       if (p.id !== id) return p;
-      const updatedProduct = { 
-        ...p, 
+      const updatedProduct = {
+        ...p,
         length: newSize.length, width: newSize.width, thickness: newSize.thickness,
-        size: `${newSize.length} x ${newSize.width} x ${newSize.thickness}`
+        size: `${newSize.length}L x ${newSize.width}W x ${newSize.thickness}T`
       };
       const newTotalAmount = calculateVolumetricTotal(updatedProduct);
       return { ...updatedProduct, totalAmount: newTotalAmount };
     }));
   };
-  
+
   const existingAddOnsForModal = addOnTarget
     ? (addOnTarget.type === 'standard'
-        ? products.find(p => p.id === addOnTarget.id)?.addOnsProducts
-        : customProducts.find(p => p.id === addOnTarget.id)?.addOnsProducts) || []
+      ? products.find(p => p.id === addOnTarget.id)?.addOnsProducts
+      : customProducts.find(p => p.id === addOnTarget.id)?.addOnsProducts) || []
     : [];
-    
+
   return (
     <Box sx={{ p: { xs: 2, sm: 3 } }}>
       <Typography variant="h5" gutterBottom style={{ color: 'black' }}>Add Standard Products <span style={{ color: '#d32f2f' }}>*</span></Typography>
       {products.length === 0 && customProducts.length === 0 && (<Alert severity="warning" sx={{ mb: 2 }}>At least one product is required to proceed.</Alert>)}
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>These are pre-defined products. Add-ons can be attached to each product.</Typography>
-      <Button onClick={handleOpenStandardModal} variant="contained" startIcon={<PlusIcon size={18}/>} sx={{ mb: 2 }}>Add Standard Product</Button>
+      <Button onClick={handleOpenStandardModal} variant="contained" startIcon={<PlusIcon size={18} />} sx={{ mb: 2 }}>Add Standard Product</Button>
       <StandardProductModalForm open={openStandardModal} handleClose={handleCloseStandardModal} onSubmit={handleSubmitStandardProduct} existingProducts={products} />
       <StandardProductsTable
         data={products}
@@ -231,7 +247,7 @@ const ProductSelectionStep: React.FC<StandardProdLayoutProps> = ({ products, set
         onDeleteAddOn={handleDeleteStandardAddOn}
         onUpdateAddOnQuantity={handleStandardAddOnsQuantityChange}
       />
-      
+
       {addOnTarget && (
         <StandardAddOnsForm
           open={openAddOnsModal}
@@ -245,8 +261,8 @@ const ProductSelectionStep: React.FC<StandardProdLayoutProps> = ({ products, set
 
       <Typography variant="h5" gutterBottom style={{ color: 'black' }}>Add Customized Products (Optional)</Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Products with user-defined sizes and specifications. Add-ons can also be attached.</Typography>
-      <Button onClick={handleOpenCustomModal} variant="contained" startIcon={<PlusIcon size={18}/>} sx={{ mb: 2 }}>Add Custom Product</Button>
-      <CustomProductModalForm open={openCustomModal} handleClose={handleCloseCustomModal} onSubmit={handleAddCustomProduct} existingCustomProducts={customProducts}/>
+      <Button onClick={handleOpenCustomModal} variant="contained" startIcon={<PlusIcon size={18} />} sx={{ mb: 2 }}>Add Custom Product</Button>
+      <CustomProductModalForm open={openCustomModal} handleClose={handleCloseCustomModal} onSubmit={handleAddCustomProduct} existingCustomProducts={customProducts} />
       <CustomProductsTable
         data={customProducts}
         onDelete={handleDeleteCustomProduct}

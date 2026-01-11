@@ -22,6 +22,7 @@ export interface StandardFormData {
   baseProductDefaultLength?: string;
   baseProductDefaultWidth?: string;
   baseProductDefaultThickness?: string;
+  size?: string;
 }
 
 export interface CustomProductData {

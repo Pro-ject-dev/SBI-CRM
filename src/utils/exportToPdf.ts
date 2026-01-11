@@ -57,13 +57,17 @@ export function exportToPdf<T>(
       halign: "center",
       valign: "middle",
       fontSize: 10,
+      lineColor: [0, 0, 0],
+      lineWidth: 0.1,
     },
     headStyles: {
-      fillColor: [37, 99, 235],
-      textColor: 255,
+      fillColor: [255, 255, 255],
+      textColor: [0, 0, 0],
       fontStyle: "bold",
+      lineWidth: 0.1,
+      lineColor: [0, 0, 0],
     },
-    theme: "striped",
+    theme: "grid",
   });
 
   doc.save(`${fileName}.pdf`);

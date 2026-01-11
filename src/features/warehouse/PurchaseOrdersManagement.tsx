@@ -4,12 +4,13 @@
 
 import { Box, Button, Container, TextField, Chip, Typography, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useEffect, useState, useMemo } from "react";
-import { Edit, Add, Visibility } from "@mui/icons-material";
+import { Edit, Add, Visibility, Download } from "@mui/icons-material";
 import { DataTable } from "../../components/UI/DataTable";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../app/store";
 import { addToast } from "../../app/slices/toastSlice";
+import { generatePurchaseOrderPdf } from "../../utils/generatePurchaseOrderPdf";
 import {
   useGetPurchaseOrdersQuery,
   useUpdatePurchaseOrderStatusMutation,
@@ -58,10 +59,10 @@ const PurchaseOrdersManagement = () => {
         const orderNumber = (order.orderNumber || '').toLowerCase();
         const vendorName = (order.vendorName || order.vendor || '').toLowerCase();
         const requestedBy = (order.requestedBy || '').toLowerCase();
-        
-        return orderNumber.includes(searchLower) || 
-               vendorName.includes(searchLower) || 
-               requestedBy.includes(searchLower);
+
+        return orderNumber.includes(searchLower) ||
+          vendorName.includes(searchLower) ||
+          requestedBy.includes(searchLower);
       });
     }
 
@@ -150,10 +151,10 @@ const PurchaseOrdersManagement = () => {
                 };
               } catch (itemErr) {
                 console.error("Error processing item:", item, itemErr);
-              return {
-                ...item,
+                return {
+                  ...item,
                   rawMaterial: "Unknown Material",
-              };
+                };
               }
             }
           );
@@ -164,7 +165,7 @@ const PurchaseOrdersManagement = () => {
             (vendorId ? vendorsMap.get(vendorId) : null) ||
             "Unknown Vendor";
           console.log(`  - Vendor ${vendorId} -> ${vendorName}`);
-          
+
           const result = {
             id: row?.id ?? row?.orderId ?? row?.order_id ?? `row-${index}`,
             orderNumber:
@@ -219,8 +220,8 @@ const PurchaseOrdersManagement = () => {
 
   useEffect(() => {
     try {
-    if (!purchaseOrderModalOpen) {
-      refetch();
+      if (!purchaseOrderModalOpen) {
+        refetch();
       }
     } catch (error) {
       console.error("Error in purchase order modal effect:", error);
@@ -229,8 +230,8 @@ const PurchaseOrdersManagement = () => {
 
   useEffect(() => {
     try {
-    if (!detailsModalOpen) {
-      refetch();
+      if (!detailsModalOpen) {
+        refetch();
       }
     } catch (error) {
       console.error("Error in details modal effect:", error);
@@ -245,9 +246,9 @@ const PurchaseOrdersManagement = () => {
         );
         return;
       }
-    dispatch(
-      addToast({ message: "Edit functionality coming soon", type: "warning" })
-    );
+      dispatch(
+        addToast({ message: "Edit functionality coming soon", type: "warning" })
+      );
     } catch (error) {
       console.error("Error in handleEditRow:", error);
       dispatch(
@@ -259,9 +260,9 @@ const PurchaseOrdersManagement = () => {
   const handleViewRow = (id: string) => {
     try {
       const purchaseOrder = filteredData?.find((order: any) => order?.id === id);
-    if (purchaseOrder) {
-      setSelectedPurchaseOrder(purchaseOrder);
-      setDetailsModalOpen(true);
+      if (purchaseOrder) {
+        setSelectedPurchaseOrder(purchaseOrder);
+        setDetailsModalOpen(true);
       } else {
         console.warn("Purchase order not found for ID:", id);
         dispatch(
@@ -278,7 +279,7 @@ const PurchaseOrdersManagement = () => {
 
   const handleAddNew = () => {
     try {
-    setPurchaseOrderModalOpen(true);
+      setPurchaseOrderModalOpen(true);
     } catch (error) {
       console.error("Error opening add new modal:", error);
       dispatch(
@@ -295,7 +296,7 @@ const PurchaseOrdersManagement = () => {
         );
         return;
       }
-      
+
       await updatePurchaseOrderStatus({ id, status });
       dispatch(
         addToast({ message: "Status Updated Successfully", type: "success" })
@@ -309,6 +310,48 @@ const PurchaseOrdersManagement = () => {
           message: "Failed to Update Status!",
           type: "error",
         })
+      );
+    }
+  };
+
+  const handleDownloadPdf = async (order: any) => {
+    try {
+      if (!order) return;
+
+      // Ensure numerical values are correctly typed for the PDF generator
+      const items = (order.items || []).map((item: any) => ({
+        ...item,
+        quantity: Number(item.quantity) || 0,
+        unitPrice: Number(item.unitPrice) || 0,
+        totalPrice: Number(item.totalPrice) || 0,
+        gst: Number(item.gst || item.gstPct || 0),
+      }));
+
+      const pdfData = {
+        ...order,
+        items,
+        totalAmount: Number(order.totalAmount) || 0,
+        cgst: Number(order.cgst) || 0,
+        sgst: Number(order.sgst) || 0,
+      };
+
+      generatePurchaseOrderPdf(pdfData, {
+        notes: {
+          remarks: order.remarks,
+          payment: order.paymentNote,
+          delivery: order.deliveryNote,
+          insurance: order.insurance,
+          warranty: order.warranty,
+        }
+      });
+
+      dispatch(
+        addToast({ message: "PDF Downloaded Successfully", type: "success" })
+      );
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      dispatch(
+        addToast({ message: "Error downloading PDF", type: "error" })
       );
     }
   };
@@ -336,7 +379,7 @@ const PurchaseOrdersManagement = () => {
   };
 
   const columns: GridColDef[] = [
-   {
+    {
       field: "requestedDate",
       headerName: "Requested Date",
       flex: 1,
@@ -355,7 +398,7 @@ const PurchaseOrdersManagement = () => {
         }
       },
     },
-   
+
     {
       field: "vendor",
       headerName: "Vendor",
@@ -435,7 +478,7 @@ const PurchaseOrdersManagement = () => {
         }
       },
     },
-   
+
     {
       field: "actions",
       headerName: "Actions",
@@ -457,6 +500,14 @@ const PurchaseOrdersManagement = () => {
                 title="View Details"
               >
                 <Visibility fontSize="small" />
+              </Button>
+              <Button
+                color="secondary"
+                sx={{ p: "4px", minWidth: "auto" }}
+                onClick={() => handleDownloadPdf(params.row)}
+                title="Download PO"
+              >
+                <Download fontSize="small" />
               </Button>
               {params?.row?.status === "pending" && (
                 <Button
@@ -535,7 +586,7 @@ const PurchaseOrdersManagement = () => {
             placeholder="Search by order number, vendor..."
             sx={{ minWidth: 200 }}
           />
-          
+
           <FormControl size="small" sx={{ minWidth: 150 }}>
             <InputLabel>Status</InputLabel>
             <Select
@@ -575,10 +626,10 @@ const PurchaseOrdersManagement = () => {
             variant="outlined"
             onClick={() => {
               try {
-              setSearchTerm("");
-              setStatusFilter("all");
-              setStartDate("");
-              setEndDate("");
+                setSearchTerm("");
+                setStatusFilter("all");
+                setStartDate("");
+                setEndDate("");
               } catch (error) {
                 console.error("Error clearing filters:", error);
               }
@@ -597,7 +648,7 @@ const PurchaseOrdersManagement = () => {
           Create Purchase Order
         </Button>
       </Box>
-      
+
       {/* Filter Summary */}
       {(searchTerm || statusFilter !== 'all' || startDate || endDate) && (
         <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
@@ -627,19 +678,19 @@ const PurchaseOrdersManagement = () => {
       <Box sx={{ width: "100%", marginTop: "8px" }}>
         <Box sx={{ height: 600, overflowX: "auto" }}>
           {filteredData && filteredData.length > 0 ? (
-                     <DataTable
-             rows={filteredData}
-             columns={columns}
-             disableColumnMenu
-             disableRowSelectionOnClick
-             loading={isLoading || isFetching}
+            <DataTable
+              rows={filteredData}
+              columns={columns}
+              disableColumnMenu
+              disableRowSelectionOnClick
+              loading={isLoading || isFetching}
               getRowId={(row: any) => row?.id ?? row?.orderId ?? row?.orderNumber ?? `${row?.vendorId || 'unknown'}-${row?.requestedDate || 'unknown'}`}
             />
           ) : (
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              alignItems: 'center', 
+            <Box sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
               height: 400,
               flexDirection: 'column',
               gap: 2

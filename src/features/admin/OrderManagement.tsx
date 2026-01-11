@@ -10,6 +10,8 @@ import type {
 import OrderStatusChip from "../operationManager/common/OrderStatusChip";
 import { textDate } from "../../utils/dateConversion";
 import OrderDetailsModal from "../../components/UI/OrderDetailsModal";
+import { exportToExcel } from "../../utils/exportToExcel";
+import { exportToPdf } from "../../utils/exportToPdf";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
@@ -240,6 +242,82 @@ const OrderManagement = () => {
                 options={statusOptions}
               />
             </Box>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => {
+                const exportData = filteredOrderData.map((order) => ({
+                  "Order ID": order.orderId,
+                  "Customer Name": order.customerName,
+                  "Date": order.date,
+                  "Total Products": order.totalProduct,
+                  "Status": statusOptions.find(opt => opt.value === order.status)?.label || order.status,
+                  "Start Date": order.deadlineStart,
+                  "End Date": order.deadlineEnd,
+                }));
+
+                const headers = {
+                  "Order ID": "Order ID",
+                  "Customer Name": "Customer Name",
+                  "Date": "Date",
+                  "Total Products": "Total Products",
+                  "Status": "Status",
+                  "Start Date": "Start Date",
+                  "End Date": "End Date",
+                };
+
+                exportToExcel(exportData, headers, "Orders_List");
+              }}
+              sx={{
+                borderColor: '#2E7D32',
+                color: '#2E7D32',
+                borderRadius: "8px",
+                '&:hover': {
+                  borderColor: '#1B5E20',
+                  backgroundColor: '#E8F5E9'
+                }
+              }}
+            >
+              Excel
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => {
+                const exportData = filteredOrderData.map((order) => ({
+                  "Order ID": order.orderId,
+                  "Customer Name": order.customerName,
+                  "Date": order.date,
+                  "Total Products": order.totalProduct,
+                  "Status": statusOptions.find(opt => opt.value === order.status)?.label || order.status,
+                  "Start Date": order.deadlineStart,
+                  "End Date": order.deadlineEnd,
+                }));
+
+                const headers = {
+                  "Order ID": "Order ID",
+                  "Customer Name": "Customer Name",
+                  "Date": "Date",
+                  "Total Products": "Total Products",
+                  "Status": "Status",
+                  "Start Date": "Start Date",
+                  "End Date": "End Date",
+                };
+
+                exportToPdf(exportData, headers, "Orders_List");
+              }}
+              sx={{
+                borderColor: '#d32f2f',
+                color: '#d32f2f',
+                borderRadius: "8px",
+                '&:hover': {
+                  borderColor: '#c62828',
+                  backgroundColor: '#FFEBEE'
+                }
+              }}
+            >
+              PDF
+            </Button>
             <Button
               onClick={handleFilterReset}
               sx={{ color: "#666666", borderRadius: "8px" }}

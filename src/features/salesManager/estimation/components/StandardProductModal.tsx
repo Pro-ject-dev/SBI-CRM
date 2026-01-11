@@ -58,7 +58,7 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
       setDuplicateAlert(null);
 
       if (comboList.length === 0) {
-        const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://sbiapi.ssengineeringworks.online";
         fetch(`${baseUrl}/api/admin/getCombos`, {
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
         })
@@ -71,7 +71,7 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
 
   useEffect(() => {
     if (selectedIds.comboId) {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://sbiapi.ssengineeringworks.online";
       fetch(`${baseUrl}/api/admin/getCategorybyCombo?comboId=${selectedIds.comboId}`, {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
       })
@@ -96,7 +96,7 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
 
   useEffect(() => {
     if (selectedIds.comboId) {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://sbiapi.ssengineeringworks.online";
       fetch(`${baseUrl}/api/admin/getProductbyCombo&Category?isStandard=1`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -316,7 +316,7 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
               </FormControl>
             </Grid>
             <Grid item xs={12} md={6}>
-              <FormControl fullWidth required>
+              <FormControl fullWidth>
                 <InputLabel id="category-label">Product Category</InputLabel>
                 <Select labelId="category-label" value={formData.productCategory} onChange={handleCategoryChange} label="Product Category" disabled={!formData.productCombo || availableCategories.length === 0}>
                   {availableCategories.map((cat) => (<MenuItem key={cat.id} value={cat.name}>{cat.name}</MenuItem>))}

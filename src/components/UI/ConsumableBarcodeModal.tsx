@@ -60,12 +60,12 @@ const ConsumableBarcodeModal = ({ open, onClose, material }: ConsumableBarcodeMo
       ctx.fillStyle = 'black';
       ctx.font = '16px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText(material.name, canvas.width / 2, 30);
+      ctx.fillText(material.materialName, canvas.width / 2, 30);
       ctx.fillText(material.barcode, canvas.width / 2, canvas.height - 20);
 
       // Download
       const link = document.createElement('a');
-      link.download = `${material.name}-barcode.png`;
+      link.download = `${material.materialName}-barcode.png`;
       link.href = canvas.toDataURL();
       link.click();
     };
@@ -97,7 +97,7 @@ const ConsumableBarcodeModal = ({ open, onClose, material }: ConsumableBarcodeMo
         <Box ref={printRef} sx={{ p: 2 }}>
           <Paper sx={{ p: 3, textAlign: 'center' }}>
             <Typography variant="h6" gutterBottom>
-              {material.name}
+              {material.materialName}
             </Typography>
 
             <Divider sx={{ my: 2 }} />

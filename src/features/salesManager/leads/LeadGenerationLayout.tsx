@@ -7,6 +7,8 @@ import LeadGenerationForm from './LeadGenerationForm';
 import LeadsTable from './LeadsTable';
 import LeadDetailsModal from './LeadDetailsModal';
 import type { LeadData } from './types';
+import { exportToExcel } from '../../../utils/exportToExcel';
+import { exportToPdf } from '../../../utils/exportToPdf';
 
 export default function LeadGenerationLayout() {
   const dispatch = useAppDispatch();
@@ -38,7 +40,7 @@ export default function LeadGenerationLayout() {
 
   const handleSuccess = () => {
     handleCloseLeadModal();
-    dispatch(fetchLeads()); 
+    dispatch(fetchLeads());
   };
 
   const handleOpenViewModal = (lead: LeadData) => {
@@ -65,9 +67,9 @@ export default function LeadGenerationLayout() {
   };
 
   const handleDeleteEstimation = (estimationId: number) => {
-      if (window.confirm('Are you sure you want to delete this estimation?')) {
-          dispatch(deleteEstimation(estimationId));
-      }
+    if (window.confirm('Are you sure you want to delete this estimation?')) {
+      dispatch(deleteEstimation(estimationId));
+    }
   };
 
   // Determine if the main page should show a loading spinner
@@ -77,14 +79,90 @@ export default function LeadGenerationLayout() {
     <Box sx={{ p: { xs: 2, sm: 3 } }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h5" gutterBottom mb={0} style={{ color: 'black' }}>Lead Management</Typography>
-        <Button onClick={handleOpenAddModal} variant="contained" startIcon={<PlusIcon size={18} />}>Add Lead</Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => {
+              const exportData = leads.map(lead => ({
+                Name: lead.name || 'N/A',
+                Email: lead.email || 'N/A',
+                Phone: lead.phoneNumber || 'N/A',
+                Module: lead.module || 'N/A',
+                Source: lead.source || 'N/A',
+                Date: lead.date ? new Date(lead.date).toLocaleDateString() : 'N/A',
+                Status: ('' + lead.isOrder) === '0' ? 'Not Converted' : 'Converted'
+              }));
+
+              const headers = {
+                Name: "Name",
+                Email: "Email",
+                Phone: "Phone",
+                Module: "Module",
+                Source: "Source",
+                Date: "Date",
+                Status: "Status"
+              };
+
+              exportToExcel(exportData, headers, "Leads_List");
+            }}
+            sx={{
+              borderColor: '#2E7D32',
+              color: '#2E7D32',
+              '&:hover': {
+                borderColor: '#1B5E20',
+                backgroundColor: '#E8F5E9'
+              }
+            }}
+          >
+            Excel
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => {
+              const exportData = leads.map(lead => ({
+                Name: lead.name || 'N/A',
+                Email: lead.email || 'N/A',
+                Phone: lead.phoneNumber || 'N/A',
+                Module: lead.module || 'N/A',
+                Source: lead.source || 'N/A',
+                Date: lead.date ? new Date(lead.date).toLocaleDateString() : 'N/A',
+                Status: ('' + lead.isOrder) === '0' ? 'Not Converted' : 'Converted'
+              }));
+
+              const headers = {
+                Name: "Name",
+                Email: "Email",
+                Phone: "Phone",
+                Module: "Module",
+                Source: "Source",
+                Date: "Date",
+                Status: "Status"
+              };
+
+              exportToPdf(exportData, headers, "Leads_List");
+            }}
+            sx={{
+              borderColor: '#d32f2f',
+              color: '#d32f2f',
+              '&:hover': {
+                borderColor: '#c62828',
+                backgroundColor: '#FFEBEE'
+              }
+            }}
+          >
+            PDF
+          </Button>
+          <Button onClick={handleOpenAddModal} variant="contained" startIcon={<PlusIcon size={18} />}>Add Lead</Button>
+        </Box>
       </Box>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>Manage and add new leads to the system.</Typography>
 
       {openLeadModal && (
         <LeadGenerationForm open={openLeadModal} handleClose={handleCloseLeadModal} onSuccess={handleSuccess} editingLeadId={editingLeadId} />
       )}
-      
+
       {viewingLead && (
         <LeadDetailsModal
           open={isViewModalOpen}
@@ -103,11 +181,11 @@ export default function LeadGenerationLayout() {
         {isPageLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress /></Box>
         ) : (
-          <LeadsTable 
-            leads={leads} 
-            onEdit={handleOpenEditModal} 
+          <LeadsTable
+            leads={leads}
+            onEdit={handleOpenEditModal}
             onDelete={handleDeleteLead}
-            onConvertToOrder={handleConvertToOrder} 
+            onConvertToOrder={handleConvertToOrder}
             onView={handleOpenViewModal}
             actionInProgressId={actionInProgressId}
           />

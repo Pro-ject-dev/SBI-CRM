@@ -37,6 +37,8 @@ import {
 import { useGetRawMaterialsQuery } from "../../app/api/rawMaterialsApi";
 import { useDispatch } from "react-redux";
 import { addToast } from "../../app/slices/toastSlice";
+import { exportToExcel } from "../../utils/exportToExcel";
+import { exportToPdf } from "../../utils/exportToPdf";
 import type { Product } from "../../types/orderManagement";
 
 interface OrderDetailsModalProps {
@@ -673,14 +675,92 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
           }}
         >
           <Typography variant="h5">Order Details - {orderId}</Typography>
-          {isAdmin && (
-            <Chip
-              label="Read-Only Mode"
-              color="warning"
-              size="small"
-              sx={{ fontWeight: "bold" }}
-            />
-          )}
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            {orderId && orderDetails && (
+              <>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => {
+                    const products = orderDetails.estimation?.products || [];
+                    const exportData = products.map((product) => ({
+                      "Product Name": product.name,
+                      "Quantity": product.quantity,
+                      "Code": product.prodCode || "N/A",
+                      "Category": product.category || "N/A",
+                      "Size": product.size || "N/A",
+                      "Addons": product.addons?.length || 0,
+                    }));
+
+                    const headers = {
+                      "Product Name": "Product Name",
+                      "Quantity": "Quantity",
+                      "Code": "Code",
+                      "Category": "Category",
+                      "Size": "Size",
+                      "Addons": "Addons",
+                    };
+
+                    exportToExcel(exportData, headers, `Order_${orderId}_Products`);
+                  }}
+                  sx={{
+                    borderColor: '#2E7D32',
+                    color: '#2E7D32',
+                    '&:hover': {
+                      borderColor: '#1B5E20',
+                      backgroundColor: '#E8F5E9'
+                    }
+                  }}
+                >
+                  Excel
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => {
+                    const products = orderDetails.estimation?.products || [];
+                    const exportData = products.map((product) => ({
+                      "Product Name": product.name,
+                      "Quantity": product.quantity,
+                      "Code": product.prodCode || "N/A",
+                      "Category": product.category || "N/A",
+                      "Size": product.size || "N/A",
+                      "Addons": product.addons?.length || 0,
+                    }));
+
+                    const headers = {
+                      "Product Name": "Product Name",
+                      "Quantity": "Quantity",
+                      "Code": "Code",
+                      "Category": "Category",
+                      "Size": "Size",
+                      "Addons": "Addons",
+                    };
+
+                    exportToPdf(exportData, headers, `Order_${orderId}_Products`);
+                  }}
+                  sx={{
+                    borderColor: '#d32f2f',
+                    color: '#d32f2f',
+                    '&:hover': {
+                      borderColor: '#c62828',
+                      backgroundColor: '#FFEBEE'
+                    }
+                  }}
+                >
+                  PDF
+                </Button>
+              </>
+            )}
+            {isAdmin && (
+              <Chip
+                label="Read-Only Mode"
+                color="warning"
+                size="small"
+                sx={{ fontWeight: "bold" }}
+              />
+            )}
+          </Box>
         </Box>
       </DialogTitle>
       <DialogContent dividers>
@@ -1213,22 +1293,22 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                               onDelete={
                                 !isAdmin && !isOrderCompleted
                                   ? () => {
-                                      updateRawMaterial(
-                                        material.id,
-                                        "selectedRawMaterial",
-                                        "",
-                                      );
-                                      updateRawMaterial(
-                                        material.id,
-                                        "rawMaterial",
-                                        "",
-                                      );
-                                      updateRawMaterial(
-                                        material.id,
-                                        "inputMode",
-                                        "manual",
-                                      );
-                                    }
+                                    updateRawMaterial(
+                                      material.id,
+                                      "selectedRawMaterial",
+                                      "",
+                                    );
+                                    updateRawMaterial(
+                                      material.id,
+                                      "rawMaterial",
+                                      "",
+                                    );
+                                    updateRawMaterial(
+                                      material.id,
+                                      "inputMode",
+                                      "manual",
+                                    );
+                                  }
                                   : undefined
                               }
                             />
@@ -1370,27 +1450,27 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                   <>
                     {(!orderDetails?.rawMaterials ||
                       orderDetails.rawMaterials.length === 0) && (
-                      <Typography
-                        variant="caption"
-                        color="error"
-                        sx={{ mt: 1, display: "block" }}
-                      >
-                        ⚠️ Complete Step 2 (Raw Materials) before sending to
-                        warehouse.
-                      </Typography>
-                    )}
+                        <Typography
+                          variant="caption"
+                          color="error"
+                          sx={{ mt: 1, display: "block" }}
+                        >
+                          ⚠️ Complete Step 2 (Raw Materials) before sending to
+                          warehouse.
+                        </Typography>
+                      )}
 
                     {(!orderDetails?.deadlineStart ||
                       !orderDetails?.deadlineEnd) && (
-                      <Typography
-                        variant="caption"
-                        color="error"
-                        sx={{ mt: 1, display: "block" }}
-                      >
-                        ⚠️ Update Step 1 (Project Deadline) before sending to
-                        warehouse.
-                      </Typography>
-                    )}
+                        <Typography
+                          variant="caption"
+                          color="error"
+                          sx={{ mt: 1, display: "block" }}
+                        >
+                          ⚠️ Update Step 1 (Project Deadline) before sending to
+                          warehouse.
+                        </Typography>
+                      )}
                   </>
                 )}
               </Paper>

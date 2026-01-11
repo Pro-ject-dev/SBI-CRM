@@ -62,7 +62,7 @@ const CustomProductModal: React.FC<CustomProductModalFormProps> = ({
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         })
           .then((res) => res.json())
-          .then((data) => { if (data.status && Array.isArray(data.data)) { setComboList(data.data); }})
+          .then((data) => { if (data.status && Array.isArray(data.data)) { setComboList(data.data); } })
           .catch((err) => { console.error("Error fetching combos:", err); setError("Failed to load combos."); })
           .finally(() => setIsLoading((prev) => ({ ...prev, combos: false })));
       }
@@ -77,7 +77,7 @@ const CustomProductModal: React.FC<CustomProductModalFormProps> = ({
       })
         .then((res) => res.json())
         .then((data) => {
-          if (data.status && Array.isArray(data.data)) { setAvailableCategories(data.data); } 
+          if (data.status && Array.isArray(data.data)) { setAvailableCategories(data.data); }
           else { setAvailableCategories([]); }
           setFormInputs((prev) => ({ ...prev, productCategory: "", productName: "", remark: "" }));
           setSelectedIds((prev) => ({ ...prev, categoryId: null, productId: null }));
@@ -96,7 +96,7 @@ const CustomProductModal: React.FC<CustomProductModalFormProps> = ({
   }, [selectedIds.comboId, open, token]);
 
   useEffect(() => {
-    if (selectedIds.comboId && selectedIds.categoryId && open) {
+    if (selectedIds.comboId && open) {
       setIsLoading((prev) => ({ ...prev, products: true }));
       fetch("https://sbiapi.ssengineeringworks.online/api/admin/getProductbyCombo&Category?isStandard=0", {
         method: "POST",
@@ -153,7 +153,7 @@ const CustomProductModal: React.FC<CustomProductModalFormProps> = ({
     setFormInputs((prev) => ({ ...prev, productName: productName }));
     if (selectedApiProduct) {
       setSelectedIds((prev) => ({ ...prev, productId: selectedApiProduct.id }));
-      
+
       // --- FIX IS HERE: The `details` object is now correctly typed as ApiProductDetails ---
       const details: ApiProductDetails = {
         id: selectedApiProduct.id,
@@ -235,9 +235,9 @@ const CustomProductModal: React.FC<CustomProductModalFormProps> = ({
     }
 
     console.log("restData:::", restData);
-    
+
     console.log("Total Amount:::", total);
-    
+
     return { finalTotalAmount: parseFloat(total.toFixed(2)), isInvalid: invalid, isWarning: warning };
   }, [selectedProductDetails, formInputs]);
 
@@ -253,7 +253,7 @@ const CustomProductModal: React.FC<CustomProductModalFormProps> = ({
     setError(null);
   };
 
-  const displayedSizeString = formInputs.length && formInputs.width && formInputs.thickness ? `${formInputs.length} x ${formInputs.width} x ${formInputs.thickness}` : "";
+  const displayedSizeString = formInputs.length && formInputs.width && formInputs.thickness ? `${formInputs.length}L x ${formInputs.width}W x ${formInputs.thickness}T` : "";
 
   const internalHandleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -273,7 +273,7 @@ const CustomProductModal: React.FC<CustomProductModalFormProps> = ({
     const defaultRate = parseFloat(selectedProductDetails.ratePerKg || "0");
     const finalRatePerKg = !isNaN(setRateNum) && formInputs.setPrice.trim() !== "" ? setRateNum : defaultRate;
     console.log("Final Rate per.kg:::", finalRatePerKg);
-    
+
     const submittedData: CustomProductData = {
       id: `${selectedProductDetails.id}-${displayedSizeString.replace(/\s/g, "")}`,
       code: `SBI-CP-${String(selectedProductDetails.id).padStart(3, "0")}`,
@@ -314,8 +314,8 @@ const CustomProductModal: React.FC<CustomProductModalFormProps> = ({
         <form onSubmit={internalHandleSubmit}>
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}><FormControl fullWidth required disabled={isLoading.combos}><InputLabel>Product Combo</InputLabel><Select value={formInputs.productCombo} onChange={handleComboChange} label="Product Combo">{comboList.map((c) => (<MenuItem key={c.id} value={c.name}>{c.name}</MenuItem>))}</Select></FormControl></Grid>
-            <Grid item xs={12} md={6}><FormControl fullWidth required disabled={!selectedIds.comboId || isLoading.categories}><InputLabel>Product Category</InputLabel><Select value={formInputs.productCategory} onChange={handleCategoryChange} label="Product Category">{availableCategories.map((c) => (<MenuItem key={c.id} value={c.name}>{c.name}</MenuItem>))}</Select></FormControl></Grid>
-            <Grid item xs={12} md={6}><FormControl fullWidth required disabled={!selectedIds.categoryId || isLoading.products}><InputLabel>Base Product Name</InputLabel><Select value={formInputs.productName} onChange={handleProductChange} label="Base Product Name">{availableProducts.map((p) => (<MenuItem key={p.id} value={p.productName}>{p.productName}</MenuItem>))}</Select></FormControl></Grid>
+            <Grid item xs={12} md={6}><FormControl fullWidth disabled={!selectedIds.comboId || isLoading.categories}><InputLabel>Product Category</InputLabel><Select value={formInputs.productCategory} onChange={handleCategoryChange} label="Product Category">{availableCategories.map((c) => (<MenuItem key={c.id} value={c.name}>{c.name}</MenuItem>))}</Select></FormControl></Grid>
+            <Grid item xs={12} md={6}><FormControl fullWidth required disabled={!selectedIds.comboId || isLoading.products}><InputLabel>Base Product Name</InputLabel><Select value={formInputs.productName} onChange={handleProductChange} label="Base Product Name">{availableProducts.map((p) => (<MenuItem key={p.id} value={p.productName}>{p.productName}</MenuItem>))}</Select></FormControl></Grid>
             <Grid item xs={12} md={6}><TextField fullWidth label="Min Cost (per Kg)" value={selectedProductDetails?.minCost || ""} InputProps={{ readOnly: true }} disabled /></Grid>
             <Grid item xs={12} md={6}><TextField fullWidth label="Max Cost (per Kg)" value={selectedProductDetails?.maxCost || ""} InputProps={{ readOnly: true }} disabled /></Grid>
             <Grid item xs={12} md={6}><Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}><TextField fullWidth label="Size (L x W x T)" value={displayedSizeString} InputProps={{ readOnly: true }} disabled={!selectedProductDetails} /><Button variant="outlined" onClick={handleSizeChartOpen} sx={{ py: "5px" }} disabled={!selectedProductDetails}>Size Chart</Button></Box></Grid>
@@ -327,10 +327,10 @@ const CustomProductModal: React.FC<CustomProductModalFormProps> = ({
           </Grid>
           <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 3 }}>
             <Button onClick={onModalClose}>Cancel</Button>
-            <Button type="submit" variant="contained" disabled={ isLoading.combos || isLoading.categories || isLoading.products || !selectedProductDetails || isInvalid }>Add Custom Product</Button>
+            <Button type="submit" variant="contained" disabled={isLoading.combos || isLoading.categories || isLoading.products || !selectedProductDetails || isInvalid}>Add Custom Product</Button>
           </Box>
         </form>
-        {selectedProductDetails && (<SizeChartPopover anchorEl={sizeChartAnchorEl} onClose={handleSizeChartClose} onSetSize={handleSetSizeFromPopover} initialLength={ formInputs.length || selectedProductDetails?.length || "" } initialWidth={ formInputs.width || selectedProductDetails?.width || "" } initialThickness={ formInputs.thickness || selectedProductDetails?.thickness || "" }/>)}
+        {selectedProductDetails && (<SizeChartPopover anchorEl={sizeChartAnchorEl} onClose={handleSizeChartClose} onSetSize={handleSetSizeFromPopover} initialLength={formInputs.length || selectedProductDetails?.length || ""} initialWidth={formInputs.width || selectedProductDetails?.width || ""} initialThickness={formInputs.thickness || selectedProductDetails?.thickness || ""} />)}
       </Box>
     </Modal>
   );

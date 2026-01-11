@@ -5,6 +5,8 @@ import type { GridColDef } from "@mui/x-data-grid";
 import { Add, Edit, Delete } from "@mui/icons-material";
 import type { Lead } from "../../types/lead";
 import { useGetAllLeadsQuery } from "../../app/api/leadsApi";
+import { exportToExcel } from "../../utils/exportToExcel";
+import { exportToPdf } from "../../utils/exportToPdf";
 
 const LeadManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -13,7 +15,7 @@ const LeadManagement = () => {
 
   useEffect(() => {
     console.log("API Response:", leadsData);
-    
+
     // Handle different possible API response structures
     if (leadsData) {
       if (Array.isArray(leadsData)) {
@@ -62,10 +64,10 @@ const LeadManagement = () => {
   };
 
   const columns: GridColDef[] = [
-    { 
-      field: "name", 
-      headerName: "Name", 
-      flex: 1, 
+    {
+      field: "name",
+      headerName: "Name",
+      flex: 1,
       minWidth: 150,
       renderCell: (params) => (
         <Typography variant="body2">
@@ -89,10 +91,10 @@ const LeadManagement = () => {
         </Box>
       ),
     },
-    { 
-      field: "module", 
-      headerName: "Module", 
-      flex: 1, 
+    {
+      field: "module",
+      headerName: "Module",
+      flex: 1,
       minWidth: 120,
       renderCell: (params) => (
         <Typography variant="body2">
@@ -100,10 +102,10 @@ const LeadManagement = () => {
         </Typography>
       )
     },
-    { 
-      field: "source", 
-      headerName: "Source", 
-      flex: 1, 
+    {
+      field: "source",
+      headerName: "Source",
+      flex: 1,
       minWidth: 120,
       renderCell: (params) => (
         <Typography variant="body2">
@@ -111,10 +113,10 @@ const LeadManagement = () => {
         </Typography>
       )
     },
-    { 
-      field: "date", 
-      headerName: "Date", 
-      flex: 0.8, 
+    {
+      field: "date",
+      headerName: "Date",
+      flex: 0.8,
       minWidth: 100,
       renderCell: (params) => (
         <Typography variant="body2">
@@ -136,7 +138,7 @@ const LeadManagement = () => {
               onClick={() => handleConvertToOrder(params.row.id)}
               color="error"
               size="small"
-              sx={{ 
+              sx={{
                 cursor: 'pointer',
                 fontSize: '0.75rem',
                 height: '24px'
@@ -147,13 +149,13 @@ const LeadManagement = () => {
               label="Converted"
               color="success"
               size="small"
-              sx={{ 
+              sx={{
                 fontSize: '0.75rem',
                 height: '24px'
               }}
             />
           )}
-          
+
         </Box>
       ),
     },
@@ -161,15 +163,15 @@ const LeadManagement = () => {
 
   const filteredLeads = Array.isArray(leads) ? leads.filter(lead => {
     if (!lead) return false;
-    
+
     const name = (lead.name || '').toLowerCase();
     const email = (lead.email || '').toLowerCase();
     const phoneNumber = (lead.phoneNumber || '').toLowerCase();
     const searchLower = searchTerm.toLowerCase();
-    
-    return name.includes(searchLower) || 
-           email.includes(searchLower) || 
-           phoneNumber.includes(searchLower);
+
+    return name.includes(searchLower) ||
+      email.includes(searchLower) ||
+      phoneNumber.includes(searchLower);
   }) : [];
 
   // Handle loading state
@@ -211,7 +213,7 @@ const LeadManagement = () => {
       >
         Lead Management
       </Typography>
-      
+
       <Box
         sx={{
           display: "flex",
@@ -227,14 +229,90 @@ const LeadManagement = () => {
           placeholder="Search leads by name, email, or phone..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{ 
+          sx={{
             flexGrow: 1,
             '& .MuiOutlinedInput-root': {
               backgroundColor: 'background.paper'
             }
           }}
         />
-      
+
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              const exportData = filteredLeads.map(lead => ({
+                Name: lead.name || 'N/A',
+                Email: lead.email || 'N/A',
+                Phone: lead.phoneNumber || 'N/A',
+                Module: lead.module || 'N/A',
+                Source: lead.source || 'N/A',
+                Date: lead.date ? new Date(lead.date).toLocaleDateString() : 'N/A',
+                Status: ('' + lead.isOrder) === '0' ? 'Not Converted' : 'Converted'
+              }));
+
+              const headers = {
+                Name: "Name",
+                Email: "Email",
+                Phone: "Phone",
+                Module: "Module",
+                Source: "Source",
+                Date: "Date",
+                Status: "Status"
+              };
+
+              exportToExcel(exportData, headers, "Leads_List");
+            }}
+            startIcon={<Box component="img" src="/icons/excel.png" sx={{ width: 20, height: 20 }} />}
+            sx={{
+              borderColor: '#2E7D32',
+              color: '#2E7D32',
+              '&:hover': {
+                borderColor: '#1B5E20',
+                backgroundColor: '#E8F5E9'
+              }
+            }}
+          >
+            Excel
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              const exportData = filteredLeads.map(lead => ({
+                Name: lead.name || 'N/A',
+                Email: lead.email || 'N/A',
+                Phone: lead.phoneNumber || 'N/A',
+                Module: lead.module || 'N/A',
+                Source: lead.source || 'N/A',
+                Date: lead.date ? new Date(lead.date).toLocaleDateString() : 'N/A',
+                Status: ('' + lead.isOrder) === '0' ? 'Not Converted' : 'Converted'
+              }));
+
+              const headers = {
+                Name: "Name",
+                Email: "Email",
+                Phone: "Phone",
+                Module: "Module",
+                Source: "Source",
+                Date: "Date",
+                Status: "Status"
+              };
+
+              exportToPdf(exportData, headers, "Leads_List");
+            }}
+            startIcon={<Box component="img" src="/icons/pdf.png" sx={{ width: 20, height: 20 }} />}
+            sx={{
+              borderColor: '#d32f2f',
+              color: '#d32f2f',
+              '&:hover': {
+                borderColor: '#c62828',
+                backgroundColor: '#FFEBEE'
+              }
+            }}
+          >
+            PDF
+          </Button>
+        </Box>
       </Box>
 
       {/* Results summary */}
@@ -247,10 +325,10 @@ const LeadManagement = () => {
 
       <Box sx={{ width: "100%", marginTop: "8px" }}>
         <Box sx={{ height: 600, overflowX: "auto" }}>
-          <DataTable 
-            rows={filteredLeads} 
-            columns={columns} 
-            disableColumnMenu 
+          <DataTable
+            rows={filteredLeads}
+            columns={columns}
+            disableColumnMenu
             loading={isLoading}
             getRowId={(row) => row.id || Math.random().toString()}
             sx={{
@@ -264,11 +342,11 @@ const LeadManagement = () => {
 
       {/* Empty state */}
       {!isLoading && filteredLeads.length === 0 && (
-        <Box sx={{ 
-          display: 'flex', 
+        <Box sx={{
+          display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center', 
-          justifyContent: 'center', 
+          alignItems: 'center',
+          justifyContent: 'center',
           height: '300px',
           textAlign: 'center'
         }}>
@@ -276,7 +354,7 @@ const LeadManagement = () => {
             {searchTerm ? 'No leads found matching your search' : 'No leads available'}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {searchTerm 
+            {searchTerm
               ? 'Try adjusting your search criteria'
               : 'Get started by adding your first lead'
             }

@@ -205,15 +205,16 @@ const StandardForm = () => {
               value={productName}
               onChange={(_, val) => { setProductName(val); handleIsProductExist(val); }}
               error={errors.productName}
+              type="text"
             />
           </Grid>
           <Grid item xs={12} sm={6}>
             <Typography variant="caption" display="block" gutterBottom sx={{ fontWeight: 500, color: "text.secondary" }}>Grade</Typography>
-            <InputBox id="grade" name="grade" value={grade} onChange={(_, val) => setGrade(val)} />
+            <InputBox id="grade" name="grade" value={grade} onChange={(_, val) => setGrade(val)} type="text" />
           </Grid>
           <Grid item xs={12}>
             <Typography variant="caption" display="block" gutterBottom sx={{ fontWeight: 500, color: "text.secondary" }}>Remark</Typography>
-            <InputBox id="remark" name="remark" value={remark} onChange={(_, val) => setRemark(val)} />
+            <InputBox id="remark" name="remark" value={remark} onChange={(_, val) => setRemark(val)} type="text" />
           </Grid>
         </Grid>
 

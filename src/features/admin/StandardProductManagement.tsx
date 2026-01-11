@@ -142,23 +142,46 @@ const StandardProductManagement = () => {
         // Flatten data: If a product has variants, create a row for each variant.
         const flattenedData: any[] = [];
         response?.data.data.forEach((prod: any) => {
+          // Normalize Keys Helper
+          const getVal = (obj: any, keys: string[]) => {
+            for (const k of keys) {
+              if (obj[k] !== undefined && obj[k] !== null && obj[k] !== "" && obj[k] !== "0" && obj[k] !== 0) return obj[k];
+            }
+            return ""; // Default to empty string if nothing found
+          };
+
           if (prod.variants && prod.variants.length > 0) {
             prod.variants.forEach((v: any) => {
               flattenedData.push({
                 ...prod,
-                ...v, // Override product defaults with variant details (length, rate, costs, etc.)
-                id: `${prod.id}_${v.id}`, // Unique ID for DataGrid
+                ...v, // Override product defaults with variant details
+                id: `${prod.id}_${v.id}`,
                 originalProductId: prod.id,
                 isVariant: true,
-                // Ensure we keep the product name
-                productName: prod.productName
+                productName: prod.productName,
+                // Grade is typically a product-level attribute not always present in variant
+                grade: getVal(v, ["grade", "Grade"]) || getVal(prod, ["grade", "Grade"]),
+                // Falling back to product data as variant data is often null/empty
+                minCost: getVal(v, ["minCost", "MinCost", "minimumCost", "MinimumCost"]) || getVal(prod, ["minCost", "MinCost", "minimumCost", "MinimumCost"]),
+                maxCost: getVal(v, ["maxCost", "MaxCost", "maximumCost", "MaximumCost"]) || getVal(prod, ["maxCost", "MaxCost", "maximumCost", "MaximumCost"]),
+                ratePerQuantity: getVal(v, ["ratePerQuantity", "RatePerQuantity", "price", "Price"]) || getVal(prod, ["ratePerQuantity", "RatePerQuantity", "price", "Price"]),
+                length: getVal(v, ["length", "Length"]) || getVal(prod, ["length", "Length"]),
+                width: getVal(v, ["width", "Width"]) || getVal(prod, ["width", "Width"]),
+                thickness: getVal(v, ["thickness", "Thickness"]) || getVal(prod, ["thickness", "Thickness"]),
               });
             });
           } else {
             flattenedData.push({
               ...prod,
               originalProductId: prod.id,
-              isVariant: false
+              isVariant: false,
+              grade: getVal(prod, ["grade", "Grade"]),
+              minCost: getVal(prod, ["minCost", "MinCost", "minimumCost", "MinimumCost"]),
+              maxCost: getVal(prod, ["maxCost", "MaxCost", "maximumCost", "MaximumCost"]),
+              ratePerQuantity: getVal(prod, ["ratePerQuantity", "RatePerQuantity", "price", "Price"]),
+              length: getVal(prod, ["length", "Length"]),
+              width: getVal(prod, ["width", "Width"]),
+              thickness: getVal(prod, ["thickness", "Thickness"]),
             });
           }
         });
@@ -174,7 +197,7 @@ const StandardProductManagement = () => {
               }
             });
             return filtered;
-          })
+          }) as StandardFileDataDto[]
         );
       } catch (error) {
         console.error("Error fetching product data");
@@ -193,7 +216,7 @@ const StandardProductManagement = () => {
         const originalIds = [...new Set(ids.map(id => {
           const row = productData.find((p: any) => p.id === id);
           return row ? row.originalProductId : Number(id); // Fallback if direct number passed
-        }))];
+        }))].filter((id): id is number => id !== undefined);
 
         const deleteData = await deleteStandard({ ids: originalIds });
         if (deleteData.error) {
@@ -289,7 +312,7 @@ const StandardProductManagement = () => {
         const originalIds = [...new Set(selectedRows.map(id => {
           const row = productData.find((p: any) => p.id === id);
           return row ? row.originalProductId : Number(id);
-        }))];
+        }))].filter((id): id is number => id !== undefined);
         const payload = { ids: originalIds, percentage: Number(value) };
         await updateProductPrice(payload).unwrap();
         setModalData((prev) => ({

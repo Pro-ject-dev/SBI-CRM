@@ -38,6 +38,7 @@ interface StandardCustomizedResponse {
   remark: string;
   minCost: string;
   maxCost: string;
+  originalProductId?: number;
   isStandard: string;
   status: string;
   createdAt: string;
