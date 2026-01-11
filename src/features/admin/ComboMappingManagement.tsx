@@ -13,7 +13,7 @@ import {
   filterSlice,
   paginationSlice,
 } from "../../app/slices/comboProductManagementSlice";
-import type { GridColDef } from "@mui/x-data-grid";
+import type { GridColDef, GridPaginationModel, GridRowSelectionModel } from "@mui/x-data-grid";
 import { Box, Button, Container } from "@mui/material";
 import { DeleteSweepOutlined as Delete } from "@mui/icons-material";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
@@ -27,7 +27,7 @@ import { AutocompleteInput } from "../../components/UI/AutoCompleteInput";
 const ComboMappingManagement = () => {
   const dispatch: AppDispatch = useDispatch();
   const comboSelector = useSelector((state: RootState) => state.combo);
-  const [selectedRows, setSelectedRows] = useState<Array<number>>([]);
+  const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() });
   const headers = {
     sno: "S. No",
     productName: "Product Name",
@@ -99,6 +99,7 @@ const ComboMappingManagement = () => {
   const [getCategoryOptions] = useLazyGetCategoryByComboQuery();
 
   const [productData, setProductData] = useState<ComboResponse[] | []>([]);
+  const [totalRows, setTotalRows] = useState(0);
 
   useEffect(() => {
     if (comboOptionData?.data) {
@@ -180,6 +181,7 @@ const ComboMappingManagement = () => {
             return filtered;
           })
         );
+        setTotalRows(response?.data.total || 0);
         setProductData(products);
       } catch (error) {
         console.error("Error fetching product data");
@@ -199,6 +201,15 @@ const ComboMappingManagement = () => {
     comboDeleted === true,
   ]);
 
+  const getSelectedIds = () => {
+    if (selectedRows.type === "include") {
+      return Array.from(selectedRows.ids);
+    }
+    return productData
+      .map((row: any) => row.id)
+      .filter((id: string | number) => !selectedRows.ids.has(id));
+  };
+
   const handleDeleteRow = async (id: number[]) => {
     try {
       if (id) {
@@ -216,7 +227,7 @@ const ComboMappingManagement = () => {
           );
           setComboDeleted(true);
         }
-        setSelectedRows([]);
+        setSelectedRows({ type: "include", ids: new Set() });
         return deleteData;
       }
     } catch (error) {
@@ -229,9 +240,8 @@ const ComboMappingManagement = () => {
     }
   };
 
-  const handlePagination = (params: any) => {
-    const { page, pageSize } = params;
-    dispatch(paginationSlice({ page, pageSize }));
+  const handlePagination = (model: GridPaginationModel) => {
+    dispatch(paginationSlice({ page: model.page, pageSize: model.pageSize }));
   };
 
   const handleFilterData = (key: string, value: string) => {
@@ -350,9 +360,10 @@ const ComboMappingManagement = () => {
         }) as ComboFileDataDto[]
       );
     } else if (value === "2") {
-      const selected = selectedRows
-        .map((value) => productData.find((obj) => obj.id === value))
-        .filter((item): item is ComboResponse => item !== undefined);
+      const currentIds = getSelectedIds();
+      const selected = currentIds
+        .map((id: string | number) => productData.find((obj: any) => obj.id === id))
+        .filter((item: any): item is ComboResponse => item !== undefined);
       setFileData(
         selected?.map((obj: Record<string, any>, index: number) => {
           const filtered: Record<string, any> = { sno: String(index + 1) };
@@ -536,7 +547,7 @@ const ComboMappingManagement = () => {
             alignItems: "center",
           }}
         >
-          {selectedRows.length > 0 && (
+          {(selectedRows.type === "exclude" || selectedRows.ids.size > 0) && (
             <Box>
               <Button
                 sx={{
@@ -551,7 +562,7 @@ const ComboMappingManagement = () => {
                     backgroundColor: "#f9ebea",
                   },
                 }}
-                onClick={() => handleDeleteRow(selectedRows)}
+                onClick={() => handleDeleteRow(getSelectedIds().map((id: string | number) => Number(id)))}
                 title="Delete"
               >
                 <Delete />
@@ -588,18 +599,21 @@ const ComboMappingManagement = () => {
             columns={columns}
             disableColumnMenu
             checkboxSelection
-            rowCount={productData.length}
+            rowCount={totalRows}
             pageSizeOptions={[10, 25, 50, 100]}
             paginationMode="server"
             onPaginationModelChange={handlePagination}
             paginationModel={comboSelector.pagination}
             loading={isLoading}
-            onRowSelectionModelChange={(params) => {
-              const rows: Array<number> = [];
-              params.ids.forEach((value) => {
-                rows.push(Number(value));
-              });
-              setSelectedRows(rows);
+            onRowSelectionModelChange={(newSelection) => {
+              setSelectedRows(newSelection);
+            }}
+            rowSelectionModel={selectedRows}
+            getRowId={(row) => row.id}
+            initialState={{
+              pagination: {
+                paginationModel: comboSelector.pagination,
+              },
             }}
           />
         </Box>

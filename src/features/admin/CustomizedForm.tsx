@@ -1,4 +1,4 @@
-import { Box, Button, Container, Grid, Paper, Typography } from "@mui/material";
+import { Box, Button, Container, Grid, Paper, Typography, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import {
@@ -7,7 +7,7 @@ import {
   useUpdateCustomizedMutation,
 } from "../../app/api/customizedProductApi";
 import { InputBox } from "../../components/UI/InputBox";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import type { AppDispatch } from "../../app/store";
 import { useDispatch } from "react-redux";
 import { addToast } from "../../app/slices/toastSlice";
@@ -27,6 +27,7 @@ interface FormField {
 const CustomizedForm = () => {
   const dispatch: AppDispatch = useDispatch();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const id = searchParams.get("id");
   const tabId = searchParams.get("tab");
   const [skipProductName, setSkipProductName] = useState<string | null>(null);
@@ -69,6 +70,7 @@ const CustomizedForm = () => {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const formFields: FormField[] = [
     { label: "Product Name", key: "productName", type: "text" },
@@ -141,6 +143,11 @@ const CustomizedForm = () => {
       setErrors(newErrors);
       return;
     }
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    setConfirmOpen(false);
 
     try {
       if (id && data) {
@@ -162,6 +169,7 @@ const CustomizedForm = () => {
         dispatch(
           addToast({ message: "Product Updated Successfully", type: "success" })
         );
+        navigate('/admin/product-management?tab=customized');
         return updateData;
       } else {
         const addData = await addCustomized({
@@ -195,6 +203,8 @@ const CustomizedForm = () => {
           maximumCost: "",
           remark: "",
         });
+
+        navigate('/admin/product-management?tab=customized');
         return addData;
       }
     } catch (error) {
@@ -349,6 +359,7 @@ const CustomizedForm = () => {
             color: "#2563eb",
             borderColor: "#2563eb",
           }}
+          onClick={() => navigate(-1)}
         >
           Cancel
         </Button>
@@ -367,6 +378,24 @@ const CustomizedForm = () => {
           {id ? "Update Product" : "Add Product"}
         </Button>
       </Box>
+
+      <Dialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+      >
+        <DialogTitle>Confirm {id ? "Update" : "Add"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to {id ? "update" : "add"} this product?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmOpen(false)}>Cancel</Button>
+          <Button onClick={handleConfirmSubmit} color="primary" autoFocus>
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

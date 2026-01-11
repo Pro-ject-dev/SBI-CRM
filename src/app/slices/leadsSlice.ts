@@ -41,20 +41,20 @@ export const fetchLeads = createAsyncThunk('leads/fetchLeads', async (_, { rejec
 });
 
 export const fetchLeadById = createAsyncThunk('leads/fetchLeadById', async (id: number, { rejectWithValue }) => {
-    try {
-      const response = await fetch(`https://sbiapi.ssengineeringworks.online/api/admin/getLeadsById?id=${id}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!response.ok) throw new Error('Failed to fetch lead details.');
-      const apiResponse = await response.json();
-      if (apiResponse.success === "true" && apiResponse.data) {
-        return apiResponse.data as LeadData;
-      }
-      throw new Error(apiResponse.message || 'Could not find the specified lead.');
-    } catch (err: any) {
-      return rejectWithValue(err.message);
+  try {
+    const response = await fetch(`https://sbiapi.ssengineeringworks.online/api/admin/getLeadsById?id=${id}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Failed to fetch lead details.');
+    const apiResponse = await response.json();
+    if (apiResponse.success === "true" && apiResponse.data) {
+      return apiResponse.data as LeadData;
     }
+    throw new Error(apiResponse.message || 'Could not find the specified lead.');
+  } catch (err: any) {
+    return rejectWithValue(err.message);
   }
+}
 );
 
 export const addLead = createAsyncThunk('leads/addLead', async (formData: LeadFormData, { rejectWithValue, dispatch }) => {
@@ -65,7 +65,7 @@ export const addLead = createAsyncThunk('leads/addLead', async (formData: LeadFo
       body: JSON.stringify(formData),
     });
     const result = await response.json();
-    
+
     // --- FIX: More robust success check ---
     // This allows the thunk to be FULFILLED, preventing the false error message in the form.
     if (!response.ok || result.success === "false" || !result.success) {
@@ -74,31 +74,31 @@ export const addLead = createAsyncThunk('leads/addLead', async (formData: LeadFo
 
     // --- FIX: Immediately refetch all leads on success to update the table ---
     dispatch(fetchLeads());
-    return result; 
+    return result;
   } catch (err: any) {
     return rejectWithValue(err.message);
   }
 });
 
 export const editLead = createAsyncThunk('leads/editLead', async (payload: { formData: LeadFormData, id: number }, { rejectWithValue }) => {
-    const body = { ...payload.formData, id: String(payload.id), isOrder: '0' };
-    try {
-        const response = await fetch(`https://sbiapi.ssengineeringworks.online/api/admin/editLeads`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify(body),
-        });
-        const result = await response.json();
+  const body = { ...payload.formData, id: String(payload.id), isOrder: '0' };
+  try {
+    const response = await fetch(`https://sbiapi.ssengineeringworks.online/api/admin/editLeads`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+    const result = await response.json();
 
-        // --- FIX: More robust success check ---
-        if (!response.ok || result.success === "false" || !result.success) {
-            throw new Error(result.message || 'Failed to update lead.');
-        }
-
-        return { ...payload.formData, id: payload.id } as Partial<LeadData>;
-    } catch (err: any) {
-        return rejectWithValue(err.message);
+    // --- FIX: More robust success check ---
+    if (!response.ok || result.success === "false" || !result.success) {
+      throw new Error(result.message || 'Failed to update lead.');
     }
+
+    return { ...payload.formData, id: payload.id } as Partial<LeadData>;
+  } catch (err: any) {
+    return rejectWithValue(err.message);
+  }
 });
 
 export const deleteLead = createAsyncThunk('leads/deleteLead', async (id: number, { rejectWithValue }) => {
@@ -113,7 +113,7 @@ export const deleteLead = createAsyncThunk('leads/deleteLead', async (id: number
     if (!response.ok || result.success === "false" || !result.success) {
       throw new Error(result.message || 'Failed to delete lead.');
     }
-    
+
     // On success, return the ID of the deleted lead
     return id;
   } catch (err: any) {
@@ -139,12 +139,12 @@ export const convertToOrder = createAsyncThunk('leads/convertToOrder', async (id
 export const fetchEstimations = createAsyncThunk('leads/fetchEstimations', async (leadId: number, { rejectWithValue }) => {
   try {
     const response = await fetch(`https://sbiapi.ssengineeringworks.online/api/admin/getEstimation?leadId=${leadId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!response.ok) throw new Error('Failed to fetch estimations.');
     const data = await response.json();
     return (Array.isArray(data) ? data : []) as Estimation[];
-  } catch(err: any) {
+  } catch (err: any) {
     return rejectWithValue(err.message);
   }
 });
@@ -152,8 +152,8 @@ export const fetchEstimations = createAsyncThunk('leads/fetchEstimations', async
 export const deleteEstimation = createAsyncThunk('leads/deleteEstimation', async (estimationId: number, { rejectWithValue }) => {
   try {
     const response = await fetch(`https://sbiapi.ssengineeringworks.online/api/admin/deleteEstimation?id=${estimationId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
     });
     const result = await response.json();
     if (!response.ok || result.success !== "true") throw new Error(result.message || 'Failed to delete estimation.');
@@ -187,17 +187,17 @@ const leadsSlice = createSlice({
         state.status = 'succeeded';
         state.selectedLead = action.payload;
       })
-       // The addLead thunk now triggers a refetch, so we just need to handle the state.
+      // The addLead thunk now triggers a refetch, so we just need to handle the state.
       .addCase(addLead.fulfilled, (state) => {
-          state.status = 'succeeded';
+        state.status = 'succeeded';
       })
       // --- FIX for TS Error 2: Correctly handle the payload ---
       .addCase(editLead.fulfilled, (state, action) => {
-          const index = state.leads.findIndex(lead => lead.id === action.payload.id);
-          if (index !== -1) {
-              state.leads[index] = { ...state.leads[index], ...action.payload };
-          }
-          state.status = 'succeeded';
+        const index = state.leads.findIndex(lead => lead.id === action.payload.id);
+        if (index !== -1) {
+          state.leads[index] = { ...state.leads[index], ...action.payload };
+        }
+        state.status = 'succeeded';
       })
       // --- FIX: Immediately update the table on delete ---
       // This reducer now runs correctly because the thunk is fulfilled.
@@ -230,11 +230,11 @@ const leadsSlice = createSlice({
         state.error = null;
         const id = action.meta.arg;
         if (typeof id === 'number') {
-            if (action.type.startsWith('leads/deleteLead') || action.type.startsWith('leads/convertToOrder')) {
-                state.actionInProgressId = id;
-            } else if (action.type.startsWith('leads/deleteEstimation')) {
-                state.estimationActionId = id;
-            }
+          if (action.type.startsWith('leads/deleteLead') || action.type.startsWith('leads/convertToOrder')) {
+            state.actionInProgressId = id;
+          } else if (action.type.startsWith('leads/deleteEstimation')) {
+            state.estimationActionId = id;
+          }
         }
       })
       .addMatcher(isRejected(fetchLeads, fetchLeadById, addLead, editLead, deleteLead, convertToOrder, fetchEstimations, deleteEstimation), (state, action) => {

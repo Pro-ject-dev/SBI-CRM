@@ -1,18 +1,20 @@
-import { Box, Button, Container } from "@mui/material";
+import { Box, Button, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import {
   useDeleteStandardMutation,
   useGetStandardByFilterQuery,
   useLazyGetStandardByFilterQuery,
   useLazyGetStandardQuery,
+  useUpdateStandardMutation,
+  useDeleteStandardVariantMutation,
   useUpdateProductCostMutation,
 } from "../../app/api/standardProductApi";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import {
   DeleteSweepOutlined as Delete,
   DriveFileRenameOutline as Edit,
 } from "@mui/icons-material";
-import { DataTable } from "../../components/UI/DataTable";
-import type { GridColDef } from "@mui/x-data-grid";
+import { DataGrid } from "@mui/x-data-grid";
+import type { GridColDef, GridRowSelectionModel, GridPaginationModel } from "@mui/x-data-grid";
 import { useNavigate } from "react-router-dom";
 import { addToast } from "../../app/slices/toastSlice";
 import { useDispatch, useSelector } from "react-redux";
@@ -35,7 +37,7 @@ const StandardProductManagement = () => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
   const standardSelector = useSelector((state: RootState) => state.standard);
-  const [selectedRows, setSelectedRows] = useState<Array<string | number>>([]);
+  const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() });
   const headers = {
     sno: "S. No",
     productName: "Product Name",
@@ -52,6 +54,10 @@ const StandardProductManagement = () => {
 
 
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ open: boolean; ids: (string | number)[] }>({
+    open: false,
+    ids: [],
+  });
   const [filterAnchor, setFilterAnchor] = useState<HTMLButtonElement | null>(
     null
   );
@@ -89,17 +95,10 @@ const StandardProductManagement = () => {
     price: { open: false, value: "", error: "", submit: false },
   });
 
-  const [
-    getStandardProducts,
-    { isLoading },
-    // isError,
-  ] = useLazyGetStandardByFilterQuery();
-
-  const [getAllStandardProducts] = useLazyGetStandardQuery();
-
+  // Fetch data using the standard hook
   const {
-    data,
-    // isError,
+    data: rawData,
+    isLoading: isGetLoading,
   } = useGetStandardByFilterQuery({
     isStandard: "1",
     page: standardSelector.pagination.page,
@@ -110,22 +109,40 @@ const StandardProductManagement = () => {
     grade: standardSelector.filterData.grade,
   });
 
-  const [
-    deleteStandard,
-    // { isLoading: deleteLoading }
-  ] = useDeleteStandardMutation();
+  const [getAllStandardProducts] = useLazyGetStandardQuery();
+  const [deleteStandard] = useDeleteStandardMutation();
+  const [deleteStandardVariant] = useDeleteStandardVariantMutation();
+  const [updateProductCost, { isLoading: productCostLoading }] = useUpdateProductCostMutation();
+  const [getProductBySearch] = useLazyGetProductBySearchQuery();
 
-  const [updateProductCost, { isLoading: productCostLoading }] =
-    useUpdateProductCostMutation();
-
-  const [
-    getProductBySearch,
-    // { isLoading: productBySearchLoading }
-  ] = useLazyGetProductBySearchQuery();
-
-  const [productData, setProductData] = useState<
-    StandardCustomizedResponse[] | []
-  >([]);
+  const productData = useMemo(() => {
+    if (!rawData?.data) return [];
+    const flattenedData: any[] = [];
+    rawData.data.forEach((prod: any) => {
+      if (!prod.id) return;
+      if (prod.variants && prod.variants.length > 0) {
+        prod.variants.forEach((v: any) => {
+          if (!v.id) return;
+          flattenedData.push({
+            ...prod,
+            ...v,
+            id: `${prod.id}_${v.id}`,
+            originalProductId: prod.id,
+            isVariant: true,
+            productName: prod.productName
+          });
+        });
+      } else {
+        flattenedData.push({
+          ...prod,
+          id: String(prod.id),
+          originalProductId: prod.id,
+          isVariant: false
+        });
+      }
+    });
+    return flattenedData;
+  }, [rawData]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -186,14 +203,17 @@ const StandardProductManagement = () => {
           }
         });
 
-        setProductData(flattenedData);
+        // For each affected product via variant selection
+        productToDeletedVariants.forEach((deletedVariantIds, pId) => {
+          const product = rawData?.data.find((p: any) => p.id === pId);
+          if (product) {
+            const currentVariants = product.variants ? product.variants.filter((v: any) => v.status === "1") : [];
+            const totalActiveVariants = currentVariants.length;
 
-        setFileData(
-          flattenedData.map((obj: Record<string, any>, index: number) => {
-            const filtered: Record<string, any> = { sno: String(index + 1) };
-            Object.keys(headers).forEach((key) => {
-              if (key !== "sno") {
-                filtered[key] = obj[key];
+            // If we're deleting all active variants or if this product is already marked for deletion anyway
+            if (deletedVariantIds.length >= totalActiveVariants && totalActiveVariants > 0) {
+              if (!productsToDelete.includes(pId)) {
+                productsToDelete.push(pId);
               }
             });
             return filtered;
@@ -231,7 +251,13 @@ const StandardProductManagement = () => {
             })
           );
         }
-        return deleteData;
+
+        if (productsToDelete.length > 0) {
+          await deleteStandard({ ids: productsToDelete });
+        }
+
+        dispatch(addToast({ message: "Deleted successfully", type: "success" }));
+        setSelectedRows({ type: "include", ids: new Set() }); // Clear selection after delete
       }
     } catch (error) {
       dispatch(
@@ -240,16 +266,13 @@ const StandardProductManagement = () => {
           type: "error",
         })
       );
+    } finally {
+      setDeleteConfirmation({ open: false, ids: [] });
     }
   };
 
-  const handleEditRow = (id: string) => {
-    navigate(`/admin/master-form?tab=standard&id=${id}`);
-  };
-
-  const handlePagination = (params: any) => {
-    const { page, pageSize } = params;
-    dispatch(paginationSlice({ page, pageSize }));
+  const handlePagination = (model: GridPaginationModel) => {
+    dispatch(paginationSlice({ page: model.page, pageSize: model.pageSize }));
   };
 
   const handleModalChange = (key: string, value: string) => {
@@ -289,7 +312,7 @@ const StandardProductManagement = () => {
           ...prev,
           [typedKey]: {
             ...prev[typedKey],
-            error: `${key} is required**`,
+            error: `${key} is required ** `,
           },
         };
       });
@@ -334,7 +357,7 @@ const StandardProductManagement = () => {
         dispatch(
           addToast({
             message: `Failed to Update ${key.charAt(0).toUpperCase() + key.slice(1)
-              }!`,
+              } !`,
             type: "error",
           })
         );
@@ -502,10 +525,11 @@ const StandardProductManagement = () => {
         }) as StandardFileDataDto[]
       );
     } else if (value === "2") {
-      const selected = selectedRows
-        .map((value) => productData.find((obj) => obj.id === value))
+      const currentIds = getSelectedIds();
+      const selected = currentIds
+        .map((id: string | number) => productData.find((obj: any) => obj.id === id))
         .filter(
-          (item): item is StandardCustomizedResponse => item !== undefined
+          (item: any): item is StandardCustomizedResponse => item !== undefined
         );
       setFileData(
         selected?.map((obj: Record<string, any>, index: number) => {
@@ -618,7 +642,7 @@ const StandardProductManagement = () => {
           <Button
             color="error"
             sx={{ minWidth: 0, padding: 0 }}
-            onClick={() => handleDeleteRow([Number(params.row.id)])}
+            onClick={() => handleDeleteRow([params.row.id])}
           >
             <Delete />
           </Button>
@@ -677,7 +701,7 @@ const StandardProductManagement = () => {
             alignItems: "center",
           }}
         >
-          {selectedRows.length > 0 && (
+          {(selectedRows.type === "exclude" || selectedRows.ids.size > 0) && (
             <Box>
               <Button
                 sx={{
@@ -716,7 +740,7 @@ const StandardProductManagement = () => {
                     backgroundColor: "#f9ebea",
                   },
                 }}
-                onClick={() => handleDeleteRow(selectedRows)}
+                onClick={() => handleDeleteRow(getSelectedIds())}
                 title="Delete"
               >
                 <Delete />
@@ -748,23 +772,38 @@ const StandardProductManagement = () => {
       </Box>
       <Box sx={{ width: "100%", mt: 2 }}>
         <Box sx={{ height: 310, width: "100%" }}>
-          <DataTable
+          <DataGrid
             rows={productData}
             columns={columns}
             disableColumnMenu
             checkboxSelection
-            rowCount={productData.length}
+            rowCount={Number(rawData?.total) || 0}
             pageSizeOptions={[10, 25, 50, 100]}
             paginationMode="server"
             onPaginationModelChange={handlePagination}
             paginationModel={standardSelector.pagination}
-            loading={isLoading}
-            onRowSelectionModelChange={(params) => {
-              const rows: Array<number> = [];
-              params.ids.forEach((value) => {
-                rows.push(Number(value));
-              });
-              setSelectedRows(rows);
+            loading={isGetLoading}
+            onRowSelectionModelChange={(newSelection) => {
+              setSelectedRows(newSelection);
+            }}
+            rowSelectionModel={selectedRows}
+            getRowId={(row) => row.id}
+            initialState={{
+              pagination: {
+                paginationModel: standardSelector.pagination,
+              },
+            }}
+            sx={{
+              borderRadius: "16px",
+              border: "1px solid #e0e0e0",
+              "& .MuiDataGrid-columnHeaders": {
+                backgroundColor: "#F8F8F8",
+                borderBottom: "1px solid #e0e0e0",
+              },
+              "& .MuiDataGrid-footerContainer": {
+                borderTop: "1px solid #e0e0e0",
+                backgroundColor: "#fafafa",
+              }
             }}
           />
         </Box>
@@ -815,6 +854,23 @@ const StandardProductManagement = () => {
         }}
         loading={productCostLoading}
       />
+      <Dialog
+        open={deleteConfirmation.open}
+        onClose={() => setDeleteConfirmation({ open: false, ids: [] })}
+      >
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete the selected product(s)? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmation({ open: false, ids: [] })}>Cancel</Button>
+          <Button onClick={confirmDelete} color="error" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

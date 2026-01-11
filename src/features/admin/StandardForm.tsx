@@ -13,6 +13,11 @@ import {
   TableRow,
   TextField,
   Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
@@ -25,12 +30,13 @@ import {
   useUpdateStandardMutation,
 } from "../../app/api/standardProductApi";
 import { InputBox } from "../../components/UI/InputBox";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../app/store";
 import { addToast } from "../../app/slices/toastSlice";
 
 interface Variant {
+  id?: string | number;
   length: string;
   width: string;
   height: string;
@@ -43,6 +49,7 @@ interface Variant {
 const StandardForm = () => {
   const dispatch: AppDispatch = useDispatch();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const id = searchParams.get("id");
   const tabId = searchParams.get("tab");
   const [skipProductName, setSkipProductName] = useState<string | null>(null);
@@ -67,7 +74,9 @@ const StandardForm = () => {
   ]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [variantErrors, setVariantErrors] = useState<Record<number, Partial<Record<keyof Variant, boolean>>>>({});
   const [productExist, setProductExist] = useState<boolean>(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (id && data?.data) {
@@ -78,6 +87,7 @@ const StandardForm = () => {
 
       if (data.data.variants && data.data.variants.length > 0) {
         setVariants(data.data.variants.map((v: any) => ({
+          id: v.id,
           length: v.length,
           width: v.width,
           height: v.height,
@@ -105,6 +115,14 @@ const StandardForm = () => {
     const updatedVariants = [...variants];
     updatedVariants[index] = { ...updatedVariants[index], [field]: value };
     setVariants(updatedVariants);
+
+    // Clear error when user starts typing
+    if (variantErrors[index]?.[field]) {
+      setVariantErrors((prev) => ({
+        ...prev,
+        [index]: { ...prev[index], [field]: false }
+      }));
+    }
   };
 
   const addVariant = () => {
@@ -153,13 +171,37 @@ const StandardForm = () => {
     if (productExist) newErrors.productName = "Product already exists!";
 
     // Validate variants
-    // Simple validation: Ensure at least one variant exists and has basic data
-    // Assuming length/width/thickness/rate are required
+    const newVariantErrors: Record<number, Partial<Record<keyof Variant, boolean>>> = {};
+    let hasVariantErrors = false;
 
-    if (Object.keys(newErrors).length > 0) {
+    variants.forEach((variant, index) => {
+      const variantError: Partial<Record<keyof Variant, boolean>> = {};
+      (Object.keys(variant) as Array<keyof Variant>).forEach((key) => {
+        if (key === 'id') return; // Skip ID validation
+        if (!variant[key] || typeof variant[key] !== 'string' || !variant[key].trim()) {
+          variantError[key] = true;
+          hasVariantErrors = true;
+        }
+      });
+      if (Object.keys(variantError).length > 0) {
+        newVariantErrors[index] = variantError;
+      }
+    });
+
+    if (Object.keys(newErrors).length > 0 || hasVariantErrors) {
       setErrors(newErrors);
+      setVariantErrors(newVariantErrors);
+      if (hasVariantErrors) {
+        dispatch(addToast({ message: "Please fill all required variant fields!", type: "error" }));
+      }
       return;
     }
+
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    setConfirmOpen(false);
 
     try {
       const payload = {
@@ -173,13 +215,11 @@ const StandardForm = () => {
       if (id) {
         await UpdateStandard({ id, ...payload });
         dispatch(addToast({ message: "Product Updated Successfully", type: "success" }));
+        navigate('/admin/product-management?tab=standard');
       } else {
         await addStandard({ date: "2025-05-14", ...payload });
         dispatch(addToast({ message: "Product Added Successfully", type: "success" }));
-        setProductName("");
-        setGrade("");
-        setRemark("");
-        setVariants([{ length: "", width: "", height: "", thickness: "", ratePerQuantity: "", minCost: "", maxCost: "" }]);
+        navigate('/admin/product-management?tab=standard');
       }
     } catch (error) {
       dispatch(addToast({ message: "Failed to save product!", type: "error" }));
@@ -202,6 +242,7 @@ const StandardForm = () => {
             <InputBox
               id="productName"
               name="productName"
+              type="text"
               value={productName}
               onChange={(_, val) => { setProductName(val); handleIsProductExist(val); }}
               error={errors.productName}
@@ -236,13 +277,13 @@ const StandardForm = () => {
             <TableBody>
               {variants.map((v, index) => (
                 <TableRow key={index}>
-                  <TableCell><TextField size="small" value={v.length} onChange={(e) => handleVariantChange(index, "length", e.target.value)} placeholder="0" /></TableCell>
-                  <TableCell><TextField size="small" value={v.width} onChange={(e) => handleVariantChange(index, "width", e.target.value)} placeholder="0" /></TableCell>
-                  <TableCell><TextField size="small" value={v.height} onChange={(e) => handleVariantChange(index, "height", e.target.value)} placeholder="0" /></TableCell>
-                  <TableCell><TextField size="small" value={v.thickness} onChange={(e) => handleVariantChange(index, "thickness", e.target.value)} placeholder="0" /></TableCell>
-                  <TableCell><TextField size="small" value={v.ratePerQuantity} onChange={(e) => handleVariantChange(index, "ratePerQuantity", e.target.value)} placeholder="0" /></TableCell>
-                  <TableCell><TextField size="small" value={v.minCost} onChange={(e) => handleVariantChange(index, "minCost", e.target.value)} placeholder="0" /></TableCell>
-                  <TableCell><TextField size="small" value={v.maxCost} onChange={(e) => handleVariantChange(index, "maxCost", e.target.value)} placeholder="0" /></TableCell>
+                  <TableCell><TextField error={!!variantErrors[index]?.length} size="small" value={v.length} onChange={(e) => handleVariantChange(index, "length", e.target.value)} placeholder="0" /></TableCell>
+                  <TableCell><TextField error={!!variantErrors[index]?.width} size="small" value={v.width} onChange={(e) => handleVariantChange(index, "width", e.target.value)} placeholder="0" /></TableCell>
+                  <TableCell><TextField error={!!variantErrors[index]?.height} size="small" value={v.height} onChange={(e) => handleVariantChange(index, "height", e.target.value)} placeholder="0" /></TableCell>
+                  <TableCell><TextField error={!!variantErrors[index]?.thickness} size="small" value={v.thickness} onChange={(e) => handleVariantChange(index, "thickness", e.target.value)} placeholder="0" /></TableCell>
+                  <TableCell><TextField error={!!variantErrors[index]?.ratePerQuantity} size="small" value={v.ratePerQuantity} onChange={(e) => handleVariantChange(index, "ratePerQuantity", e.target.value)} placeholder="0" /></TableCell>
+                  <TableCell><TextField error={!!variantErrors[index]?.minCost} size="small" value={v.minCost} onChange={(e) => handleVariantChange(index, "minCost", e.target.value)} placeholder="0" /></TableCell>
+                  <TableCell><TextField error={!!variantErrors[index]?.maxCost} size="small" value={v.maxCost} onChange={(e) => handleVariantChange(index, "maxCost", e.target.value)} placeholder="0" /></TableCell>
                   <TableCell align="center">
                     <IconButton onClick={() => removeVariant(index)} color="error" disabled={variants.length === 1}>
                       <DeleteIcon />
@@ -258,11 +299,29 @@ const StandardForm = () => {
       </Paper>
 
       <Box sx={{ display: "flex", justifyContent: "center", gap: 2, mt: 3 }}>
-        <Button variant="outlined" sx={{ borderRadius: "16px", borderColor: "#2563eb", color: "#2563eb" }}>Cancel</Button>
+        <Button variant="outlined" sx={{ borderRadius: "16px", borderColor: "#2563eb", color: "#2563eb" }} onClick={() => navigate(-1)}>Cancel</Button>
         <Button variant="contained" onClick={handleSubmit} endIcon={<ArrowForwardIosIcon />} sx={{ borderRadius: "16px", backgroundColor: "#2563eb" }}>
           {id ? "Update Product" : "Add Product"}
         </Button>
       </Box>
+
+      <Dialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+      >
+        <DialogTitle>Confirm {id ? "Update" : "Add"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to {id ? "update" : "add"} this product?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmOpen(false)}>Cancel</Button>
+          <Button onClick={handleConfirmSubmit} color="primary" autoFocus>
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

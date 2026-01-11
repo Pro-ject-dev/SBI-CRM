@@ -70,8 +70,9 @@ interface FormErrors {
 const ROLE_OPTIONS = [
   { value: "admin", label: "Administrator" },
   { value: "sales_manager", label: "Sales Manager" },
-  { value: "warehouse_manager", label: "Warehouse Manager" },
+  { value: "warehouse_manager", label: "Store Manager" },
   { value: "operation_manager", label: "Operation Manager" },
+  { value: "purchase_manager", label: "Purchase Manager" },
 ];
 
 const EmployeeManagement: React.FC = () => {
@@ -132,19 +133,19 @@ const EmployeeManagement: React.FC = () => {
   const employees = useMemo((): Employee[] => {
     if (!rawData) return [];
     if (Array.isArray(rawData)) return rawData;
-    
+
     if (typeof rawData === "object" && rawData !== null) {
       const data = rawData as any;
       if (Array.isArray(data.data)) return data.data;
       if (Array.isArray(data.employees)) return data.employees;
       if (Array.isArray(data.results)) return data.results;
       if (Array.isArray(data.items)) return data.items;
-      
+
       if (data.entities && typeof data.entities === "object") {
         return Object.values(data.entities).filter(Boolean) as Employee[];
       }
     }
-    
+
     return [];
   }, [rawData]);
 
@@ -152,9 +153,9 @@ const EmployeeManagement: React.FC = () => {
   useEffect(() => {
     if (fetchError) {
       console.error("Complete fetch error object:", fetchError);
-      
+
       let errorMessage = "Failed to load employees.";
-      
+
       if ("status" in fetchError) {
         switch (fetchError.status) {
           case "PARSING_ERROR":
@@ -169,11 +170,11 @@ const EmployeeManagement: React.FC = () => {
           case 500:
             errorMessage = "Internal server error. Please check your backend logs.";
             break;
-                  default:
-          errorMessage = `HTTP ${fetchError.status}: ${(fetchError as any)?.data?.message || "Server error"}`;
+          default:
+            errorMessage = `HTTP ${fetchError.status}: ${(fetchError as any)?.data?.message || "Server error"}`;
         }
       }
-      
+
       setSnackbar({
         open: true,
         message: errorMessage,
@@ -186,30 +187,30 @@ const EmployeeManagement: React.FC = () => {
   const validateForm = (data: EmployeeFormData): boolean => {
     const errors: FormErrors = {};
     const isEditing = !!editingEmployee;
-    
+
     // Basic field validation
     if (!data.name?.trim()) {
       errors.name = "Full name is required";
     } else if (data.name.trim().length < 2) {
       errors.name = "Name must be at least 2 characters long";
     }
-    
+
     if (!data.mail?.trim()) {
       errors.mail = "Email address is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.mail)) {
       errors.mail = "Please enter a valid email address";
     }
-    
+
     if (!data.role?.trim()) {
       errors.role = "Role is required";
     }
-    
+
     if (!data.mobile?.trim()) {
       errors.mobile = "Mobile number is required";
     } else if (!/^\+?[\d\s\-\(\)]{10,15}$/.test(data.mobile)) {
       errors.mobile = "Please enter a valid mobile number";
     }
-    
+
     // Date validation
     if (!data.date?.trim()) {
       errors.date = "Date of joining is required";
@@ -217,12 +218,12 @@ const EmployeeManagement: React.FC = () => {
       const selectedDate = new Date(data.date);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       if (selectedDate > today) {
         errors.date = "Date of joining cannot be in the future";
       }
     }
-    
+
     // Password validation
     if (!isEditing) {
       // Required for new employees
@@ -233,7 +234,7 @@ const EmployeeManagement: React.FC = () => {
       } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(data.password)) {
         errors.password = "Password must contain uppercase, lowercase, and number";
       }
-      
+
       if (!data.confirmPassword?.trim()) {
         errors.confirmPassword = "Please confirm your password";
       } else if (data.password !== data.confirmPassword) {
@@ -247,7 +248,7 @@ const EmployeeManagement: React.FC = () => {
         } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(data.password)) {
           errors.password = "Password must contain uppercase, lowercase, and number";
         }
-        
+
         if (!data.confirmPassword?.trim()) {
           errors.confirmPassword = "Please confirm your password";
         } else if (data.password !== data.confirmPassword) {
@@ -265,7 +266,7 @@ const EmployeeManagement: React.FC = () => {
           }
           return emp.mail.toLowerCase() === data.mail.toLowerCase() && emp.id !== editingEmployee?.id;
         });
-        
+
         if (emailExists) {
           errors.mail = "Email address already exists";
         }
@@ -623,7 +624,7 @@ const EmployeeManagement: React.FC = () => {
               }}
             />
           </Box>
-          
+
           <Stack direction="row" spacing={2}>
             <Button
               variant="outlined"
@@ -905,7 +906,7 @@ const EmployeeManagement: React.FC = () => {
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 2,
-                },
+                  },
                 }}
               />
             </Grid>
@@ -944,7 +945,7 @@ const EmployeeManagement: React.FC = () => {
         <DialogTitle sx={{ color: "error.main" }}>Confirm Delete</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete employee <strong>"{employeeToDelete?.name}"</strong>? 
+            Are you sure you want to delete employee <strong>"{employeeToDelete?.name}"</strong>?
             This action cannot be undone.
           </Typography>
         </DialogContent>

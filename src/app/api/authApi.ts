@@ -20,7 +20,29 @@ export const authApi = createApi({
         if (response.success && response.token && response.data) {
           // The backend already sends the correct role values
           const role = response.data.role || "admin";
-          const roleDisplayName = response.data.roleDisplayName || response.data.role || "Administrator";
+          let roleDisplayName = response.data.roleDisplayName;
+
+          if (!roleDisplayName) {
+            switch (role) {
+              case "admin":
+                roleDisplayName = "Administrator";
+                break;
+              case "sales_manager":
+                roleDisplayName = "Sales Manager";
+                break;
+              case "warehouse_manager":
+                roleDisplayName = "Store Manager";
+                break;
+              case "operation_manager":
+                roleDisplayName = "Operation Manager";
+                break;
+              case "purchase_manager":
+                roleDisplayName = "Purchase Manager";
+                break;
+              default:
+                roleDisplayName = role;
+            }
+          }
 
           const transformedResponse = {
             userName: response.data.name || "User",

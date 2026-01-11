@@ -78,6 +78,14 @@ export const standardProductApi = createApi({
       }),
       invalidatesTags: ["Standard"],
     }),
+    deleteStandardVariant: builder.mutation({
+      query: (payload) => ({
+        url: `${localStorage.getItem("api_endpoint")}/deleteStandardVariant`,
+        method: "PUT",
+        body: payload,
+      }),
+      invalidatesTags: ["Standard"],
+    }),
     isProductExist: builder.mutation({
       query: (searchTerm: string) => ({
         url: `${localStorage.getItem(
@@ -116,4 +124,5 @@ export const {
   useLazyGetStandardByFilterQuery,
   useGetStandardByFilterQuery,
   useUpdateProductCostMutation,
+  useDeleteStandardVariantMutation,
 } = standardProductApi;

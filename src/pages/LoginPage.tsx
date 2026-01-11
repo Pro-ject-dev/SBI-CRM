@@ -16,13 +16,13 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [login, { isLoading }] = useLoginMutation();
-  
+
   // Monitor auth state
   const authState = useSelector((state: RootState) => state.auth);
-  
+
   useEffect(() => {
     console.log("LoginPage - Current auth state:", authState);
-    
+
     // If user is already authenticated, redirect to appropriate dashboard
     if (authState.role) {
       console.log("User already authenticated, redirecting to dashboard");
@@ -34,6 +34,8 @@ const LoginPage = () => {
         navigate("/operation-manager/dashboard", { replace: true });
       } else if (authState.role === "warehouse_manager") {
         navigate("/warehouse/dashboard", { replace: true });
+      } else if (authState.role === "purchase_manager") {
+        navigate("/purchase-manager/dashboard", { replace: true });
       }
     }
   }, [authState, navigate]);
@@ -46,8 +48,8 @@ const LoginPage = () => {
 
     // Show loading message
     const loadingToastId = Date.now();
-    dispatch(addToast({ 
-      message: "Signing you in...", 
+    dispatch(addToast({
+      message: "Signing you in...",
       type: "warning",
       id: loadingToastId
     }));
@@ -60,7 +62,7 @@ const LoginPage = () => {
       // Remove loading toast
       dispatch(removeToast(loadingToastId));
 
-      const allowedRoles = ["admin", "sales_manager", "operation_manager", "warehouse_manager"] as const;
+      const allowedRoles = ["admin", "sales_manager", "operation_manager", "warehouse_manager", "purchase_manager"] as const;
 
       const { userName, role, roleDisplayName, idToken, refreshToken } = response;
       console.log("Extracted user data:", { userName, role, roleDisplayName, idToken: idToken ? "***" : null });
@@ -89,9 +91,9 @@ const LoginPage = () => {
 
         // Show success message and navigate
         setTimeout(() => {
-          dispatch(addToast({ 
-            message: `Welcome back, ${userName}! Login successful as ${roleDisplayName}.`, 
-            type: "success" 
+          dispatch(addToast({
+            message: `Welcome back, ${userName}! Login successful as ${roleDisplayName}.`,
+            type: "success"
           }));
 
           // Test navigation
@@ -110,25 +112,28 @@ const LoginPage = () => {
             } else if (role === "warehouse_manager") {
               console.log("Navigating to /warehouse/dashboard");
               navigate("/warehouse/dashboard", { replace: true });
+            } else if (role === "purchase_manager") {
+              console.log("Navigating to /purchase-manager/dashboard");
+              navigate("/purchase-manager/dashboard", { replace: true });
             }
           }, 100);
         }, 500);
       } else {
         console.error("Invalid role received:", role);
-        dispatch(addToast({ 
-          message: `Invalid role: ${role}. Please contact administrator.`, 
-          type: "error" 
+        dispatch(addToast({
+          message: `Invalid role: ${role}. Please contact administrator.`,
+          type: "error"
         }));
       }
     } catch (error: any) {
       console.error("Login error:", error);
-      
+
       // Remove loading toast
       dispatch(removeToast(loadingToastId));
-      
+
       // Enhanced error handling with specific messages
       let errorMessage = "Login failed. Please check your credentials.";
-      
+
       if (error?.data?.message) {
         errorMessage = error.data.message;
       } else if (error?.error?.data?.message) {
@@ -142,10 +147,10 @@ const LoginPage = () => {
       } else if (error?.status === 0) {
         errorMessage = "Network error. Please check your internet connection.";
       }
-      
-      dispatch(addToast({ 
-        message: errorMessage, 
-        type: "error" 
+
+      dispatch(addToast({
+        message: errorMessage,
+        type: "error"
       }));
     }
   };
@@ -171,7 +176,7 @@ const LoginPage = () => {
             <img
               src="https://photos.app.goo.gl/VsFhptp5eUHU9guK6"
               alt="Login Illustration"
-              
+
               className="max-h-[68rem] w-auto rounded-xl shadow-2xl border border-white/20 bg-white/10 backdrop-blur"
             />
           </div>
@@ -249,10 +254,10 @@ const LoginPage = () => {
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                        <EyeOffIcon className="h-5 w-5 text-gray-400" />
-                      ) : (
-                        <EyeIcon className="h-5 w-5 text-gray-400" />
-                      )}
+                    <EyeOffIcon className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5 text-gray-400" />
+                  )}
                 </button>
               </div>
             </div>

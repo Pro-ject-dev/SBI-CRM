@@ -12,14 +12,14 @@ import type {
   ApiAddOnProductItem,
   ApiProductDetails
 } from '../estimation.types'; // Adjust path if your structure is different
- // Adjust path if your structure is different
+// Adjust path if your structure is different
 
 import SizeChartPopover from './SizeChartPopover';
 
 interface ApiProductDetailsResponse {
-    status: boolean;
-    data: ApiProductDetails | null;
-    message?: string;
+  status: boolean;
+  data: ApiProductDetails | null;
+  message?: string;
 }
 
 interface ProductFormModalProps {
@@ -70,7 +70,7 @@ const AddOnProductModal: React.FC<ProductFormModalProps> = ({
 
   useEffect(() => {
     if (open) {
-      if(availableProducts.length === 0) fetchAvailableProducts();
+      if (availableProducts.length === 0) fetchAvailableProducts();
       setFormInputs(initialFormInputs);
       setProductDetails(null);
       setError(null);
@@ -92,7 +92,7 @@ const AddOnProductModal: React.FC<ProductFormModalProps> = ({
       if (existingAddOns.some(addon => addon.id === productId)) {
         const pInfo = availableProducts.find(p => p.id.toString() === productId);
         setError(`Product "${pInfo?.name || 'Selected Product'}" has already been added.`);
-        setFormInputs(prev => ({ ...prev, selectedProductId: ''}));
+        setFormInputs(prev => ({ ...prev, selectedProductId: '' }));
         return;
       }
       setIsLoadingDetails(true);
@@ -103,11 +103,11 @@ const AddOnProductModal: React.FC<ProductFormModalProps> = ({
         if (result.status && result.data) {
           setProductDetails(result.data);
           setFormInputs(prev => ({
-              ...prev,
-              length: result.data?.length || '',
-              width: result.data?.width || '',
-              thickness: result.data?.thickness || '',
-              remark: result.data?.remark || '',
+            ...prev,
+            length: result.data?.length || '',
+            width: result.data?.width || '',
+            thickness: result.data?.thickness || '',
+            remark: result.data?.remark || '',
           }));
         } else { throw new Error(result.message || 'Failed to retrieve product data'); }
       } catch (err) {
@@ -120,38 +120,38 @@ const AddOnProductModal: React.FC<ProductFormModalProps> = ({
 
   const { finalTotalAmount, isInvalid, isWarning } = useMemo(() => {
     if (!productDetails) return { finalTotalAmount: 0, isInvalid: false, isWarning: false };
-    
+
     const setRateNum = parseFloat(formInputs.setPrice);
     const defaultRate = parseFloat(productDetails.ratePerKg || '0');
     const effectiveRate = !isNaN(setRateNum) && formInputs.setPrice.trim() !== '' ? setRateNum : defaultRate;
-    
+
     const minCost = parseFloat(productDetails.minCost || '0');
     const maxCost = parseFloat(productDetails.maxCost || '0');
     let invalid = false, warning = false;
     if (!isNaN(setRateNum) && formInputs.setPrice.trim() !== '') {
-        invalid = minCost > 0 && setRateNum < minCost;
-        warning = maxCost > 0 && setRateNum > maxCost;
+      invalid = minCost > 0 && setRateNum < minCost;
+      warning = maxCost > 0 && setRateNum > maxCost;
     }
-    
+
     const quantity = parseFloat(formInputs.quantity);
     const length = parseFloat(formInputs.length);
     const width = parseFloat(formInputs.width);
     const thickness = parseFloat(formInputs.thickness);
-    
+
     const baseW = parseFloat(productDetails.weightOfObject || "0");
     const baseL = parseFloat(productDetails.length || formInputs.length);
     const baseWi = parseFloat(productDetails.width || formInputs.width);
     const baseT = parseFloat(productDetails.thickness || formInputs.thickness);
-    
-    if ([quantity, length, width, thickness, baseW, baseL, baseWi, baseT, effectiveRate].some(isNaN) || 
-        [quantity, length, width, thickness, baseW, baseL, baseWi, baseT].some(v => v <= 0) || 
-        effectiveRate < 0) {
+
+    if ([quantity, length, width, thickness, baseW, baseL, baseWi, baseT, effectiveRate].some(isNaN) ||
+      [quantity, length, width, thickness, baseW, baseL, baseWi, baseT].some(v => v <= 0) ||
+      effectiveRate < 0) {
       return { finalTotalAmount: 0, isInvalid: invalid, isWarning: warning };
     }
-    
+
     const baseVolume = baseL * baseWi * baseT;
     if (baseVolume === 0) return { finalTotalAmount: 0, isInvalid: invalid, isWarning: warning };
-    
+
     const density = baseW / baseVolume;
     const customVolume = length * width * thickness;
     const estimatedWeightPerItem = customVolume * density;
@@ -159,7 +159,7 @@ const AddOnProductModal: React.FC<ProductFormModalProps> = ({
 
     return { finalTotalAmount: parseFloat(total.toFixed(2)), isInvalid: invalid, isWarning: warning };
   }, [productDetails, formInputs]);
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isInvalid) { setError(`Set Rate cannot be below Min Cost (${productDetails?.minCost}).`); return; }
@@ -168,7 +168,7 @@ const AddOnProductModal: React.FC<ProductFormModalProps> = ({
     const setRateNum = parseFloat(formInputs.setPrice);
     const defaultRate = parseFloat(productDetails.ratePerKg || '0');
     const finalRatePerKg = !isNaN(setRateNum) && formInputs.setPrice.trim() !== '' ? setRateNum : defaultRate;
-    
+
     onSubmit({
       id: productDetails.id.toString(),
       code: `SBI-AP-${String(productDetails.id).padStart(3, '0')}`,
@@ -194,11 +194,11 @@ const AddOnProductModal: React.FC<ProductFormModalProps> = ({
       unitCost: finalTotalAmount / (parseFloat(formInputs.quantity) || 1),
       discountAmount: 0,
       weight: productDetails.weightOfObject,
-      customBadgeText: '', 
+      customBadgeText: '',
     });
     handleClose();
   };
-  
+
   const handleSizeChartOpen = (event: React.MouseEvent<HTMLElement>) => { setSizeChartAnchorEl(event.currentTarget); };
   const handleSizeChartClose = () => { setSizeChartAnchorEl(null); };
   const handleSetSizeFromPopover = (sizeString: string) => {
@@ -224,10 +224,10 @@ const AddOnProductModal: React.FC<ProductFormModalProps> = ({
             <Grid item xs={12} md={6}><TextField fullWidth label="Grade" value={productDetails?.grade || ''} InputProps={{ readOnly: true }} disabled /></Grid>
             <Grid item xs={12} md={6}><TextField fullWidth label="Min Cost (per Kg)" value={productDetails?.minCost || ''} InputProps={{ readOnly: true }} disabled /></Grid>
             <Grid item xs={12} md={6}><TextField fullWidth label="Max Cost (per Kg)" value={productDetails?.maxCost || ''} InputProps={{ readOnly: true }} disabled /></Grid>
-            <Grid item xs={12} md={6}><Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}><TextField fullWidth label="Size (L x W x T)" value={productDetails ? `${formInputs.length} x ${formInputs.width} x ${formInputs.thickness}` : ''} InputProps={{ readOnly: true }} disabled={!productDetails}/><Button variant="outlined" onClick={handleSizeChartOpen} sx={{ py: "5px" }} disabled={!productDetails || isLoadingDetails}>Size Chart</Button></Box></Grid>
-            <Grid item xs={12} md={6}><TextField fullWidth label="Quantity" name="quantity" type="number" value={formInputs.quantity} onChange={handleInputChange} required inputProps={{ min: "1", step: "1" }} disabled={!productDetails}/></Grid>
+            <Grid item xs={12} md={6}><Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}><TextField fullWidth label="Size (L x W x T)" value={productDetails ? `${formInputs.length} x ${formInputs.width} x ${formInputs.thickness}` : ''} InputProps={{ readOnly: true }} disabled={!productDetails} /><Button variant="outlined" onClick={handleSizeChartOpen} sx={{ py: "5px" }} disabled={!productDetails || isLoadingDetails}>Size Chart</Button></Box></Grid>
+            <Grid item xs={12} md={6}><TextField fullWidth label="Quantity" name="quantity" type="number" value={formInputs.quantity} onChange={handleInputChange} required inputProps={{ min: "1", step: "1" }} disabled={!productDetails} /></Grid>
             <Grid item xs={12} md={6}><TextField fullWidth label="Set Rate (per Kg, optional)" name="setPrice" type="number" value={formInputs.setPrice} onChange={handleInputChange} disabled={!productDetails} error={isInvalid} helperText={(isInvalid && `Rate must be >= ${productDetails?.minCost}`) || (isWarning && `Rate is above Max Cost (${productDetails?.maxCost})`) || `Replaces default rate of ${productDetails?.ratePerKg || 'N/A'}`} FormHelperTextProps={{ sx: { color: isWarning && !isInvalid ? 'orange' : undefined } }} /></Grid>
-            <Grid item xs={12} md={6}><TextField fullWidth label="Final Total Amount" value={finalTotalAmount.toFixed(2)} InputProps={{readOnly: true}} disabled/></Grid>
+            <Grid item xs={12} md={6}><TextField fullWidth label="Final Total Amount" value={finalTotalAmount.toFixed(2)} InputProps={{ readOnly: true }} disabled /></Grid>
             <Grid item xs={12} md={6}><TextField fullWidth label="Remark (Optional)" name="remark" value={formInputs.remark} onChange={handleInputChange} multiline disabled={!productDetails || isLoadingDetails} /></Grid>
           </Grid>
           <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 3 }}>
@@ -237,7 +237,7 @@ const AddOnProductModal: React.FC<ProductFormModalProps> = ({
             </Button>
           </Box>
         </form>
-        {productDetails && (<SizeChartPopover anchorEl={sizeChartAnchorEl} onClose={handleSizeChartClose} onSetSize={handleSetSizeFromPopover} initialLength={formInputs.length || productDetails.length || ""} initialWidth={formInputs.width || productDetails.width || ""} initialThickness={formInputs.thickness || productDetails.thickness || ""}/>)}
+        {productDetails && (<SizeChartPopover anchorEl={sizeChartAnchorEl} onClose={handleSizeChartClose} onSetSize={handleSetSizeFromPopover} initialLength={formInputs.length || productDetails.length || ""} initialWidth={formInputs.width || productDetails.width || ""} initialThickness={formInputs.thickness || productDetails.thickness || ""} />)}
       </Box>
     </Modal>
   );
