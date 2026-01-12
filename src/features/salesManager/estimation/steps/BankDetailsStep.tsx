@@ -62,7 +62,7 @@ export default function BankDetailsStep({ onBankInfoChange, savedData }: BankFor
   const token = localStorage.getItem("authToken");
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/admin/getBanks', {
+    fetch('https://sbiapi.ssengineeringworks.online/api/admin/getBanks', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ export default function BankDetailsStep({ onBankInfoChange, savedData }: BankFor
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`http://localhost:8000/api/admin/getBankbyId?id=${bankId}`, {
+      const response = await fetch(`https://sbiapi.ssengineeringworks.online/api/admin/getBankbyId?id=${bankId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',

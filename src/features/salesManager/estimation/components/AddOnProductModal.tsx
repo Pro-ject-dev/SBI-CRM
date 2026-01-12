@@ -56,7 +56,7 @@ const AddOnProductModal: React.FC<ProductFormModalProps> = ({
     setIsLoadingProducts(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:8000/api/admin/getAddons', { headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } });
+      const response = await fetch('https://sbiapi.ssengineeringworks.online/api/admin/getAddons', { headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } });
       if (!response.ok) throw new Error(`Failed to fetch products: ${response.statusText}`);
       const data: ApiAddOnProductItem[] = await response.json();
       setAvailableProducts(data);
@@ -97,7 +97,7 @@ const AddOnProductModal: React.FC<ProductFormModalProps> = ({
       }
       setIsLoadingDetails(true);
       try {
-        const response = await fetch(`http://localhost:8000/api/admin/getAddonsbyId?id=${productId}`, { headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } });
+        const response = await fetch(`https://sbiapi.ssengineeringworks.online/api/admin/getAddonsbyId?id=${productId}`, { headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } });
         if (!response.ok) throw new Error(`Failed to fetch product details: ${response.statusText}`);
         const result: ApiProductDetailsResponse = await response.json();
         if (result.status && result.data) {

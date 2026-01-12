@@ -58,7 +58,7 @@ const CustomProductModal: React.FC<CustomProductModalFormProps> = ({
       setSizeChartAnchorEl(null);
       if (comboList.length === 0) {
         setIsLoading((prev) => ({ ...prev, combos: true }));
-        fetch("http://localhost:8000/api/admin/getCombos", {
+        fetch("https://sbiapi.ssengineeringworks.online/api/admin/getCombos", {
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         })
           .then((res) => res.json())
@@ -72,7 +72,7 @@ const CustomProductModal: React.FC<CustomProductModalFormProps> = ({
   useEffect(() => {
     if (selectedIds.comboId && open) {
       setIsLoading((prev) => ({ ...prev, categories: true }));
-      fetch(`http://localhost:8000/api/admin/getCategorybyCombo?comboId=${selectedIds.comboId}`, {
+      fetch(`https://sbiapi.ssengineeringworks.online/api/admin/getCategorybyCombo?comboId=${selectedIds.comboId}`, {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       })
         .then((res) => res.json())
@@ -98,7 +98,7 @@ const CustomProductModal: React.FC<CustomProductModalFormProps> = ({
   useEffect(() => {
     if (selectedIds.comboId && open) {
       setIsLoading((prev) => ({ ...prev, products: true }));
-      fetch("http://localhost:8000/api/admin/getProductbyCombo&Category?isStandard=0", {
+      fetch("https://sbiapi.ssengineeringworks.online/api/admin/getProductbyCombo&Category?isStandard=0", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ comboId: selectedIds.comboId, catId: selectedIds.categoryId }),

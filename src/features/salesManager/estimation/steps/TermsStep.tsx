@@ -67,7 +67,7 @@ export default function TermsStep({
   const token = localStorage.getItem("authToken");
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/admin/getTerms", {
+    fetch("https://sbiapi.ssengineeringworks.online/api/admin/getTerms", {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -101,7 +101,7 @@ export default function TermsStep({
     setError("");
     try {
       const response = await fetch(
-        `http://localhost:8000/api/admin/getTermsbyId?id=${termId}`,
+        `https://sbiapi.ssengineeringworks.online/api/admin/getTermsbyId?id=${termId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

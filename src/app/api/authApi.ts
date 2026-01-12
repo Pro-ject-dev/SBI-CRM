@@ -4,7 +4,7 @@ import type { LoginResponse } from "../../types/auth";
 export const authApi = createApi({
   reducerPath: "authApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
+    baseUrl: import.meta.env.VITE_API_BASE_URL || "https://sbiapi.ssengineeringworks.online",
   }),
   endpoints: (builder) => ({
     login: builder.mutation<LoginResponse, { mail: string; password: string }>({

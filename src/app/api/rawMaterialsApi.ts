@@ -4,7 +4,7 @@ import type { RawMaterial, RawMaterialLog } from "../../types/warehouse";
 export const rawMaterialsApi = createApi({
   reducerPath: "rawMaterialsApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
+    baseUrl: import.meta.env.VITE_API_BASE_URL || "https://sbiapi.ssengineeringworks.online",
     prepareHeaders: (headers) => {
       const accessToken = localStorage.getItem("authToken");
       if (accessToken) {
