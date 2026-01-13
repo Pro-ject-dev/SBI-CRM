@@ -103,6 +103,22 @@ export const combosMappingApi = createApi({
       }),
       invalidatesTags: ["combos"],
     }),
+    deleteCombo: builder.mutation({
+      query: (payload) => ({
+        url: `${localStorage.getItem("api_endpoint")}/deleteCombo`,
+        method: "PUT",
+        body: payload,
+      }),
+      invalidatesTags: ["combos"],
+    }),
+    deleteCategory: builder.mutation({
+      query: (payload) => ({
+        url: `${localStorage.getItem("api_endpoint")}/deleteCategory`,
+        method: "PUT",
+        body: payload,
+      }),
+      invalidatesTags: ["combos"],
+    }),
   }),
 });
 
@@ -118,4 +134,6 @@ export const {
   useAddCategoryMutation,
   useUpdateProductCostMutation,
   useDeleteComboByIdMutation,
+  useDeleteComboMutation,
+  useDeleteCategoryMutation,
 } = combosMappingApi;

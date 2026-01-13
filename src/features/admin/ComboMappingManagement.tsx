@@ -8,6 +8,9 @@ import {
   useGetComboMapByFilterMutation,
   useGetComboQuery,
   useLazyGetCategoryByComboQuery,
+  useDeleteComboMutation,
+  useDeleteCategoryMutation,
+  useGetCategoryQuery,
 } from "../../app/api/combosMappingApi";
 import {
   filterSlice,
@@ -20,6 +23,7 @@ import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import ArrowDownwardOutlinedIcon from "@mui/icons-material/ArrowDownwardOutlined";
 import FilterModal from "./common/FilterModal";
 import ExportModal from "./common/ExportModal";
+import ManageComboCategoryModal from "./common/ManageComboCategoryModal";
 import { DataTable } from "../../components/UI/DataTable";
 import { SearchTextField } from "../../components/UI/SearchTextField";
 import { AutocompleteInput } from "../../components/UI/AutoCompleteInput";
@@ -88,13 +92,19 @@ const ComboMappingManagement = () => {
   ] = useGetComboMapByFilterMutation();
 
   const [
-    deleteCombo,
+    deleteComboById,
     // { isLoading: deleteLoading }
   ] = useDeleteComboByIdMutation();
 
+  const [deleteCombo] = useDeleteComboMutation();
+  const [deleteCategory] = useDeleteCategoryMutation();
+
   const [comboDeleted, setComboDeleted] = useState<Boolean>(false);
 
+  const [manageModalOpen, setManageModalOpen] = useState(false);
+
   const { data: comboOptionData } = useGetComboQuery("");
+  const { data: categoryOptionData } = useGetCategoryQuery("");
 
   const [getCategoryOptions] = useLazyGetCategoryByComboQuery();
 
@@ -103,12 +113,12 @@ const ComboMappingManagement = () => {
 
   useEffect(() => {
     if (comboOptionData?.data) {
-      const filteredData: Option[] = comboOptions.concat(
+      const filteredData: Option[] = [{ label: "All", value: "" }].concat(
         comboOptionData.data
           .filter((obj: any) => obj.id && obj.name)
           .map((obj: any) => ({
             label: String(obj.name),
-            value: obj.id,
+            value: String(obj.id),
           }))
       );
       setComboOptions(filteredData);
@@ -125,7 +135,7 @@ const ComboMappingManagement = () => {
             .filter((obj: any) => obj.id && obj.name)
             .map((obj: any) => ({
               label: String(obj.name),
-              value: obj.id,
+              value: String(obj.id),
             }))
         );
         setCategoryOptions(filteredData);
@@ -138,7 +148,7 @@ const ComboMappingManagement = () => {
     } else {
       setCategoryOptions([{ label: "All", value: "" }]);
     }
-  }, [comboDropDownValue.combo]);
+  }, [comboDropDownValue.combo, comboDeleted]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -213,7 +223,7 @@ const ComboMappingManagement = () => {
   const handleDeleteRow = async (id: number[]) => {
     try {
       if (id) {
-        const deleteData = await deleteCombo({ id });
+        const deleteData = await deleteComboById({ id });
         if (deleteData.error) {
           dispatch(
             addToast({ message: "Failed to Deleting Product!", type: "error" })
@@ -237,6 +247,36 @@ const ComboMappingManagement = () => {
           type: "error",
         })
       );
+    }
+  };
+
+  const handleDeleteCombo = async (id: string) => {
+    try {
+      const response = await deleteCombo({ id });
+      if (response.error) {
+        dispatch(addToast({ message: "Failed to Delete Combo!", type: "error" }));
+      } else {
+        dispatch(addToast({ message: "Combo Deleted Successfully", type: "success" }));
+        setComboDropDownValue(prev => ({ ...prev, combo: "" }));
+        setComboDeleted(true); // Trigger refresh
+      }
+    } catch (error) {
+      dispatch(addToast({ message: "Failed to Delete Combo!", type: "error" }));
+    }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    try {
+      const response = await deleteCategory({ id });
+      if (response.error) {
+        dispatch(addToast({ message: "Failed to Delete Category!", type: "error" }));
+      } else {
+        dispatch(addToast({ message: "Category Deleted Successfully", type: "success" }));
+        setComboDropDownValue(prev => ({ ...prev, category: "" }));
+        setComboDeleted(true); // Trigger refresh
+      }
+    } catch (error) {
+      dispatch(addToast({ message: "Failed to Delete Category!", type: "error" }));
     }
   };
 
@@ -518,15 +558,17 @@ const ComboMappingManagement = () => {
             alignItems: "center",
           }}
         >
-          <AutocompleteInput
-            id="combo"
-            name="combo"
-            label="Combo"
-            value={comboDropDownValue.combo}
-            options={comboOptions}
-            onChange={handleCombosChange}
-            placeholder="Select the combo"
-          />
+          <Box sx={{ marginLeft: 1 }}>
+            <AutocompleteInput
+              id="combo"
+              name="combo"
+              label="Combo"
+              value={comboDropDownValue.combo}
+              options={comboOptions}
+              onChange={handleCombosChange}
+              placeholder="Select the combo"
+            />
+          </Box>
           {comboDropDownValue.combo && (
             <Box sx={{ marginLeft: 1 }}>
               <AutocompleteInput
@@ -569,6 +611,25 @@ const ComboMappingManagement = () => {
               </Button>
             </Box>
           )}
+          <Button
+            onClick={() => setManageModalOpen(true)}
+            sx={{
+              textTransform: "none",
+              minWidth: 0,
+              py: 0.5,
+              px: 1.5,
+              mr: 1,
+              borderRadius: "8px",
+              color: "primary",
+              border: `1px solid #1976D2`,
+              backgroundColor: "white",
+              "&:hover": {
+                backgroundColor: "#eaf2f8",
+              },
+            }}
+          >
+            ⚙️
+          </Button>
           <Button
             onClick={handleExportModalOpen}
             sx={{
@@ -634,6 +695,17 @@ const ComboMappingManagement = () => {
         selectedValue={exportDropDownValue}
         onDropDownChange={handleExportDropDownChange}
         disable={exportDisable}
+      />
+      <ManageComboCategoryModal
+        open={manageModalOpen}
+        onClose={() => setManageModalOpen(false)}
+        comboOptions={comboOptions.filter(opt => opt.value !== "")}
+        categoryOptions={(categoryOptionData?.data || [])
+          .filter((obj: any) => obj.id && obj.name)
+          .map((obj: any) => ({ label: String(obj.name), value: String(obj.id) }))
+        }
+        onDeleteCombo={handleDeleteCombo}
+        onDeleteCategory={handleDeleteCategory}
       />
     </Container>
   );

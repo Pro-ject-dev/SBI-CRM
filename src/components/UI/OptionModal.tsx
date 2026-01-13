@@ -49,6 +49,9 @@ interface OptionModalProps {
   handleModalSubmit: () => void;
   loading: boolean;
   showPriceHelper?: boolean;
+  subtitle?: string;
+  footerText?: string;
+  placeholder?: string;
 }
 
 const OptionModal: React.FC<OptionModalProps> = ({
@@ -60,6 +63,9 @@ const OptionModal: React.FC<OptionModalProps> = ({
   handleModalSubmit,
   loading = false,
   showPriceHelper = false,
+  subtitle = "Configure product pricing adjustments",
+  footerText = "Enter positive values to increase, negative to decrease",
+  placeholder = "Enter the percentage",
 }) => {
   return (
     <Modal open={modalData.open} onClose={handleClose} keepMounted>
@@ -82,7 +88,7 @@ const OptionModal: React.FC<OptionModalProps> = ({
                 {detail}
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
-                Configure product pricing adjustments
+                {subtitle}
               </Typography>
             </Box>
           </Box>
@@ -156,7 +162,7 @@ const OptionModal: React.FC<OptionModalProps> = ({
                   }
                   error={!!modalData.error}
                   helperText={modalData.error}
-                  placeholder="Enter the percentage"
+                  placeholder={placeholder}
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       borderRadius: 2,
@@ -181,7 +187,7 @@ const OptionModal: React.FC<OptionModalProps> = ({
           }}
         >
           <Typography variant="body2" color="text.secondary">
-            Enter positive values to increase, negative to decrease
+            {footerText}
           </Typography>
           <Stack direction="row" spacing={2}>
             <Button

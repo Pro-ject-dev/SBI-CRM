@@ -147,7 +147,7 @@ const RawMaterialsManagement = () => {
       align: "center",
       renderCell: (params) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {params.row.currentStock <= params.row.minimumStock && (
+          {Number(params.row.currentStock) <= Number(params.row.minimumStock) && (
             <Warning color="warning" fontSize="small" />
           )}
           {params.row.currentStock} {params.row.unit}
@@ -201,7 +201,7 @@ const RawMaterialsManagement = () => {
       align: "center",
       renderCell: (params: any) => (
         <Box sx={{ display: "block" }}>
-           <Button
+          <Button
             color="inherit"
             sx={{ p: "0px", m: "0px" }}
             onClick={() => handleOpenBarcodeModal(params.row)}
@@ -221,7 +221,7 @@ const RawMaterialsManagement = () => {
       align: "center",
       renderCell: (params: any) => (
         <Box sx={{ display: "block" }}>
-              <Button
+          <Button
             color="primary"
             sx={{ p: "0px", m: "0px" }}
             onClick={() => handleEditRow(params.row.id)}
@@ -235,8 +235,8 @@ const RawMaterialsManagement = () => {
           >
             <Delete />
           </Button>
-      
-         
+
+
         </Box>
       ),
     },
@@ -304,11 +304,11 @@ const RawMaterialsManagement = () => {
       </Box>
 
       <Box sx={{ width: "100%", marginTop: "8px" }}>
-        <Box sx={{ height: 600, overflowX: "auto" }}>          
-          <DataTable 
-            rows={materialData || []} 
-            columns={columns} 
-            disableColumnMenu 
+        <Box sx={{ height: 600, overflowX: "auto" }}>
+          <DataTable
+            rows={materialData || []}
+            columns={columns}
+            disableColumnMenu
             getRowId={(row) => row.id}
           />
         </Box>

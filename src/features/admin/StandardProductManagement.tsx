@@ -160,6 +160,22 @@ const StandardProductManagement = () => {
   // useEffect for manual data fetching removed as it was redundant and contained syntax errors.
   // Data is handled by useGetStandardByFilterQuery and useMemo above.
 
+  useEffect(() => {
+    if (productData.length > 0) {
+      setFileData(
+        productData.map((obj: Record<string, any>, index: number) => {
+          const filtered: Record<string, any> = { sno: String(index + 1) };
+          Object.keys(headers).forEach((key) => {
+            if (key !== "sno") {
+              filtered[key] = obj[key];
+            }
+          });
+          return filtered;
+        }) as StandardFileDataDto[]
+      );
+    }
+  }, [productData]);
+
   const handleDeleteRow = (ids: Array<string | number>) => {
     setDeleteConfirmation({ open: true, ids });
   };
@@ -441,7 +457,6 @@ const StandardProductManagement = () => {
   const handleExportModalClose = () => {
     setExportAnchor(null);
     setExportDropDownValue("1");
-    setFileData(fileData);
   };
 
   const handleExportDropDownChange = async (

@@ -93,15 +93,7 @@ const ConsumableMaterialsManagement = () => {
                 </Box>
             ),
         },
-        {
-            field: "barcode",
-            headerName: "Barcode",
-            flex: 1,
-            minWidth: 150,
-            headerAlign: "center",
-            align: "center",
-            renderCell: (params) => params.row.barcode || "N/A",
-        },
+
     ];
 
     return (

@@ -199,9 +199,8 @@ const CombosMappingForm = () => {
         }));
         dispatch(
           addToast({
-            message: `New ${
-              key.charAt(0).toUpperCase() + key.slice(1)
-            } Added Successfully`,
+            message: `New ${key.charAt(0).toUpperCase() + key.slice(1)
+              } Added Successfully`,
             type: "success",
           })
         );
@@ -212,9 +211,8 @@ const CombosMappingForm = () => {
         }));
         dispatch(
           addToast({
-            message: `Failed to Adding New ${
-              key.charAt(0).toUpperCase() + key.slice(1)
-            }!`,
+            message: `Failed to Adding New ${key.charAt(0).toUpperCase() + key.slice(1)
+              }!`,
             type: "error",
           })
         );
@@ -506,8 +504,8 @@ const CombosMappingForm = () => {
                     field.key === "combo"
                       ? comboOptions
                       : field.key === "category"
-                      ? categoryOptions
-                      : productOptions
+                        ? categoryOptions
+                        : productOptions
                   }
                   onChange={handleCombosChange}
                   error={errors[field.key]}
@@ -582,6 +580,9 @@ const CombosMappingForm = () => {
           }
         }}
         loading={addComboLoading}
+        subtitle="Enter the details for the new combo"
+        placeholder="Enter combo name"
+        footerText=""
       />
       <OptionModal
         modalData={modalData.category}
@@ -611,6 +612,9 @@ const CombosMappingForm = () => {
           }
         }}
         loading={addCategoryLoading}
+        subtitle="Enter the details for the new category"
+        placeholder="Enter category name"
+        footerText=""
       />
     </Container>
   );

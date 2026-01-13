@@ -13,6 +13,7 @@ import EmployeeManagement from "../features/admin/EmployeeManagement";
 import HelpSupport from "../pages/HelpSupport";
 import RawMaterialsLog from "../features/admin/RawMaterialsLog";
 import ConsumableMaterialsLog from "../features/admin/ConsumableMaterialsLog";
+import VendorsManagement from "../features/warehouse/VendorsManagement";
 
 const AdminRoutes = () => (
   <>
@@ -39,6 +40,7 @@ const AdminRoutes = () => (
       <Route path="raw-materials-log" element={<RawMaterialsLog />} />
       <Route path="consumable-materials" element={<ConsumableMaterialsManagement />} />
       <Route path="consumable-materials-log" element={<ConsumableMaterialsLog />} />
+      <Route path="vendors" element={<VendorsManagement />} />
       <Route path="help" element={<HelpSupport />} />
     </Route>
   </>

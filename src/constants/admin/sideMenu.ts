@@ -11,6 +11,7 @@ import {
   Badge as BadgeIcon, // Employees
   DynamicForm as DynamicFormIcon, // Master Forms
   HelpOutline as HelpOutlineIcon,
+  Store as VendorIcon,
 } from "@mui/icons-material";
 
 import type { SideBar } from "../../types/sideBar";
@@ -81,6 +82,12 @@ export const adminMenuItems: SideBar[] = [
     label: "Master Forms",
     icon: DynamicFormIcon,
     path: "/admin/master-form",
+  },
+  {
+    id: "vendors",
+    label: "Vendors",
+    icon: VendorIcon,
+    path: "/admin/vendors",
   },
   {
     id: "help",

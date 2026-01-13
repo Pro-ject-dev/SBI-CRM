@@ -136,7 +136,7 @@ const RawMaterialsManagement = () => {
       align: "center",
       renderCell: (params) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {params.row.currentStock <= params.row.minimumStock && (
+          {Number(params.row.currentStock) <= Number(params.row.minimumStock) && (
             <Warning color="warning" fontSize="small" />
           )}
           {params.row.currentStock} {params.row.unit}
@@ -237,14 +237,14 @@ const RawMaterialsManagement = () => {
       </Box>
 
       <Box sx={{ width: "100%", marginTop: "8px" }}>
-        <Box sx={{ height: 600, overflowX: "auto" }}>          
+        <Box sx={{ height: 600, overflowX: "auto" }}>
           <DataTable rows={materialData} columns={columns} disableColumnMenu />
         </Box>
       </Box>
 
-     
 
-     
+
+
     </Container>
   );
 };
