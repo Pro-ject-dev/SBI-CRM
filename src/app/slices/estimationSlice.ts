@@ -144,8 +144,8 @@ export const saveEstimationAsync = createAsyncThunk(
     const { editingEstimationId, leadId } = state.estimation;
     const isEditing = !!editingEstimationId;
     const endpoint = isEditing
-      ? `https://sbiapi.ssengineeringworks.online/api/admin/editEstimation?leadId=${leadId}`
-      : "https://sbiapi.ssengineeringworks.online/api/admin/addEstimation";
+      ? `https://sbiapi.sustainnovatechlabs.com/api/admin/editEstimation?leadId=${leadId}`
+      : "https://sbiapi.sustainnovatechlabs.com/api/admin/addEstimation";
     try {
       const response = await fetch(endpoint, {
         method: isEditing ? "PUT" : "POST",

@@ -58,7 +58,7 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
       setDuplicateAlert(null);
 
       if (comboList.length === 0) {
-        const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://sbiapi.ssengineeringworks.online";
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://sbiapi.sustainnovatechlabs.com";
         fetch(`${baseUrl}/api/admin/getCombos`, {
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
         })
@@ -71,7 +71,7 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
 
   useEffect(() => {
     if (selectedIds.comboId) {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://sbiapi.ssengineeringworks.online";
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://sbiapi.sustainnovatechlabs.com";
       fetch(`${baseUrl}/api/admin/getCategorybyCombo?comboId=${selectedIds.comboId}`, {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
       })
@@ -96,7 +96,7 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
 
   useEffect(() => {
     if (selectedIds.comboId) {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://sbiapi.ssengineeringworks.online";
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || "https://sbiapi.sustainnovatechlabs.com";
       fetch(`${baseUrl}/api/admin/getProductbyCombo&Category?isStandard=1`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
