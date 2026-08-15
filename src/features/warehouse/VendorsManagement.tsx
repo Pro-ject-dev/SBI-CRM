@@ -11,7 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
-import { Delete, Edit, Add } from "@mui/icons-material";
+import { Delete, Edit, Add, Category as CategoryIcon } from "@mui/icons-material";
 import { DataTable } from "../../components/UI/DataTable";
 import type { GridColDef } from "@mui/x-data-grid";
 import { useDispatch } from "react-redux";
@@ -23,11 +23,13 @@ import {
 } from "../../app/api/vendorsApi";
 import type { Vendor } from "../../types/warehouse";
 import VendorModal from "../../components/UI/VendorModal";
+import VendorCategoryModal from "../../components/UI/VendorCategoryModal";
 
 const VendorsManagement = () => {
   const dispatch: AppDispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [editingVendor, setEditingVendor] = useState<Vendor | null>(null);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [vendorToDelete, setVendorToDelete] = useState<string | null>(null);
@@ -110,6 +112,15 @@ const VendorsManagement = () => {
       minWidth: 150,
       headerAlign: "center",
       align: "center",
+    },
+    {
+      field: "category",
+      headerName: "Category",
+      flex: 1,
+      minWidth: 140,
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => params.row.category || "N/A",
     },
     {
       field: "contactPerson",
@@ -224,14 +235,24 @@ const VendorsManagement = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           sx={{ flexGrow: 1, maxWidth: { md: 400 } }}
         />
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={handleAddNew}
-          sx={{ py: 1.2, px: 3 }}
-        >
-          Add Vendor
-        </Button>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+          <Button
+            variant="outlined"
+            startIcon={<CategoryIcon />}
+            onClick={() => setCategoryModalOpen(true)}
+            sx={{ py: 1.2, px: 2.5 }}
+          >
+            Manage Categories
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={handleAddNew}
+            sx={{ py: 1.2, px: 3 }}
+          >
+            Add Vendor
+          </Button>
+        </Box>
       </Box>
 
       <Box sx={{ width: "100%", marginTop: "8px" }}>
@@ -240,11 +261,16 @@ const VendorsManagement = () => {
         </Box>
       </Box>
 
-      {/* Modal */}
+      {/* Modals */}
       <VendorModal
         open={modalOpen}
         onClose={handleCloseModal}
         vendor={editingVendor}
+      />
+
+      <VendorCategoryModal
+        open={categoryModalOpen}
+        onClose={() => setCategoryModalOpen(false)}
       />
 
       <Dialog

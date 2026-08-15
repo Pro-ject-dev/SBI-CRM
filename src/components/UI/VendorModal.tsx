@@ -8,22 +8,24 @@ import {
   IconButton,
   Paper,
   Stack,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
   FormControl,
-  FormLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
+  Tooltip,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import { Close, Add, Edit } from "@mui/icons-material";
+import { Close, Add, Edit, Category as CategoryIcon } from "@mui/icons-material";
 import {
   useAddVendorMutation,
   useUpdateVendorMutation,
+  useGetVendorCategoriesQuery,
 } from "../../app/api/vendorsApi";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../app/store";
 import { addToast } from "../../app/slices/toastSlice";
-import type { Vendor } from "../../types/warehouse";
+import type { Vendor, VendorCategory } from "../../types/warehouse";
+import VendorCategoryModal from "./VendorCategoryModal";
 
 const modalStyle = {
   position: "absolute" as const,
@@ -53,7 +55,11 @@ const VendorModal: React.FC<VendorModalProps> = ({
   const dispatch: AppDispatch = useDispatch();
   const [addVendor] = useAddVendorMutation();
   const [updateVendor] = useUpdateVendorMutation();
+  const { data: categoriesData } = useGetVendorCategoriesQuery();
 
+  const categories: VendorCategory[] = categoriesData?.data || [];
+
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     contactPerson: "",
@@ -148,7 +154,8 @@ const VendorModal: React.FC<VendorModalProps> = ({
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
+    <>
+      <Modal open={open} onClose={onClose}>
       <Box sx={modalStyle}>
         {/* Enhanced Header */}
         <Box
@@ -229,23 +236,54 @@ const VendorModal: React.FC<VendorModalProps> = ({
                   </Grid>
 
                   <Grid item xs={12} md={6}>
-                    <Typography variant="subtitle2" display="block" gutterBottom sx={{ fontWeight: "600" }}>
-                      Vendor Category *
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      size="medium"
-                      value={formData.category}
-                      onChange={(e) => handleChange("category", e.target.value)}
-                      error={!!errors.category}
-                      helperText={errors.category}
-                      placeholder="Enter vendor category"
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: "600" }}>
+                        Vendor Category *
+                      </Typography>
+                      <Button
+                        size="small"
+                        startIcon={<Add sx={{ fontSize: 16 }} />}
+                        onClick={() => setCategoryModalOpen(true)}
+                        sx={{
+                          textTransform: "none",
+                          fontSize: "0.75rem",
+                          fontWeight: "600",
+                          py: 0,
+                          px: 1,
+                        }}
+                      >
+                        Add / Manage
+                      </Button>
+                    </Box>
+                    <FormControl fullWidth error={!!errors.category}>
+                      <Select
+                        displayEmpty
+                        size="medium"
+                        value={formData.category}
+                        onChange={(e) => handleChange("category", e.target.value as string)}
+                        sx={{
                           borderRadius: 2,
-                        }
-                      }}
-                    />
+                        }}
+                      >
+                        <MenuItem value="" disabled>
+                          Select Vendor Category
+                        </MenuItem>
+                        {categories.map((cat) => (
+                          <MenuItem key={cat.id} value={cat.name}>
+                            {cat.name}
+                          </MenuItem>
+                        ))}
+                        {formData.category &&
+                          !categories.some((cat) => cat.name === formData.category) && (
+                            <MenuItem value={formData.category}>
+                              {formData.category}
+                            </MenuItem>
+                          )}
+                      </Select>
+                      {errors.category && (
+                        <FormHelperText error>{errors.category}</FormHelperText>
+                      )}
+                    </FormControl>
                   </Grid>
 
                   <Grid item xs={12} md={6}>
@@ -443,7 +481,15 @@ const VendorModal: React.FC<VendorModalProps> = ({
           </Stack>
         </Box>
       </Box>
-    </Modal>
+      </Modal>
+      <VendorCategoryModal
+        open={categoryModalOpen}
+        onClose={() => setCategoryModalOpen(false)}
+        onCategoryAdded={(newCategory) => {
+          handleChange("category", newCategory);
+        }}
+      />
+    </>
   );
 };
 

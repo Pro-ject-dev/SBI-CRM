@@ -12,7 +12,7 @@ export const vendorsApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ["Vendors"],
+  tagTypes: ["Vendors", "VendorCategories"],
   endpoints: (builder) => ({
     getVendors: builder.query<any, { search?: string }>({
       query: ({ search } = {}) => {
@@ -55,6 +55,25 @@ export const vendorsApi = createApi({
       }),
       invalidatesTags: ["Vendors"],
     }),
+    getVendorCategories: builder.query<any, void>({
+      query: () => `${localStorage.getItem("api_endpoint")}/getAllVendorCategories`,
+      providesTags: ["VendorCategories"],
+    }),
+    addVendorCategory: builder.mutation({
+      query: (payload: { name: string }) => ({
+        url: `${localStorage.getItem("api_endpoint")}/addVendorCategory`,
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: ["VendorCategories"],
+    }),
+    deleteVendorCategory: builder.mutation({
+      query: ({ id }: { id: string | number }) => ({
+        url: `${localStorage.getItem("api_endpoint")}/deleteVendorCategory?id=${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["VendorCategories"],
+    }),
   }),
 });
 
@@ -64,4 +83,7 @@ export const {
   useAddVendorMutation,
   useUpdateVendorMutation,
   useDeleteVendorMutation,
+  useGetVendorCategoriesQuery,
+  useAddVendorCategoryMutation,
+  useDeleteVendorCategoryMutation,
 } = vendorsApi;

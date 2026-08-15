@@ -29,6 +29,14 @@ export interface RawMaterialFormData {
   vendorId: string;
 }
 
+export interface VendorCategory {
+  id: number;
+  name: string;
+  status: "1" | "0";
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Vendor {
   id: number;
   name: string;
