@@ -139,6 +139,21 @@ const CustomizedForm = () => {
       }
     }
 
+    // Additional validation for minCost, maxCost and rate
+    const rate = parseFloat(customizedForm.ratePerKg);
+    const min = parseFloat(customizedForm.minimumCost);
+    const max = parseFloat(customizedForm.maximumCost);
+
+    if (!isNaN(rate) && !isNaN(min) && rate < min) {
+      newErrors.minimumCost = "Rate must be >= Min Cost";
+    }
+    if (!isNaN(rate) && !isNaN(max) && rate > max) {
+      newErrors.maximumCost = "Rate must be <= Max Cost";
+    }
+    if (!isNaN(min) && !isNaN(max) && min > max) {
+      newErrors.minimumCost = "Min Cost must be <= Max Cost";
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;

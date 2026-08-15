@@ -97,6 +97,7 @@ export interface MultiProductFormData {
 export interface ProductItemWithPrice extends ProductItem {
   setPrice?: number | string;
   selectedVariantId?: number;
+  uniqueKey?: string;
 }
 
 

@@ -1,4 +1,4 @@
-import { Box, Button, Container } from "@mui/material";
+import { Box, Button, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import { useEffect, useRef, useState, useMemo } from "react";
 import {
   DeleteSweepOutlined as Delete,
@@ -36,6 +36,10 @@ const AddonsProductManagement = () => {
   const navigate = useNavigate();
   const addonsSelector = useSelector((state: RootState) => state.addons);
   const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() });
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ open: boolean; ids: (string | number)[] }>({
+    open: false,
+    ids: [],
+  });
   const headers = {
     sno: "S. No",
     name: "Product Name",
@@ -137,10 +141,15 @@ const AddonsProductManagement = () => {
     }
   }, [productData]);
 
-  const handleDeleteRow = async (ids: number[]) => {
+  const handleDeleteRow = (ids: Array<string | number>) => {
+    setDeleteConfirmation({ open: true, ids });
+  };
+
+  const confirmDelete = async () => {
+    const ids = deleteConfirmation.ids;
     try {
-      if (ids) {
-        const deleteData = await deleteAddons({ ids });
+      if (ids && ids.length > 0) {
+        const deleteData = await deleteAddons({ ids: ids.map(id => Number(id)) });
         if (deleteData.error) {
           dispatch(
             addToast({ message: "Failed to Deleting Product!", type: "error" })
@@ -154,7 +163,6 @@ const AddonsProductManagement = () => {
           );
         }
         setSelectedRows({ type: "include", ids: new Set() });
-        return deleteData;
       }
     } catch (error) {
       dispatch(
@@ -163,6 +171,8 @@ const AddonsProductManagement = () => {
           type: "error",
         })
       );
+    } finally {
+      setDeleteConfirmation({ open: false, ids: [] });
     }
   };
 
@@ -676,7 +686,7 @@ const AddonsProductManagement = () => {
         </Box>
       </Box>
       <Box sx={{ width: "100%", mt: 2 }}>
-        <Box sx={{ height: 310, width: "100%" }}>
+        <Box sx={{ height: 600, width: "100%" }}>
           <DataTable
             rows={productData}
             columns={columns}
@@ -746,6 +756,23 @@ const AddonsProductManagement = () => {
         }}
         loading={productCostLoading}
       />
+      <Dialog
+        open={deleteConfirmation.open}
+        onClose={() => setDeleteConfirmation({ open: false, ids: [] })}
+      >
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete the selected product(s)? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmation({ open: false, ids: [] })}>Cancel</Button>
+          <Button onClick={confirmDelete} color="error" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

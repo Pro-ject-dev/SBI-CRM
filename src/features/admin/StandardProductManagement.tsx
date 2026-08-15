@@ -724,7 +724,7 @@ const StandardProductManagement = () => {
         </Box>
       </Box>
       <Box sx={{ width: "100%", mt: 2 }}>
-        <Box sx={{ height: 310, width: "100%" }}>
+        <Box sx={{ height: 600, width: "100%" }}>
           <DataGrid
             rows={productData}
             columns={columns}

@@ -183,6 +183,27 @@ const StandardForm = () => {
           hasVariantErrors = true;
         }
       });
+
+      // Additional validation for minCost, maxCost and rate
+      const rate = parseFloat(variant.ratePerQuantity);
+      const min = parseFloat(variant.minCost);
+      const max = parseFloat(variant.maxCost);
+
+      if (!isNaN(rate) && !isNaN(min) && rate < min) {
+        variantError.minCost = true;
+        hasVariantErrors = true;
+        dispatch(addToast({ message: `Row ${index + 1}: Rate must be greater than or equal to Min Cost!`, type: "error" }));
+      }
+      if (!isNaN(rate) && !isNaN(max) && rate > max) {
+        variantError.maxCost = true;
+        hasVariantErrors = true;
+        dispatch(addToast({ message: `Row ${index + 1}: Rate must be less than or equal to Max Cost!`, type: "error" }));
+      }
+      if (!isNaN(min) && !isNaN(max) && min > max) {
+        variantError.minCost = true;
+        hasVariantErrors = true;
+        dispatch(addToast({ message: `Row ${index + 1}: Min Cost must be less than or equal to Max Cost!`, type: "error" }));
+      }
       if (Object.keys(variantError).length > 0) {
         newVariantErrors[index] = variantError;
       }

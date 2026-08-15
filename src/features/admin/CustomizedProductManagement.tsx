@@ -694,7 +694,7 @@ const CustomizedProductManagement = () => {
         </Box>
       </Box>
       <Box sx={{ width: "100%", mt: 2 }}>
-        <Box sx={{ height: 310, width: "100%" }}>
+        <Box sx={{ height: 600, width: "100%" }}>
           <DataTable
             rows={productData}
             columns={columns}

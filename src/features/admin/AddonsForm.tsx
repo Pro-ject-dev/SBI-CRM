@@ -1,4 +1,4 @@
-import { Box, Button, Container, Grid, Paper, Typography } from "@mui/material";
+import { Box, Button, Container, Grid, Paper, Typography, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import {
@@ -7,7 +7,7 @@ import {
   useUpdateAddonsMutation,
 } from "../../app/api/addonsProductApi";
 import { InputBox } from "../../components/UI/InputBox";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../app/store";
 import { addToast } from "../../app/slices/toastSlice";
@@ -26,6 +26,7 @@ interface FormField {
 const AddonsForm = () => {
   const dispatch: AppDispatch = useDispatch();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const id = searchParams.get("id");
   const tabId = searchParams.get("tab");
   const [skipProductName, setSkipProductName] = useState<string | null>(null);
@@ -68,6 +69,7 @@ const AddonsForm = () => {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const formFields: FormField[] = [
     { label: "Product Name", key: "productName", type: "text" },
@@ -133,11 +135,31 @@ const AddonsForm = () => {
       }
     }
 
+    // Additional validation for minCost, maxCost and rate
+    const rate = parseFloat(addonsForm.ratePerKg);
+    const min = parseFloat(addonsForm.minimumCost);
+    const max = parseFloat(addonsForm.maximumCost);
+
+    if (!isNaN(rate) && !isNaN(min) && rate < min) {
+      newErrors.minimumCost = "Rate must be >= Min Cost";
+    }
+    if (!isNaN(rate) && !isNaN(max) && rate > max) {
+      newErrors.maximumCost = "Rate must be <= Max Cost";
+    }
+    if (!isNaN(min) && !isNaN(max) && min > max) {
+      newErrors.minimumCost = "Min Cost must be <= Max Cost";
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    setConfirmOpen(false);
     try {
       if (id && data) {
         const updateData = await updateAddons({
@@ -157,6 +179,7 @@ const AddonsForm = () => {
         dispatch(
           addToast({ message: "Product Updated Successfully", type: "success" })
         );
+        navigate('/admin/product-management?tab=addons');
         return updateData;
       } else {
         const addData = await addAddons({
@@ -189,6 +212,7 @@ const AddonsForm = () => {
           maximumCost: "",
           remark: "",
         });
+        navigate('/admin/product-management?tab=addons');
         return addData;
       }
     } catch (error) {
@@ -343,6 +367,7 @@ const AddonsForm = () => {
             color: "#2563eb",
             borderColor: "#2563eb",
           }}
+          onClick={() => navigate(-1)}
         >
           Cancel
         </Button>
@@ -361,6 +386,24 @@ const AddonsForm = () => {
           {id ? "Update Product" : "Add Product"}
         </Button>
       </Box>
+
+      <Dialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+      >
+        <DialogTitle>Confirm {id ? "Update" : "Add"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to {id ? "update" : "add"} this product?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmOpen(false)}>Cancel</Button>
+          <Button onClick={handleConfirmSubmit} color="primary" autoFocus>
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

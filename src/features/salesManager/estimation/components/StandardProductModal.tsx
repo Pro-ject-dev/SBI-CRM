@@ -5,6 +5,7 @@ import {
   type SelectChangeEvent,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { PlusIcon } from 'lucide-react';
 
 // --- THIS IS THE CORRECTED IMPORT BLOCK ---
 import type {
@@ -152,18 +153,17 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
     // For now, let's pick the first variant if available to populate defaults.
 
     const newProductDetails = selectedProductNames.map(name => {
-      const existing = selectedProductDetails.find(p => p.productName === name);
-      if (existing) return existing;
+      const existingRows = selectedProductDetails.filter(p => p.productName === name);
+      if (existingRows.length > 0) return existingRows; // Keep all existing rows for this product
 
       const productData = availableProducts.find(p => p.productName === name);
-      if (!productData) return null;
+      if (!productData) return [];
 
       let initialVariantId = undefined;
       let initialRate = productData.ratePerQuantity || 0;
       let initialMin = productData.minCost || '0';
       let initialMax = productData.maxCost || '0';
 
-      // Auto-select first variant if exists
       if (productData.variants && productData.variants.length > 0) {
         const v = productData.variants[0];
         initialVariantId = v.id;
@@ -172,27 +172,57 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
         initialMax = v.maxCost;
       }
 
-      return {
+      return [{
         ...productData,
+        uniqueKey: `${productData.id}-${Date.now()}`,
         ratePerQuantity: initialRate,
         minCost: initialMin,
         maxCost: initialMax,
         setPrice: '',
         selectedVariantId: initialVariantId
-      };
-    }).filter((p): p is ProductItemWithPrice => p !== null);
+      }];
+    }).flat();
 
     setSelectedProductDetails(newProductDetails);
     setFormData(prev => ({ ...prev, productName: selectedProductNames }));
-    setSelectedIds(prev => ({ ...prev, productIds: newProductDetails.map(p => p.id) }));
+    setSelectedIds(prev => ({ ...prev, productIds: Array.from(new Set(newProductDetails.map(p => p.id))) }));
   };
 
-  const handleVariantChange = (productId: number, variantId: number) => {
+  const handleAddAnotherVariant = (productId: number) => {
+    const productData = availableProducts.find(p => p.id === productId);
+    if (!productData) return;
+
+    let initialVariantId = undefined;
+    let initialRate = productData.ratePerQuantity || 0;
+    let initialMin = productData.minCost || '0';
+    let initialMax = productData.maxCost || '0';
+
+    if (productData.variants && productData.variants.length > 0) {
+      const v = productData.variants[0];
+      initialVariantId = v.id;
+      initialRate = parseFloat(v.ratePerQuantity) || 0;
+      initialMin = v.minCost;
+      initialMax = v.maxCost;
+    }
+
+    const newRow: ProductItemWithPrice = {
+      ...productData,
+      uniqueKey: `${productData.id}-${Date.now()}`,
+      ratePerQuantity: initialRate,
+      minCost: initialMin,
+      maxCost: initialMax,
+      setPrice: '',
+      selectedVariantId: initialVariantId
+    };
+
+    setSelectedProductDetails(prev => [...prev, newRow]);
+  };
+
+  const handleVariantChange = (uniqueKey: string, variantId: number) => {
     setSelectedProductDetails(prevDetails =>
       prevDetails.map(p => {
-        if (p.id !== productId) return p;
+        if (p.uniqueKey !== uniqueKey) return p;
 
-        // Find the variant
         const variant = p.variants?.find((v: any) => v.id === variantId);
         if (!variant) return p;
 
@@ -202,16 +232,31 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
           ratePerQuantity: parseFloat(variant.ratePerQuantity) || 0,
           minCost: variant.minCost,
           maxCost: variant.maxCost,
-          setPrice: '' // Reset set price on variant change
+          setPrice: ''
         };
       })
     );
   };
 
-  const handlePriceChange = (productId: number, value: string) => {
+  const handlePriceChange = (uniqueKey: string, value: string) => {
     setSelectedProductDetails(prevDetails =>
-      prevDetails.map(p => p.id === productId ? { ...p, setPrice: value } : p)
+      prevDetails.map(p => p.uniqueKey === uniqueKey ? { ...p, setPrice: value } : p)
     );
+  };
+
+  const handleRemoveVariant = (uniqueKey: string) => {
+    const itemToRemove = selectedProductDetails.find(p => p.uniqueKey === uniqueKey);
+    if (!itemToRemove) return;
+
+    const updatedDetails = selectedProductDetails.filter(p => p.uniqueKey !== uniqueKey);
+    setSelectedProductDetails(updatedDetails);
+
+    // If no more rows for this product, remove from productName list
+    const remainingCount = updatedDetails.filter(p => p.id === itemToRemove.id).length;
+    if (remainingCount === 0) {
+      setFormData(prev => ({ ...prev, productName: prev.productName.filter(name => name !== itemToRemove.productName) }));
+      setSelectedIds(prev => ({ ...prev, productIds: prev.productIds.filter(id => id !== itemToRemove.id) }));
+    }
   };
 
   const handleDeleteProduct = (productNameToDelete: string) => {
@@ -243,28 +288,38 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
   const internalHandleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setDuplicateAlert(null);
-    const existingProductIds = new Set(existingProducts.map(p => p.id));
     const productsToAdd: ProductItemWithPrice[] = [];
-    const duplicateProductNames: string[] = [];
+    const duplicateVariantsInfo: string[] = [];
+    
     selectedProductDetails.forEach(item => {
-      // NOTE: We might strictly check duplication by ID.
-      // With variants, it's technically possible to add Same Product -> Variant A and Same Product -> Variant B.
-      // But the current system relies on top-level `productIds`. 
-      // For now, we enforce uniqueness by Product ID to avoid complexity.
-      if (existingProductIds.has(item.id.toString())) {
-        duplicateProductNames.push(item.productName);
+      // For each selection, check if EXACT variant already exists in the estimation list
+      const isDuplicate = existingProducts.some(ep => 
+        ep.id.startsWith(`${item.id}-`) && 
+        ep.size === (item.selectedVariantId && item.variants ? 
+          (() => {
+            const v = item.variants.find((vr: any) => vr.id === item.selectedVariantId);
+            if (!v) return "N/A";
+            let sz = `${v.length}L x ${v.width}W`;
+            if (v.height) sz += ` x ${v.height}H`;
+            if (v.thickness) sz += ` (Thick: ${v.thickness})`;
+            return sz;
+          })() : "N/A")
+      );
+
+      if (isDuplicate) {
+        duplicateVariantsInfo.push(`${item.productName}`);
       } else {
         productsToAdd.push(item);
       }
     });
 
-    if (duplicateProductNames.length > 0) {
-      let message = `Product(s) "${duplicateProductNames.join(', ')}" already exist(s) and will not be added again.`;
+    if (duplicateVariantsInfo.length > 0) {
+      let message = `Some selected product/variant combinations already exist and will be skipped.`;
       setDuplicateAlert(message);
     }
     if (productsToAdd.length === 0) {
-      if (duplicateProductNames.length === selectedProductDetails.length) { /* All were duplicates */ }
-      else { setDuplicateAlert("Please select at least one new product to add."); }
+      if (duplicateVariantsInfo.length === selectedProductDetails.length) { }
+      else { setDuplicateAlert("Please select at least one new product or variant to add."); }
       return;
     }
 
@@ -346,7 +401,7 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
             <Box mt={3}>
               <Divider sx={{ mb: 2 }} />
               <Typography variant="subtitle1" gutterBottom>Product Configuration & Pricing</Typography>
-              {selectedProductDetails.map(p => {
+              {selectedProductDetails.map((p, index) => {
                 const minCost = parseFloat(p.minCost || '0');
                 const maxCost = parseFloat(p.maxCost || '0');
                 const setPrice = parseFloat(String(p.setPrice));
@@ -354,8 +409,33 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
                 const isWarning = !isNaN(setPrice) && setPrice > maxCost;
                 const hasVariants = p.variants && p.variants.length > 0;
 
+                // Show product name if it's the first occurrence or if it's a duplicate entry
+                const isFirstOfProduct = selectedProductDetails.findIndex(item => item.id === p.id) === index;
+
                 return (
-                  <Box key={p.id} mb={3} p={2} border={1} borderColor="grey.300" borderRadius={1}>
+                  <Box key={p.uniqueKey} mb={3} p={2} border={1} borderColor="grey.300" borderRadius={1} sx={{ position: 'relative' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                        {p.productName} {hasVariants ? '(Variant Selection)' : ''}
+                      </Typography>
+                      <Box>
+                        {hasVariants && (
+                          <Button 
+                            size="small" 
+                            variant="outlined" 
+                            startIcon={<PlusIcon size={14} />} 
+                            onClick={() => handleAddAnotherVariant(p.id)}
+                            sx={{ mr: 1 }}
+                          >
+                            Add Another Size
+                          </Button>
+                        )}
+                        <IconButton size="small" color="error" onClick={() => handleRemoveVariant(p.uniqueKey!)}>
+                          <CloseIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    </Box>
+
                     <Grid container spacing={2}>
                       {hasVariants && (
                         <Grid item xs={12}>
@@ -364,7 +444,7 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
                             <Select
                               value={p.selectedVariantId || ''}
                               label="Select Variant (Size)"
-                              onChange={(e) => handleVariantChange(p.id, Number(e.target.value))}
+                              onChange={(e) => handleVariantChange(p.uniqueKey!, Number(e.target.value))}
                             >
                               {p.variants?.map((v: any) => (
                                 <MenuItem key={v.id} value={v.id}>
@@ -375,14 +455,14 @@ const StandardProductModal: React.FC<ModalFormProps> = ({
                           </FormControl>
                         </Grid>
                       )}
-                      <Grid item xs={12} md={6}><TextField label="Rate Per Quantity" value={p.ratePerQuantity ?? 'N/A'} fullWidth InputProps={{ readOnly: true }} /></Grid>
-                      <Grid item xs={12} md={6}><TextField label="Min Cost" value={p.minCost ?? 'N/A'} fullWidth InputProps={{ readOnly: true }} /></Grid>
-                      <Grid item xs={12} md={6}><TextField label="Max Cost" value={p.maxCost ?? 'N/A'} fullWidth InputProps={{ readOnly: true }} /></Grid>
+                      <Grid item xs={12} md={6}><TextField label="Rate Per Quantity" value={p.ratePerQuantity ?? 'N/A'} fullWidth InputProps={{ readOnly: true }} size="small" /></Grid>
+                      <Grid item xs={12} md={6}><TextField label="Min Cost" value={p.minCost ?? 'N/A'} fullWidth InputProps={{ readOnly: true }} size="small" /></Grid>
+                      <Grid item xs={12} md={6}><TextField label="Max Cost" value={p.maxCost ?? 'N/A'} fullWidth InputProps={{ readOnly: true }} size="small" /></Grid>
                       <Grid item xs={12} md={6}>
                         <TextField
                           label="Set Price" type="number" value={p.setPrice}
-                          onChange={(e) => handlePriceChange(p.id, e.target.value)}
-                          fullWidth error={isInvalid} inputProps={{ min: 0 }}
+                          onChange={(e) => handlePriceChange(p.uniqueKey!, e.target.value)}
+                          fullWidth error={isInvalid} inputProps={{ min: 0 }} size="small"
                         />
                         {isInvalid && <FormHelperText error>Price cannot be below Min Cost.</FormHelperText>}
                         {isWarning && <FormHelperText sx={{ color: 'orange' }}>Price is above Max Cost.</FormHelperText>}

@@ -17,7 +17,7 @@ import {
   paginationSlice,
 } from "../../app/slices/comboProductManagementSlice";
 import type { GridColDef, GridPaginationModel, GridRowSelectionModel } from "@mui/x-data-grid";
-import { Box, Button, Container } from "@mui/material";
+import { Box, Button, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import { DeleteSweepOutlined as Delete } from "@mui/icons-material";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import ArrowDownwardOutlinedIcon from "@mui/icons-material/ArrowDownwardOutlined";
@@ -32,6 +32,10 @@ const ComboMappingManagement = () => {
   const dispatch: AppDispatch = useDispatch();
   const comboSelector = useSelector((state: RootState) => state.combo);
   const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>({ type: "include", ids: new Set() });
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ open: boolean; ids: (string | number)[] }>({
+    open: false,
+    ids: [],
+  });
   const headers = {
     sno: "S. No",
     productName: "Product Name",
@@ -220,10 +224,15 @@ const ComboMappingManagement = () => {
       .filter((id: string | number) => !selectedRows.ids.has(id));
   };
 
-  const handleDeleteRow = async (id: number[]) => {
+  const handleDeleteRow = (ids: Array<string | number>) => {
+    setDeleteConfirmation({ open: true, ids });
+  };
+
+  const confirmDelete = async () => {
+    const ids = deleteConfirmation.ids;
     try {
-      if (id) {
-        const deleteData = await deleteComboById({ id });
+      if (ids && ids.length > 0) {
+        const deleteData = await deleteComboById({ id: ids.map(id => Number(id)) });
         if (deleteData.error) {
           dispatch(
             addToast({ message: "Failed to Deleting Product!", type: "error" })
@@ -238,7 +247,6 @@ const ComboMappingManagement = () => {
           setComboDeleted(true);
         }
         setSelectedRows({ type: "include", ids: new Set() });
-        return deleteData;
       }
     } catch (error) {
       dispatch(
@@ -247,6 +255,8 @@ const ComboMappingManagement = () => {
           type: "error",
         })
       );
+    } finally {
+      setDeleteConfirmation({ open: false, ids: [] });
     }
   };
 
@@ -465,13 +475,6 @@ const ComboMappingManagement = () => {
 
   const columns: GridColDef[] = [
     {
-      field: "productName",
-      headerName: "Product Name",
-      flex: 1,
-      headerAlign: "center",
-      align: "center",
-    },
-    {
       field: "comboName",
       headerName: "Combo Name",
       flex: 1,
@@ -479,26 +482,34 @@ const ComboMappingManagement = () => {
       align: "center",
     },
     {
+      field: "productName",
+      headerName: "Product Name",
+      flex: 1,
+      headerAlign: "center",
+      align: "center",
+    },
+
+    {
       field: "categoryName",
       headerName: "Category Name",
       flex: 1,
       headerAlign: "center",
       align: "center",
     },
-    {
-      field: "ratePerQuantity",
-      headerName: "Price",
-      flex: 1,
-      headerAlign: "center",
-      align: "center",
-    },
-    {
-      field: "grade",
-      headerName: "Grade",
-      flex: 1,
-      headerAlign: "center",
-      align: "center",
-    },
+    // {
+    //   field: "ratePerQuantity",
+    //   headerName: "Price",
+    //   flex: 1,
+    //   headerAlign: "center",
+    //   align: "center",
+    // },
+    // {
+    //   field: "grade",
+    //   headerName: "Grade",
+    //   flex: 1,
+    //   headerAlign: "center",
+    //   align: "center",
+    // },
     {
       field: "actions",
       headerName: "Actions",
@@ -654,7 +665,7 @@ const ComboMappingManagement = () => {
         </Box>
       </Box>
       <Box sx={{ width: "100%", mt: 2 }}>
-        <Box sx={{ height: 310, width: "100%" }}>
+        <Box sx={{ height: 600, width: "100%" }}>
           <DataTable
             rows={productData}
             columns={columns}
@@ -707,6 +718,23 @@ const ComboMappingManagement = () => {
         onDeleteCombo={handleDeleteCombo}
         onDeleteCategory={handleDeleteCategory}
       />
+      <Dialog
+        open={deleteConfirmation.open}
+        onClose={() => setDeleteConfirmation({ open: false, ids: [] })}
+      >
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete the selected product(s)? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmation({ open: false, ids: [] })}>Cancel</Button>
+          <Button onClick={confirmDelete} color="error" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

@@ -90,11 +90,13 @@ const ProductSelectionStep: React.FC<StandardProdLayoutProps> = ({ products, set
 
   const handleSubmitStandardProduct = (data: MultiProductFormData) => {
     let newProductsFromForm: StandardFormData[] = [];
-    if (data.productDetails && data.productDetails.length > 0) {
-      newProductsFromForm = data.productDetails.map(productDetail => {
+      newProductsFromForm = (data.productDetails || []).map((productDetail, index) => {
         const quantityStrFromForm = data.quantity || "1";
         const quantityNumForCalc = parseFloat(quantityStrFromForm) || 0;
         const rateFromDetail = productDetail.ratePerQuantity || 0;
+        
+        // UNIQUE ID generation: ProductID + VariantID (if any) + index to ensure uniqueness even for same variant multiple times
+        const uniqueId = `${productDetail.id}-${productDetail.selectedVariantId || 'base'}-${index}-${Date.now()}`;
         const newCode = `SBI-SP-${String(productDetail.id).padStart(3, '0')}`;
 
         // --- FIX: Capture Size Info & Dimensions ---
@@ -120,7 +122,7 @@ const ProductSelectionStep: React.FC<StandardProdLayoutProps> = ({ products, set
         }
 
         return {
-          id: productDetail.id.toString(), code: newCode, productName: productDetail.productName,
+          id: uniqueId, code: newCode, productName: productDetail.productName,
           ratePerQuantity: rateFromDetail, productCombo: data.productCombo, productCategory: data.productCategory,
           quantity: quantityStrFromForm, remark: productDetail.remark || data.remark || '',
           totalAmount: calculateStandardProductTotal(rateFromDetail, quantityNumForCalc),
@@ -130,10 +132,9 @@ const ProductSelectionStep: React.FC<StandardProdLayoutProps> = ({ products, set
           baseProductDefaultLength: dimLength,
           baseProductDefaultWidth: dimWidth,
           baseProductDefaultThickness: dimThickness,
-          size: finalSize, // <--- Added Size
+          size: finalSize,
         };
       });
-    }
     setProducts([...products, ...newProductsFromForm]);
     handleCloseStandardModal();
   };
